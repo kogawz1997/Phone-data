@@ -143,6 +143,12 @@ export default function UXEnhancements() {
     window.setTimeout(() => setToasts((items) => items.filter((item) => item.id !== id)), 3200);
   };
 
+  const goPath = (href: string) => {
+    setSheet("none");
+    setCommandOpen(false);
+    window.location.href = href;
+  };
+
   const goTab = (label: string) => {
     const ok = clickByText(".tab-btn", [label]);
     setSheet("none");
@@ -157,6 +163,9 @@ export default function UXEnhancements() {
     { id: "payments", label: "ไปหน้าชำระเงิน", hint: "Payments", group: "เมนู", run: () => goTab("ชำระเงิน") },
     { id: "devices", label: "ไปหน้าสต็อกเครื่อง", hint: "Devices", group: "เมนู", run: () => goTab("สต็อก") },
     { id: "audit", label: "ไปหน้า Audit", hint: "Logs", group: "เมนู", run: () => goTab("Audit") },
+    { id: "owner", label: "ไปหน้า Owner", hint: "Platform owner", group: "ระบบ", run: () => goPath("/platform") },
+    { id: "users", label: "ไปหน้า Users ลูกค้า", hint: "Customer access", group: "ระบบ", run: () => goPath("/customer-access") },
+    { id: "integrations", label: "ไปหน้า Integrations", hint: "Provider setup", group: "ระบบ", run: () => goPath("/integrations") },
     { id: "refresh", label: "รีเฟรชข้อมูล", hint: "Reload current data", group: "คำสั่ง", run: () => clickByText("button", ["รีเฟรช", "กำลังโหลด"]) },
     { id: "add-customer", label: "เพิ่มลูกค้า", hint: "เปิดหน้าลูกค้า", group: "Quick action", run: () => goTab("ลูกค้า") },
     { id: "add-device", label: "เพิ่มเครื่อง", hint: "เปิดหน้าสต็อก", group: "Quick action", run: () => goTab("สต็อก") },
@@ -294,6 +303,9 @@ export default function UXEnhancements() {
         <aside className="ux-sheet">
           <div className="ux-sheet-handle" />
           <h3>เมนูเพิ่มเติม</h3>
+          <button type="button" onClick={() => goPath("/platform")}>Owner / Platform</button>
+          <button type="button" onClick={() => goPath("/customer-access")}>Users ลูกค้า</button>
+          <button type="button" onClick={() => goPath("/integrations")}>Integrations</button>
           <button type="button" onClick={() => goTab("สต็อก")}>สต็อกเครื่อง</button>
           <button type="button" onClick={() => goTab("ติดตาม")}>ติดตามงวด</button>
           <button type="button" onClick={() => goTab("MDM")}>MDM</button>
@@ -307,7 +319,7 @@ export default function UXEnhancements() {
           <div className="ux-command" onMouseDown={(event) => event.stopPropagation()}>
             <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหาเมนู คำสั่ง หรือข้อมูล" />
             <div className="ux-command-list">
-              {filteredCommands.slice(0, 9).map((command) => (
+              {filteredCommands.slice(0, 12).map((command) => (
                 <button key={command.id} type="button" onClick={command.run}>
                   <strong>{command.label}</strong>
                   <span>{command.group} · {command.hint}</span>
