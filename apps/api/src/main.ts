@@ -17,6 +17,12 @@ if (!process.env.PAYMENT_WEBHOOK_SECRET && process.env.PAYMENT_GATEWAY_WEBHOOK_S
 const SESSION_COOKIE_NAME = process.env.AUTH_COOKIE_NAME || "koga_session";
 const listenPort = Number(process.env.PORT ?? process.env.API_PORT ?? PORT);
 
+function normalizeOrigin(origin: string) {
+  return origin.trim().replace(/\/+$/, "").toLowerCase();
+}
+
+const normalizedAllowedOrigins = new Set(ALLOWED_ORIGINS.map(normalizeOrigin));
+
 function readCookieValue(cookieHeader: string | undefined, name: string) {
   if (!cookieHeader) return "";
   const pair = cookieHeader
@@ -52,7 +58,10 @@ const app = Fastify({ logger: true });
 
 await app.register(cors, {
   origin(origin, cb) {
-    if (!IS_PRODUCTION || !origin || ALLOWED_ORIGINS.length === 0 || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    if (!IS_PRODUCTION || !origin || normalizedAllowedOrigins.size === 0 || normalizedAllowedOrigins.has(normalizeOrigin(origin))) {
+      return cb(null, true);
+    }
+    app.log.warn({ origin, allowedOrigins: ALLOWED_ORIGINS }, "CORS origin blocked");
     return cb(new Error(`CORS origin blocked: ${origin}`), false);
   },
   credentials: true,
