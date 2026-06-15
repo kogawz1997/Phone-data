@@ -30,6 +30,20 @@ function normalizeOrigin(origin: string) {
   }
 }
 
+function isRailwayFrontendOrigin(origin: string) {
+  const value = normalizeOrigin(origin);
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      url.hostname.endsWith(".up.railway.app") &&
+      (url.hostname.includes("admin-web") || url.hostname.includes("customer-web") || url.hostname.includes("kogaadmin") || url.hostname.includes("kogacustomer"))
+    );
+  } catch {
+    return false;
+  }
+}
+
 const normalizedAllowedOrigins = new Set([...ALLOWED_ORIGINS, ...RAILWAY_DEPLOYMENT_ORIGINS].map(normalizeOrigin));
 
 function readCookieValue(cookieHeader: string | undefined, name: string) {
@@ -67,7 +81,7 @@ const app = Fastify({ logger: true });
 
 await app.register(cors, {
   origin(origin, cb) {
-    if (!IS_PRODUCTION || !origin || normalizedAllowedOrigins.has(normalizeOrigin(origin))) {
+    if (!IS_PRODUCTION || !origin || normalizedAllowedOrigins.has(normalizeOrigin(origin)) || isRailwayFrontendOrigin(origin)) {
       return cb(null, true);
     }
     app.log.warn({ origin, allowedOrigins: Array.from(normalizedAllowedOrigins) }, "CORS origin blocked");
