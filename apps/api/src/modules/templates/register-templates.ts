@@ -2,7 +2,11 @@ import type { FastifyInstance } from "fastify";
 import type { Prisma } from "@repo/db";
 import type { AuthedRequest, CustomerPortalRequest } from "../../core/app-context";
 import * as ctx from "../../core/app-context";
-
+function getClientIp(request: any): string {
+  const forwarded = request.headers["x-forwarded-for"];
+  if (typeof forwarded === "string") return forwarded.split(",")[0]?.trim() ?? "";
+  return request.ip ?? "";
+}
 export async function registerTemplatesRoutes(app: FastifyInstance) {
   const {
     crypto,

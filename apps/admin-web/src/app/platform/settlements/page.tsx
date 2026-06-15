@@ -1,5 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { api } from "../../../lib/api";
+import { api } from "@/lib/api";
 import { baht } from "@repo/shared";
 export default function SettlementPage(){const [rows,setRows]=useState<any[]>([]);const [error,setError]=useState("");async function load(){try{setRows(await api<any[]>("/platform/settlements"))}catch(e){setError(e instanceof Error?e.message:"โหลดไม่ได้")}}useEffect(()=>{void load()},[]);return <main className="app-shell"><section className="hero"><div className="kicker">Platform Owner</div><h1>Settlement</h1><p className="muted">สรุปยอดร้าน ค่า platform fee และสถานะจ่าย settlement</p><button className="btn" onClick={load}>รีเฟรช</button></section>{error&&<div className="alert bad">{error}</div>}<section className="card"><div className="table-wrap"><table className="table"><thead><tr><th>ร้าน</th><th>รอบ</th><th>ยอดรวม</th><th>Fee</th><th>สุทธิ</th><th>สถานะ</th></tr></thead><tbody>{rows.map(r=><tr key={r.id}><td>{r.organization?.name}</td><td>{r.periodLabel}</td><td>{baht(Number(r.grossAmount))}</td><td>{baht(Number(r.feeAmount))}</td><td>{baht(Number(r.netAmount))}</td><td><span className="badge">{r.status}</span></td></tr>)}</tbody></table></div></section></main>}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { api, clearToken, setToken } from "../lib/api";
+import { api, clearToken, setToken } from "@/lib/api";
 import { baht } from "@repo/shared";
 
 type CustodyRecord = {

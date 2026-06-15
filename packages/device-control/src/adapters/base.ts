@@ -39,6 +39,7 @@ export type AndroidSignupUrlResponse = DeviceControlResult & {
   signupUrlName?: string;
   url?: string;
   enterpriseToken?: string;
+setupRequired?: string[];
 };
 
 export type AndroidEnterpriseResponse = DeviceControlResult & {

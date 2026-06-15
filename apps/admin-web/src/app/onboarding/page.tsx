@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api } from "../../lib/api";
+import { api } from "@/lib/api";
 
 type Profile = { organization: any; subscription: any; counts: { customers: number; devices: number; contracts: number; pendingPayments: number } };
 type Step = { id: string; stepKey: string; title: string; description?: string; status: string };

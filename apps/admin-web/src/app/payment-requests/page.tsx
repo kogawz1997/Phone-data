@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../../lib/api";
+import { api } from "@/lib/api";
 import { baht } from "@repo/shared";
 
 type Installment = { id: string; installmentNo: number; dueDate: string; amount: string; paidAmount: string; status: string };

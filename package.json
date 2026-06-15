@@ -40,6 +40,7 @@
     "backup:prod": "bash ./infra/scripts/backup.sh"
   },
   "devDependencies": {
+    "@types/node": "^22.19.21",
     "turbo": "^2.3.3",
     "typescript": "^5.7.2"
   }

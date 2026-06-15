@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { api } from "../lib/api";
+import { api } from "@/lib/api";
 
 type Row = any;
 function badge(status?: string) { const s = status || "-"; const tone = /DONE|PAID|ACTIVE|RESOLVED/.test(s) ? "good" : /OPEN|OVERDUE|WAITING|IN_PROGRESS/.test(s) ? "warn" : "neutral"; return <span className={`badge ${tone}`}>{s}</span>; }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { api, clearToken, setToken, downloadCsv, openHtml, API_BASE_URL } from "../lib/api";
+import { api, clearToken, setToken, downloadCsv, openHtml, API_BASE_URL } from "@/lib/api";
 import { baht } from "@repo/shared";
 
 type Summary = {

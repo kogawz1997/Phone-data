@@ -8,59 +8,59 @@ datasource db {
 }
 
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String?  @unique
-  storeCode String?  @unique
-  ownerName String?
-  email     String?
-  billingEmail String?
-  taxId     String?
-  phone     String?
-  address   String?
-  status    TenantStatus @default(TRIAL)
-  plan      TenantPlan @default(STARTER)
+  id            String        @id @default(cuid())
+  name          String
+  slug          String?       @unique
+  storeCode     String?       @unique
+  ownerName     String?
+  email         String?
+  billingEmail  String?
+  taxId         String?
+  phone         String?
+  address       String?
+  status        TenantStatus  @default(TRIAL)
+  plan          TenantPlan    @default(STARTER)
   billingStatus BillingStatus @default(TRIALING)
-  monthlyFee Decimal @default(990)
-  trialEndsAt DateTime?
-  suspendedAt DateTime?
+  monthlyFee    Decimal       @default(990)
+  trialEndsAt   DateTime?
+  suspendedAt   DateTime?
   lastBillingAt DateTime?
   nextBillingAt DateTime?
-  lastActiveAt DateTime?
+  lastActiveAt  DateTime?
   platformNotes String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  users     User[]
-  branches  Branch[]
-  customers Customer[]
-  devices   Device[]
-  contracts Contract[]
-  audits    AuditLog[]
-  platformSubscriptions PlatformSubscription[]
-  platformInvoices PlatformInvoice[]
-  integrationConnectors IntegrationConnector[]
-  onboardingSteps StoreOnboardingStep[]
-  customerPortalUsers CustomerPortalUser[]
-  customerPortalInvites CustomerPortalInvite[]
-  paymentRequests CustomerPaymentRequest[]
-  paymentSettings StorePaymentSetting[]
+  users                  User[]
+  branches               Branch[]
+  customers              Customer[]
+  devices                Device[]
+  contracts              Contract[]
+  audits                 AuditLog[]
+  platformSubscriptions  PlatformSubscription[]
+  platformInvoices       PlatformInvoice[]
+  integrationConnectors  IntegrationConnector[]
+  onboardingSteps        StoreOnboardingStep[]
+  customerPortalUsers    CustomerPortalUser[]
+  customerPortalInvites  CustomerPortalInvite[]
+  paymentRequests        CustomerPaymentRequest[]
+  paymentSettings        StorePaymentSetting[]
   mdmProviderConnections MdmProviderConnection[]
-  mdmEnterprises MdmEnterprise[]
-  mdmEnrollments MdmEnrollment[]
-  mdmPolicies MdmPolicy[]
-  appleCustodyRecords AppleCustodyRecord[]
-  platformSettlements PlatformSettlement[]
-  ledgerEntries StoreLedgerEntry[]
-  riskAssessments CustomerRiskAssessment[]
-  collectionTasks CollectionTask[]
-  disputes DisputeCase[]
-  notificationTemplates NotificationTemplate[]
-  templateItems TemplateCenterItem[]
-  automationRules AutomationRule[]
-  consentSnapshots ConsentDocumentSnapshot[]
-  storeHealthSnapshots StoreHealthSnapshot[]
-  reportExports ReportExport[]
+  mdmEnterprises         MdmEnterprise[]
+  mdmEnrollments         MdmEnrollment[]
+  mdmPolicies            MdmPolicy[]
+  appleCustodyRecords    AppleCustodyRecord[]
+  platformSettlements    PlatformSettlement[]
+  ledgerEntries          StoreLedgerEntry[]
+  riskAssessments        CustomerRiskAssessment[]
+  collectionTasks        CollectionTask[]
+  disputes               DisputeCase[]
+  notificationTemplates  NotificationTemplate[]
+  templateItems          TemplateCenterItem[]
+  automationRules        AutomationRule[]
+  consentSnapshots       ConsentDocumentSnapshot[]
+  storeHealthSnapshots   StoreHealthSnapshot[]
+  reportExports          ReportExport[]
 
   @@index([status])
   @@index([plan])
@@ -130,27 +130,27 @@ model Branch {
 }
 
 model Customer {
-  id             String   @id @default(cuid())
+  id             String         @id @default(cuid())
   organizationId String
   fullName       String
   phone          String
   nationalIdHash String?
   address        String?
-  riskScore      Int      @default(0)
+  riskScore      Int            @default(0)
   status         CustomerStatus @default(ACTIVE)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  contracts    Contract[]
-  consents     Consent[]
-  contactLogs  ContactLog[]
-  portalUsers CustomerPortalUser[]
-  portalInvites CustomerPortalInvite[]
-  paymentRequests CustomerPaymentRequest[]
-  riskAssessments CustomerRiskAssessment[]
-  collectionTasks CollectionTask[]
-  disputes DisputeCase[]
+  organization     Organization              @relation(fields: [organizationId], references: [id])
+  contracts        Contract[]
+  consents         Consent[]
+  contactLogs      ContactLog[]
+  portalUsers      CustomerPortalUser[]
+  portalInvites    CustomerPortalInvite[]
+  paymentRequests  CustomerPaymentRequest[]
+  riskAssessments  CustomerRiskAssessment[]
+  collectionTasks  CollectionTask[]
+  disputes         DisputeCase[]
   consentSnapshots ConsentDocumentSnapshot[]
 
   @@index([organizationId])
@@ -164,39 +164,38 @@ enum CustomerStatus {
 }
 
 model Device {
-  id             String   @id @default(cuid())
-  organizationId String
-  brand          String
-  model          String
-  imei           String?  @unique
-  serialNumber   String?  @unique
-  storage        String?
-  color          String?
-  platform       DevicePlatform
-  deviceStatus   DeviceStatus @default(IN_STOCK)
-  controlStatus  DeviceControlStatus @default(NOT_ENROLLED)
-  controlMode    DeviceControlMode @default(NONE)
-  providerDeviceName String?
+  id                   String              @id @default(cuid())
+  organizationId       String
+  brand                String
+  model                String
+  imei                 String?             @unique
+  serialNumber         String?             @unique
+  storage              String?
+  color                String?
+  platform             DevicePlatform
+  deviceStatus         DeviceStatus        @default(IN_STOCK)
+  controlStatus        DeviceControlStatus @default(NOT_ENROLLED)
+  controlMode          DeviceControlMode   @default(NONE)
+  providerDeviceName   String?
   providerEnrollmentId String?
-  providerDeviceToken String?
-  providerPushMagic String?
-  lastMdmSyncAt  DateTime?
-  notes          String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  providerDeviceToken  String?
+  providerPushMagic    String?
+  lastMdmSyncAt        DateTime?
+  notes                String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  contract     Contract?
-  events       DeviceEvent[]
-  actions      DeviceAction[]
-  mdmEnrollments MdmEnrollment[]
-  mdmCommands MdmCommand[]
+  organization       Organization        @relation(fields: [organizationId], references: [id])
+  contract           Contract?
+  events             DeviceEvent[]
+  actions            DeviceAction[]
+  mdmEnrollments     MdmEnrollment[]
+  mdmCommands        MdmCommand[]
   appleCustodyRecord AppleCustodyRecord?
 
   @@index([organizationId])
   @@index([platform])
   @@index([deviceStatus])
-
   @@index([controlMode])
   @@index([controlStatus])
   @@index([organizationId, deviceStatus])
@@ -242,51 +241,50 @@ enum DeviceControlMode {
 }
 
 model Contract {
-  id               String   @id @default(cuid())
-  organizationId   String
-  customerId       String
-  deviceId         String   @unique
-  contractNo       String   @unique
+  id             String @id @default(cuid())
+  organizationId String
+  customerId     String
+  deviceId       String @unique
+  contractNo     String @unique
 
-  salePrice        Decimal
-  downPayment      Decimal
-  principalAmount  Decimal
-  interestAmount   Decimal
-  totalAmount      Decimal
-  installmentCount Int
-  status           ContractStatus @default(DRAFT)
-  agreementType    AgreementType @default(LEASE_TO_OWN)
-  legalTitleStatus LegalTitleStatus @default(ORGANIZATION_OWNED)
-  managementPurpose String @default("LEASE_TO_OWN_ASSET_PROTECTION")
-  releaseDueAt     DateTime?
-  releaseCompletedAt DateTime?
+  salePrice              Decimal
+  downPayment            Decimal
+  principalAmount        Decimal
+  interestAmount         Decimal
+  totalAmount            Decimal
+  installmentCount       Int
+  status                 ContractStatus   @default(DRAFT)
+  agreementType          AgreementType    @default(LEASE_TO_OWN)
+  legalTitleStatus       LegalTitleStatus @default(ORGANIZATION_OWNED)
+  managementPurpose      String           @default("LEASE_TO_OWN_ASSET_PROTECTION")
+  releaseDueAt           DateTime?
+  releaseCompletedAt     DateTime?
   ownershipTransferredAt DateTime?
 
-  signedAt         DateTime?
-  paidOffAt        DateTime?
-  cancelledAt      DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  signedAt    DateTime?
+  paidOffAt   DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  customer     Customer     @relation(fields: [customerId], references: [id])
-  device       Device       @relation(fields: [deviceId], references: [id])
-  installments Installment[]
-  payments     Payment[]
-  paymentRequests CustomerPaymentRequest[]
-  consents     Consent[]
-  actions      DeviceAction[]
-  mdmEnrollments MdmEnrollment[]
-  mdmCommands MdmCommand[]
+  organization        Organization              @relation(fields: [organizationId], references: [id])
+  customer            Customer                  @relation(fields: [customerId], references: [id])
+  device              Device                    @relation(fields: [deviceId], references: [id])
+  installments        Installment[]
+  payments            Payment[]
+  paymentRequests     CustomerPaymentRequest[]
+  consents            Consent[]
+  actions             DeviceAction[]
+  mdmEnrollments      MdmEnrollment[]
+  mdmCommands         MdmCommand[]
   appleCustodyRecords AppleCustodyRecord[]
-  collectionTasks CollectionTask[]
-  disputes DisputeCase[]
-  consentSnapshots ConsentDocumentSnapshot[]
+  collectionTasks     CollectionTask[]
+  disputes            DisputeCase[]
+  consentSnapshots    ConsentDocumentSnapshot[]
 
   @@index([organizationId])
   @@index([status])
   @@index([contractNo])
-
   @@index([customerId])
   @@index([deviceId])
   @@index([legalTitleStatus])
@@ -322,25 +320,24 @@ enum LegalTitleStatus {
 }
 
 model Installment {
-  id            String   @id @default(cuid())
+  id            String            @id @default(cuid())
   contractId    String
   installmentNo Int
   dueDate       DateTime
   amount        Decimal
-  paidAmount    Decimal @default(0)
+  paidAmount    Decimal           @default(0)
   status        InstallmentStatus @default(PENDING)
   paidAt        DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
-  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
-  payments Payment[]
+  contract        Contract                 @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  payments        Payment[]
   paymentRequests CustomerPaymentRequest[]
 
   @@unique([contractId, installmentNo])
   @@index([dueDate])
   @@index([status])
-
   @@index([contractId])
   @@index([contractId, status])
   @@index([status, dueDate])
@@ -356,19 +353,19 @@ enum InstallmentStatus {
 }
 
 model Payment {
-  id            String   @id @default(cuid())
+  id             String        @id @default(cuid())
   organizationId String
-  contractId    String
-  installmentId String?
-  amount        Decimal
-  method        PaymentMethod
-  status        PaymentStatus @default(PENDING)
-  slipUrl       String?
-  providerRef   String?
-  note          String?
-  paidAt        DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  contractId     String
+  installmentId  String?
+  amount         Decimal
+  method         PaymentMethod
+  status         PaymentStatus @default(PENDING)
+  slipUrl        String?
+  providerRef    String?
+  note           String?
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   contract    Contract     @relation(fields: [contractId], references: [id])
   installment Installment? @relation(fields: [installmentId], references: [id])
@@ -376,7 +373,6 @@ model Payment {
   @@index([organizationId])
   @@index([contractId])
   @@index([status])
-
   @@index([installmentId])
   @@index([createdAt])
   @@index([status, createdAt])
@@ -400,19 +396,19 @@ enum PaymentStatus {
 }
 
 model StorePaymentSetting {
-  id             String   @id @default(cuid())
+  id             String              @id @default(cuid())
   organizationId String
   provider       PaymentProviderType @default(PROMPTPAY_MANUAL)
-  displayName    String   @default("PromptPay Manual")
+  displayName    String              @default("PromptPay Manual")
   promptPayId    String?
   bankName       String?
   accountNo      String?
   accountName    String?
   instructions   String?
-  isActive       Boolean  @default(false)
+  isActive       Boolean             @default(false)
   configJson     Json?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
@@ -427,7 +423,7 @@ enum PaymentProviderType {
 }
 
 model CustomerPortalUser {
-  id             String   @id @default(cuid())
+  id             String                   @id @default(cuid())
   organizationId String
   customerId     String
   email          String?
@@ -435,11 +431,11 @@ model CustomerPortalUser {
   passwordHash   String
   status         CustomerPortalUserStatus @default(ACTIVE)
   lastLoginAt    DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  customer     Customer     @relation(fields: [customerId], references: [id])
+  organization Organization           @relation(fields: [organizationId], references: [id])
+  customer     Customer               @relation(fields: [customerId], references: [id])
   invites      CustomerPortalInvite[]
 
   @@index([organizationId])
@@ -454,19 +450,19 @@ enum CustomerPortalUserStatus {
 }
 
 model CustomerPortalInvite {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   organizationId String
   customerId     String
   portalUserId   String?
-  token          String   @unique
+  token          String    @unique
   shareUrl       String?
   expiresAt      DateTime
   acceptedAt     DateTime?
   revokedAt      DateTime?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime  @default(now())
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  customer     Customer     @relation(fields: [customerId], references: [id])
+  organization Organization        @relation(fields: [organizationId], references: [id])
+  customer     Customer            @relation(fields: [customerId], references: [id])
   portalUser   CustomerPortalUser? @relation(fields: [portalUserId], references: [id])
 
   @@index([organizationId])
@@ -475,31 +471,31 @@ model CustomerPortalInvite {
 }
 
 model CustomerPaymentRequest {
-  id             String   @id @default(cuid())
-  organizationId String
-  customerId     String
-  contractId     String
-  installmentId  String
-  amount         Decimal
-  status         PaymentRequestStatus @default(OPEN)
-  qrPayload      String?
-  qrImageDataUrl String?
-  paymentUrl     String?
-  providerRef    String?
+  id               String               @id @default(cuid())
+  organizationId   String
+  customerId       String
+  contractId       String
+  installmentId    String
+  amount           Decimal
+  status           PaymentRequestStatus @default(OPEN)
+  qrPayload        String?
+  qrImageDataUrl   String?
+  paymentUrl       String?
+  providerRef      String?
   submittedSlipUrl String?
-  submittedNote  String?
-  expiresAt      DateTime?
-  submittedAt    DateTime?
-  confirmedAt    DateTime?
-  rejectedAt     DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  submittedNote    String?
+  expiresAt        DateTime?
+  submittedAt      DateTime?
+  confirmedAt      DateTime?
+  rejectedAt       DateTime?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  customer     Customer     @relation(fields: [customerId], references: [id])
-  contract     Contract     @relation(fields: [contractId], references: [id])
-  installment  Installment  @relation(fields: [installmentId], references: [id])
-  disputes DisputeCase[]
+  organization  Organization       @relation(fields: [organizationId], references: [id])
+  customer      Customer           @relation(fields: [customerId], references: [id])
+  contract      Contract           @relation(fields: [contractId], references: [id])
+  installment   Installment        @relation(fields: [installmentId], references: [id])
+  disputes      DisputeCase[]
   ledgerEntries StoreLedgerEntry[]
 
   @@index([organizationId])
@@ -507,7 +503,6 @@ model CustomerPaymentRequest {
   @@index([contractId])
   @@index([installmentId])
   @@index([status])
-
   @@index([organizationId, status])
   @@index([createdAt])
 }
@@ -522,12 +517,12 @@ enum PaymentRequestStatus {
 }
 
 model Consent {
-  id         String   @id @default(cuid())
+  id         String      @id @default(cuid())
   customerId String
   contractId String?
   type       ConsentType
   version    String
-  acceptedAt DateTime @default(now())
+  acceptedAt DateTime    @default(now())
   ipAddress  String?
   userAgent  String?
 
@@ -549,7 +544,7 @@ enum ConsentType {
 }
 
 model DeviceAction {
-  id          String   @id @default(cuid())
+  id          String             @id @default(cuid())
   deviceId    String
   contractId  String?
   type        DeviceActionType
@@ -557,7 +552,7 @@ model DeviceAction {
   status      DeviceActionStatus @default(PENDING_APPROVAL)
   approvedBy  String?
   resultJson  Json?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime           @default(now())
   completedAt DateTime?
 
   device   Device    @relation(fields: [deviceId], references: [id])
@@ -566,7 +561,6 @@ model DeviceAction {
   @@index([deviceId])
   @@index([contractId])
   @@index([status])
-
   @@index([status, createdAt])
 }
 
@@ -602,12 +596,12 @@ model DeviceEvent {
 }
 
 model ContactLog {
-  id         String   @id @default(cuid())
+  id         String         @id @default(cuid())
   customerId String
   channel    ContactChannel
   message    String
   createdBy  String?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime       @default(now())
 
   customer Customer @relation(fields: [customerId], references: [id])
 
@@ -634,7 +628,7 @@ model AuditLog {
   metadata       Json?
   createdAt      DateTime @default(now())
 
-  actor       User?         @relation(fields: [actorId], references: [id])
+  actor        User?         @relation(fields: [actorId], references: [id])
   organization Organization? @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId])
@@ -642,16 +636,15 @@ model AuditLog {
   @@index([targetType, targetId])
 }
 
-
 model MdmProviderConnection {
-  id             String   @id @default(cuid())
+  id             String            @id @default(cuid())
   organizationId String
   provider       MdmProviderType
   status         MdmProviderStatus @default(SETUP_REQUIRED)
   configJson     Json?
   lastCheckedAt  DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
@@ -673,14 +666,14 @@ enum MdmProviderStatus {
 }
 
 model MdmEnterprise {
-  id             String   @id @default(cuid())
+  id             String          @id @default(cuid())
   organizationId String
   provider       MdmProviderType
   providerRef    String?
   displayName    String
-  status         String   @default("SETUP_REQUIRED")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  status         String          @default("SETUP_REQUIRED")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
@@ -689,7 +682,7 @@ model MdmEnterprise {
 }
 
 model MdmEnrollment {
-  id             String   @id @default(cuid())
+  id             String          @id @default(cuid())
   organizationId String
   deviceId       String?
   platform       DevicePlatform
@@ -699,87 +692,85 @@ model MdmEnrollment {
   providerToken  String?
   qrPayload      Json?
   enrollmentUrl  String?
-  status         String   @default("CREATED")
+  status         String          @default("CREATED")
   expiresAt      DateTime?
   usedAt         DateTime?
-  createdAt      DateTime @default(now())
-
-  organization Organization @relation(fields: [organizationId], references: [id])
-  device       Device?      @relation(fields: [deviceId], references: [id])
+  createdAt      DateTime        @default(now())
+  contractId     String?
+  contract       Contract?       @relation(fields: [contractId], references: [id])
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  device         Device?         @relation(fields: [deviceId], references: [id])
 
   @@index([organizationId])
   @@index([deviceId])
   @@index([platform])
-
   @@index([status])
   @@index([createdAt])
 }
 
 model MdmPolicy {
-  id             String   @id @default(cuid())
+  id             String          @id @default(cuid())
   organizationId String
   provider       MdmProviderType
   platform       DevicePlatform
   name           String
   payload        Json
-  version        Int      @default(1)
-  status         String   @default("DRAFT")
+  version        Int             @default(1)
+  status         String          @default("DRAFT")
   providerRef    String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId])
   @@index([provider])
-
   @@index([platform])
   @@index([status])
 }
 
 model MdmCommand {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   deviceId    String
   provider    MdmProviderType
   commandType String
   payload     Json?
-  status      String   @default("QUEUED")
+  status      String          @default("QUEUED")
   providerRef String?
   resultJson  Json?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime        @default(now())
   completedAt DateTime?
-
-  device Device @relation(fields: [deviceId], references: [id])
+  contractId  String?
+  contract    Contract?       @relation(fields: [contractId], references: [id])
+  device      Device          @relation(fields: [deviceId], references: [id])
 
   @@index([deviceId])
   @@index([provider])
   @@index([status])
-
   @@index([status, createdAt])
   @@index([createdAt])
 }
 
-
 model AppleCustodyRecord {
-  id                String   @id @default(cuid())
-  organizationId    String
-  deviceId          String   @unique
-  contractId        String?
-  mode              AppleCustodyMode @default(ICLOUD_CUSTODY_TRACKING)
-  status            AppleCustodyStatus @default(ACTIVE)
-  appleIdAlias      String?
-  findMyStatus      FindMyStatus @default(UNKNOWN)
-  activationStatus  ActivationStatus @default(UNKNOWN)
-  evidenceUrls      Json?
-  releaseDueAt      DateTime?
-  releasedAt        DateTime?
+  id                  String             @id @default(cuid())
+  organizationId      String
+  deviceId            String             @unique
+  contractId          String?
+  mode                AppleCustodyMode   @default(ICLOUD_CUSTODY_TRACKING)
+  status              AppleCustodyStatus @default(ACTIVE)
+  appleIdAlias        String?
+  findMyStatus        FindMyStatus       @default(UNKNOWN)
+  activationStatus    ActivationStatus   @default(UNKNOWN)
+  evidenceUrls        Json?
+  releaseDueAt        DateTime?
+  releasedAt          DateTime?
   releaseEvidenceUrls Json?
-  lastCheckedAt     DateTime?
-  checkedByUserId   String?
-  releaseCheckedBy  String?
-  notes             String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  lastCheckedAt       DateTime?
+  checkedByUserId     String?
+  releaseCheckedBy    String?
+  notes               String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
   device       Device       @relation(fields: [deviceId], references: [id])
@@ -789,7 +780,6 @@ model AppleCustodyRecord {
   @@index([deviceId])
   @@index([contractId])
   @@index([status])
-
   @@index([releaseDueAt])
   @@index([releasedAt])
 }
@@ -818,21 +808,20 @@ enum ActivationStatus {
   OFF
 }
 
-
 model PlatformSubscription {
-  id             String   @id @default(cuid())
-  organizationId String
-  plan           TenantPlan @default(STARTER)
-  status         BillingStatus @default(TRIALING)
-  monthlyFee     Decimal @default(990)
-  deviceLimit    Int @default(50)
-  storeUserLimit Int @default(5)
-  trialEndsAt    DateTime?
+  id                 String        @id @default(cuid())
+  organizationId     String
+  plan               TenantPlan    @default(STARTER)
+  status             BillingStatus @default(TRIALING)
+  monthlyFee         Decimal       @default(990)
+  deviceLimit        Int           @default(50)
+  storeUserLimit     Int           @default(5)
+  trialEndsAt        DateTime?
   currentPeriodStart DateTime?
   currentPeriodEnd   DateTime?
-  cancelledAt    DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  cancelledAt        DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
@@ -841,9 +830,9 @@ model PlatformSubscription {
 }
 
 model PlatformInvoice {
-  id             String   @id @default(cuid())
+  id             String        @id @default(cuid())
   organizationId String
-  invoiceNo      String   @unique
+  invoiceNo      String        @unique
   periodLabel    String
   amount         Decimal
   status         InvoiceStatus @default(DRAFT)
@@ -851,8 +840,8 @@ model PlatformInvoice {
   paidAt         DateTime?
   paymentRef     String?
   note           String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
@@ -870,17 +859,17 @@ enum InvoiceStatus {
 }
 
 model IntegrationConnector {
-  id             String   @id @default(cuid())
+  id             String              @id @default(cuid())
   organizationId String
   provider       IntegrationProvider
   category       IntegrationCategory
   displayName    String
-  status         IntegrationStatus @default(SETUP_REQUIRED)
+  status         IntegrationStatus   @default(SETUP_REQUIRED)
   configJson     Json?
   lastCheckedAt  DateTime?
-  lastError       String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  lastError      String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
@@ -922,16 +911,16 @@ enum IntegrationStatus {
 }
 
 model StoreOnboardingStep {
-  id             String   @id @default(cuid())
+  id             String               @id @default(cuid())
   organizationId String
   stepKey        String
   title          String
   description    String?
   status         OnboardingStepStatus @default(PENDING)
   completedAt    DateTime?
-  sortOrder      Int @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  sortOrder      Int                  @default(0)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
@@ -947,25 +936,23 @@ enum OnboardingStepStatus {
   SKIPPED
 }
 
-
 model PlatformSettlement {
-  id             String   @id @default(cuid())
+  id             String           @id @default(cuid())
   organizationId String
   periodLabel    String
-  grossAmount     Decimal @default(0)
-  feeAmount       Decimal @default(0)
-  netAmount       Decimal @default(0)
-  status          SettlementStatus @default(DRAFT)
-  paidAt          DateTime?
-  note            String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  grossAmount    Decimal          @default(0)
+  feeAmount      Decimal          @default(0)
+  netAmount      Decimal          @default(0)
+  status         SettlementStatus @default(DRAFT)
+  paidAt         DateTime?
+  note           String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId])
   @@index([status])
-
   @@index([periodLabel])
 }
 
@@ -978,17 +965,17 @@ enum SettlementStatus {
 }
 
 model StoreLedgerEntry {
-  id               String   @id @default(cuid())
+  id               String          @id @default(cuid())
   organizationId   String
   paymentRequestId String?
   type             LedgerEntryType
   amount           Decimal
-  status           String   @default("POSTED")
+  status           String          @default("POSTED")
   reference        String?
   note             String?
-  createdAt        DateTime @default(now())
+  createdAt        DateTime        @default(now())
 
-  organization Organization @relation(fields: [organizationId], references: [id])
+  organization   Organization            @relation(fields: [organizationId], references: [id])
   paymentRequest CustomerPaymentRequest? @relation(fields: [paymentRequestId], references: [id])
 
   @@index([organizationId])
@@ -1005,17 +992,17 @@ enum LedgerEntryType {
 }
 
 model CustomerRiskAssessment {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   organizationId String
   customerId     String
   grade          RiskGrade @default(B)
-  score          Int      @default(50)
+  score          Int       @default(50)
   reasons        Json?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
-  customer Customer @relation(fields: [customerId], references: [id])
+  customer     Customer     @relation(fields: [customerId], references: [id])
 
   @@index([organizationId])
   @@index([customerId])
@@ -1030,28 +1017,27 @@ enum RiskGrade {
 }
 
 model CollectionTask {
-  id             String   @id @default(cuid())
+  id             String               @id @default(cuid())
   organizationId String
   customerId     String
   contractId     String?
   title          String
   dueAt          DateTime?
-  priority       String   @default("NORMAL")
+  priority       String               @default("NORMAL")
   status         CollectionTaskStatus @default(OPEN)
-  channel        ContactChannel @default(PHONE)
+  channel        ContactChannel       @default(PHONE)
   note           String?
   completedAt    DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
-  customer Customer @relation(fields: [customerId], references: [id])
-  contract Contract? @relation(fields: [contractId], references: [id])
+  customer     Customer     @relation(fields: [customerId], references: [id])
+  contract     Contract?    @relation(fields: [contractId], references: [id])
 
   @@index([organizationId])
   @@index([status])
   @@index([dueAt])
-
   @@index([customerId])
   @@index([priority])
 }
@@ -1065,23 +1051,23 @@ enum CollectionTaskStatus {
 }
 
 model DisputeCase {
-  id               String   @id @default(cuid())
+  id               String        @id @default(cuid())
   organizationId   String
   customerId       String
   contractId       String?
   paymentRequestId String?
   title            String
-  category         String   @default("PAYMENT")
+  category         String        @default("PAYMENT")
   status           DisputeStatus @default(OPEN)
   description      String?
   evidenceUrls     Json?
   resolution       String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  customer Customer @relation(fields: [customerId], references: [id])
-  contract Contract? @relation(fields: [contractId], references: [id])
+  organization   Organization            @relation(fields: [organizationId], references: [id])
+  customer       Customer                @relation(fields: [customerId], references: [id])
+  contract       Contract?               @relation(fields: [contractId], references: [id])
   paymentRequest CustomerPaymentRequest? @relation(fields: [paymentRequestId], references: [id])
 
   @@index([organizationId])
@@ -1099,15 +1085,15 @@ enum DisputeStatus {
 }
 
 model NotificationTemplate {
-  id             String   @id @default(cuid())
+  id             String              @id @default(cuid())
   organizationId String
   key            String
   channel        NotificationChannel @default(LINE)
   title          String
   body           String
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  isActive       Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
@@ -1124,16 +1110,16 @@ enum NotificationChannel {
 }
 
 model TemplateCenterItem {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String?
   type           TemplateType
   title          String
-  version        String   @default("1.0")
+  version        String       @default("1.0")
   body           String
-  isSystem       Boolean  @default(false)
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  isSystem       Boolean      @default(false)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   organization Organization? @relation(fields: [organizationId], references: [id])
 
@@ -1151,22 +1137,21 @@ enum TemplateType {
 }
 
 model AutomationRule {
-  id             String   @id @default(cuid())
+  id             String            @id @default(cuid())
   organizationId String
   name           String
   trigger        AutomationTrigger
   action         AutomationAction
   configJson     Json?
-  status         RuleStatus @default(ACTIVE)
+  status         RuleStatus        @default(ACTIVE)
   lastRunAt      DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId])
   @@index([status])
-
   @@index([trigger])
 }
 
@@ -1195,7 +1180,7 @@ enum RuleStatus {
 }
 
 model ConsentDocumentSnapshot {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   customerId     String
   contractId     String?
@@ -1207,16 +1192,15 @@ model ConsentDocumentSnapshot {
   ipAddress      String?
   userAgent      String?
   pdfUrl         String?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime     @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id])
-  customer Customer @relation(fields: [customerId], references: [id])
-  contract Contract? @relation(fields: [contractId], references: [id])
+  customer     Customer     @relation(fields: [customerId], references: [id])
+  contract     Contract?    @relation(fields: [contractId], references: [id])
 
   @@index([organizationId])
   @@index([customerId])
   @@index([contractId])
-
   @@index([type])
   @@index([createdAt])
 }
@@ -1233,7 +1217,6 @@ model StoreHealthSnapshot {
 
   @@index([organizationId])
   @@index([grade])
-
   @@index([createdAt])
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { API_BASE_URL } from "../../lib/api";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function StoreSignupPage() {
   const [message, setMessage] = useState("");

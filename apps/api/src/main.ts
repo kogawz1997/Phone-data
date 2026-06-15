@@ -23,10 +23,12 @@ await app.register(cors, {
 
 
 await registerApiModules(app);
-
 app.setErrorHandler((error, _request, reply) => {
-  app.log.error(error);
-  return fail(reply, 500, "INTERNAL_ERROR", error.message || "Internal server error");
+
+  const message = error instanceof Error ? error.message : "Internal server error";
+
+  return fail(reply, 500, "INTERNAL_ERROR", message);
+
 });
 
 app.listen({ port: PORT, host: "0.0.0.0" }).catch((error) => {

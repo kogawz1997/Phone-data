@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api, clearToken, setToken } from "../../../lib/api";
+import { api, clearToken, setToken } from "@/lib/api";
 
 type StoreRisk = { organizationId: string; storeName: string; total: number; releaseDue: number; released: number; missingEvidence: number; disputed: number };
 type RecordRow = {
