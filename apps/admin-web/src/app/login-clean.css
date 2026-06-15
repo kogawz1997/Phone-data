@@ -1,0 +1,13 @@
+/* Keep global UX overlays out of the unauthenticated login screen. */
+body:has(.login-page) .ux-smart-search,
+body:has(.login-page) .ux-fab,
+body:has(.login-page) .ux-bottom-nav,
+body:has(.login-page) .ux-sheet-backdrop,
+body:has(.login-page) .ux-sheet,
+body:has(.login-page) .ux-command-backdrop {
+  display: none !important;
+}
+
+body:has(.login-page) {
+  padding-bottom: 0 !important;
+}
