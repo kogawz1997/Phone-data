@@ -1,0 +1,397 @@
+/* Premium responsive layer for KOGA Admin Web.
+   This file upgrades the console for phones/tablets without rewriting every screen. */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: geometricPrecision;
+}
+
+body {
+  overscroll-behavior-y: none;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+.btn,
+.tab-btn,
+a.btn {
+  touch-action: manipulation;
+}
+
+.app-shell {
+  width: min(100%, 1480px);
+  padding-left: max(18px, env(safe-area-inset-left));
+  padding-right: max(18px, env(safe-area-inset-right));
+  padding-bottom: max(22px, env(safe-area-inset-bottom));
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  margin: -22px -22px 16px;
+  padding: 14px 22px;
+  background: rgba(7, 10, 18, .78);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(148, 163, 184, .12);
+}
+
+.brand h2 {
+  font-size: 20px;
+}
+
+.pill-list {
+  align-items: center;
+}
+
+.nav {
+  position: sticky;
+  top: 78px;
+  z-index: 30;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 8px 0 10px;
+  scrollbar-width: none;
+  background: linear-gradient(180deg, rgba(7,10,18,.96), rgba(7,10,18,.72), rgba(7,10,18,0));
+}
+
+.nav::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-height: 44px;
+}
+
+.btn {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hero,
+.card,
+.login-form,
+.login-poster {
+  transform: translateZ(0);
+}
+
+.hero {
+  isolation: isolate;
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.table-wrap {
+  -webkit-overflow-scrolling: touch;
+  box-shadow: inset -18px 0 18px -22px rgba(148, 163, 184, .5);
+}
+
+.table {
+  white-space: nowrap;
+}
+
+.table td,
+.table th {
+  min-height: 44px;
+}
+
+.input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+.notice,
+.alert {
+  backdrop-filter: blur(16px);
+}
+
+@media (max-width: 1100px) {
+  .app-shell {
+    padding: 16px;
+  }
+
+  .topbar {
+    margin: -16px -16px 14px;
+    padding: 12px 16px;
+  }
+
+  .brand .logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+  }
+
+  .hero-grid,
+  .layout-rail,
+  .cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  body {
+    background:
+      radial-gradient(circle at 50% -10%, rgba(56,189,248,.18), transparent 34%),
+      linear-gradient(180deg, #080b16 0%, #0f172a 58%, #070a12 100%);
+  }
+
+  body::before {
+    opacity: .45;
+    background-size: 34px 34px;
+  }
+
+  .app-shell {
+    padding: 12px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .topbar {
+    margin: -12px -12px 12px;
+    padding: 12px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .brand h2 {
+    font-size: 18px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 72vw;
+  }
+
+  .brand .logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 13px;
+    flex: 0 0 auto;
+  }
+
+  .pill-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .pill-list .badge,
+  .pill-list .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 38px;
+    text-align: center;
+  }
+
+  .pill-list .badge.neutral,
+  .pill-list .btn.secondary[href*="all-systems"],
+  .pill-list .btn.secondary[href*="integrations"],
+  .pill-list .btn.secondary[href*="customer-access"] {
+    display: none !important;
+  }
+
+  .nav {
+    top: 128px;
+    margin-left: -12px;
+    margin-right: -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .tab-btn {
+    min-height: 42px;
+    padding: 10px 13px;
+    border-radius: 999px;
+    font-size: 13px;
+  }
+
+  .hero,
+  .card {
+    border-radius: 20px !important;
+  }
+
+  .hero {
+    padding: 18px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .hero::after {
+    width: 150px;
+    height: 150px;
+    right: -65px;
+    top: -65px;
+  }
+
+  .hero h1 {
+    font-size: 27px !important;
+    line-height: 1.1 !important;
+    letter-spacing: -.045em !important;
+  }
+
+  .hero-actions,
+  .form-row,
+  .cols-2,
+  .cols-3,
+  .cols-4,
+  .hero-grid,
+  .layout-rail {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hero-actions {
+    display: grid;
+    gap: 8px;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+  }
+
+  .grid {
+    gap: 12px;
+  }
+
+  .card {
+    padding: 14px !important;
+  }
+
+  .metric {
+    min-height: 88px !important;
+  }
+
+  .metric-value {
+    font-size: 27px !important;
+  }
+
+  .table-wrap {
+    margin-left: -2px;
+    margin-right: -2px;
+    border-radius: 16px;
+  }
+
+  .table {
+    min-width: 720px;
+    font-size: 13px;
+  }
+
+  .table th,
+  .table td {
+    padding: 10px;
+  }
+
+  .form-grid {
+    gap: 10px;
+  }
+
+  label {
+    font-size: 13px;
+  }
+
+  .input {
+    min-height: 48px;
+    border-radius: 14px;
+  }
+
+  .btn {
+    width: auto;
+    min-height: 46px;
+    border-radius: 14px;
+  }
+
+  .actions-col {
+    min-width: 180px;
+  }
+
+  .actions-col .btn {
+    width: 100%;
+    margin: 3px 0;
+  }
+
+  .notice,
+  .alert {
+    border-radius: 15px !important;
+    padding: 12px !important;
+  }
+}
+
+@media (max-width: 460px) {
+  .topbar {
+    border-radius: 0 0 20px 20px;
+  }
+
+  .pill-list {
+    grid-template-columns: 1fr;
+  }
+
+  .pill-list .badge:not(:first-child),
+  .pill-list .btn.secondary:not(:last-child) {
+    display: none !important;
+  }
+
+  .nav {
+    top: 138px;
+  }
+
+  .hero h1 {
+    font-size: 24px !important;
+  }
+
+  .card h2 {
+    font-size: 17px;
+  }
+
+  .login-page {
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)) !important;
+    align-items: center !important;
+  }
+
+  .login-card {
+    max-width: 100% !important;
+  }
+
+  .login-form {
+    padding: 24px 18px !important;
+    border-radius: 24px !important;
+  }
+
+  .login-form h2 {
+    font-size: 27px !important;
+  }
+
+  .login-form .kicker {
+    font-size: 11px;
+  }
+
+  .login-form .input,
+  .login-form .btn {
+    min-height: 50px !important;
+  }
+}
+
+@media (min-width: 761px) {
+  .card:hover {
+    border-color: rgba(148, 163, 184, .28);
+  }
+}
