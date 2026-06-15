@@ -3,9 +3,33 @@ import path from "node:path";
 
 export type StorageProviderName = "local" | "s3" | "r2" | "supabase";
 
+const DEFAULT_ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".pdf"];
+const DEFAULT_ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+
 export function safeStorageName(filename: string) {
   const clean = filename.replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 120);
   return clean || `upload-${Date.now()}.bin`;
+}
+
+function envList(key: string, fallback: string[]) {
+  return String(process.env[key] || fallback.join(","))
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function parseBase64Payload(input: string) {
+  const match = input.match(/^data:([^;]+);base64,(.*)$/s);
+  if (!match) return { mimeType: "", payload: input };
+  return { mimeType: match[1].toLowerCase(), payload: match[2] };
+}
+
+function detectMimeFromMagic(buffer: Buffer) {
+  if (buffer.subarray(0, 4).toString("hex") === "89504e47") return "image/png";
+  if (buffer.subarray(0, 3).toString("hex") === "ffd8ff") return "image/jpeg";
+  if (buffer.subarray(0, 4).toString("utf8") === "%PDF") return "application/pdf";
+  if (buffer.subarray(0, 4).toString("utf8") === "RIFF" && buffer.subarray(8, 12).toString("utf8") === "WEBP") return "image/webp";
+  return "application/octet-stream";
 }
 
 export function getStorageSetupStatus(env: NodeJS.ProcessEnv = process.env) {
@@ -30,16 +54,36 @@ export function getStorageSetupStatus(env: NodeJS.ProcessEnv = process.env) {
 export async function saveLocalBase64(input: { filename: string; contentBase64: string; folder?: string; uploadDir?: string; publicBaseUrl?: string; maxBytes?: number }) {
   const uploadRoot = input.uploadDir || process.env.UPLOAD_DIR || path.resolve(process.cwd(), "uploads");
   const folder = safeStorageName(input.folder || "misc");
-  const targetDir = path.join(uploadRoot, folder);
-  await fs.promises.mkdir(targetDir, { recursive: true });
-  const filename = `${Date.now()}-${safeStorageName(input.filename)}`;
-  const filePath = path.join(targetDir, filename);
-  const buffer = Buffer.from(input.contentBase64.replace(/^data:[^;]+;base64,/, ""), "base64");
+  const safeName = safeStorageName(input.filename);
+  const extension = path.extname(safeName).toLowerCase();
+  const allowedExtensions = envList("UPLOAD_ALLOWED_EXTENSIONS", DEFAULT_ALLOWED_EXTENSIONS);
+  const allowedMimeTypes = envList("UPLOAD_ALLOWED_MIME_TYPES", DEFAULT_ALLOWED_MIME_TYPES);
+
+  if (!allowedExtensions.includes(extension)) {
+    throw new Error(`Upload file extension not allowed: ${extension || "none"}`);
+  }
+
+  const parsed = parseBase64Payload(input.contentBase64);
+  const buffer = Buffer.from(parsed.payload, "base64");
   const maxBytes = input.maxBytes ?? Number(process.env.MAX_UPLOAD_BYTES ?? 8_000_000);
   if (buffer.byteLength > maxBytes) throw new Error(`Upload too large: ${buffer.byteLength}/${maxBytes}`);
-  await fs.promises.writeFile(filePath, buffer);
+
+  const detectedMime = detectMimeFromMagic(buffer);
+  const claimedMime = parsed.mimeType;
+  const effectiveMime = claimedMime || detectedMime;
+
+  if (!allowedMimeTypes.includes(effectiveMime) || !allowedMimeTypes.includes(detectedMime)) {
+    throw new Error(`Upload MIME type not allowed: ${effectiveMime}/${detectedMime}`);
+  }
+
+  const targetDir = path.join(uploadRoot, folder);
+  await fs.promises.mkdir(targetDir, { recursive: true });
+  const filename = `${Date.now()}-${safeName}`;
+  const filePath = path.join(targetDir, filename);
+  await fs.promises.writeFile(filePath, buffer, { mode: 0o600 });
+
   const publicBase = input.publicBaseUrl || process.env.PUBLIC_UPLOAD_BASE_URL || "/uploads";
-  return { provider: "local" as const, filePath, url: `${publicBase.replace(/\/$/, "")}/${folder}/${filename}`, size: buffer.byteLength };
+  return { provider: "local" as const, filePath, url: `${publicBase.replace(/\/$/, "")}/${folder}/${filename}`, size: buffer.byteLength, mimeType: detectedMime };
 }
 
 export function buildObjectKey(input: { organizationId: string; folder: string; filename: string }) {
