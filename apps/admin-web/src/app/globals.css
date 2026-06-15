@@ -183,3 +183,60 @@ textarea.input { min-height: 92px; resize: vertical; }
 .alert.bad { border-color: rgba(251,113,133,.45); background: rgba(190,18,60,.16); color: #fecdd3; }
 .empty { text-align: center; color: var(--muted); padding: 24px !important; }
 select, input, textarea { font: inherit; }
+
+/* Production login polish */
+.login-page {
+  padding: 18px;
+  align-items: center;
+}
+.login-card {
+  max-width: 460px;
+  grid-template-columns: 1fr;
+}
+.login-poster {
+  display: none;
+}
+.login-form {
+  padding: 30px;
+  border-radius: 28px;
+  background: rgba(15, 23, 42, .88);
+  box-shadow: 0 24px 80px rgba(0,0,0,.42);
+}
+.login-form .small {
+  display: none;
+}
+.login-form .kicker {
+  margin-bottom: 6px;
+  letter-spacing: .16em;
+}
+.login-form h2 {
+  font-size: 28px;
+  margin-bottom: 14px;
+}
+.login-form label {
+  font-size: 13px;
+  color: #dbeafe;
+}
+.login-form .input {
+  min-height: 50px;
+  border-radius: 16px;
+  background: rgba(2, 6, 23, .82);
+}
+.login-form .btn {
+  min-height: 52px;
+  margin-top: 4px;
+  border-radius: 16px;
+}
+.login-form .notice.error {
+  padding: 12px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.45;
+  white-space: normal;
+  word-break: break-word;
+}
+@media (max-width: 640px) {
+  .login-page { place-items: start center; padding-top: 70px; }
+  .login-card { max-width: 100%; }
+  .login-form { padding: 22px; border-radius: 22px; }
+}
