@@ -14,7 +14,11 @@ function loadEnvFile(filePath) {
   }
 }
 
-loadEnvFile(path.resolve(process.cwd(), ".env"));
+const localEnvPath = path.resolve(process.cwd(), ".env");
+loadEnvFile(localEnvPath);
+if (!fs.existsSync(localEnvPath)) {
+  loadEnvFile(path.resolve(process.cwd(), ".env.production.template"));
+}
 
 const checks = [
   { group: "Payment", name: "PromptPay manual", keys: ["PROMPTPAY_ID"], required: false, docs: "docs/external/payment-gateway-production-th.md" },

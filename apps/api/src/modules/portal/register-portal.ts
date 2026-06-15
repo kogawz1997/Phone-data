@@ -86,13 +86,21 @@ export async function registerPortalRoutes(app: FastifyInstance) {
 app.post("/portal/auth/login", async (request, reply) => {
   if (!rateLimit(request, reply, "portal-login", 20, 60_000)) return;
   const body = cleanEmptyStrings(request.body) as { storeSlug?: string; phone?: string; password?: string; inviteToken?: string };
-  if (!body.storeSlug || !body.phone || !body.password) return fail(reply, 400, "BAD_REQUEST", "storeSlug, phone and password are required");
+  if (!body.storeSlug || !body.phone || !body.password) return fail(reply, 400, "BAD_REQUEST", "storeSlug, phone/email and password are required");
   const org = await prisma.organization.findFirst({ where: { OR: [{ slug: body.storeSlug }, { storeCode: body.storeSlug }] } });
   if (!org) return fail(reply, 404, "STORE_NOT_FOUND", "Store not found");
-  const portalUser = await prisma.customerPortalUser.findFirst({ where: { organizationId: org.id, phone: body.phone, status: "ACTIVE" }, include: { customer: true } });
-  if (!portalUser) return fail(reply, 401, "INVALID_LOGIN", "Phone or PIN is incorrect");
+  const loginId = body.phone.trim();
+  const portalUser = await prisma.customerPortalUser.findFirst({
+    where: {
+      organizationId: org.id,
+      status: "ACTIVE",
+      OR: [{ phone: loginId }, { email: loginId.toLowerCase() }],
+    },
+    include: { customer: true },
+  });
+  if (!portalUser) return fail(reply, 401, "INVALID_LOGIN", "Phone/email or password is incorrect");
   const valid = await bcrypt.compare(body.password, portalUser.passwordHash);
-  if (!valid) return fail(reply, 401, "INVALID_LOGIN", "Phone or PIN is incorrect");
+  if (!valid) return fail(reply, 401, "INVALID_LOGIN", "Phone/email or password is incorrect");
   await prisma.customerPortalUser.update({ where: { id: portalUser.id }, data: { lastLoginAt: new Date() } });
   if (body.inviteToken) await prisma.customerPortalInvite.updateMany({ where: { token: body.inviteToken, organizationId: org.id, portalUserId: portalUser.id, revokedAt: null }, data: { acceptedAt: new Date() } });
   const sessionUser = { id: portalUser.id, organizationId: org.id, email: portalUser.email ?? `${portalUser.phone}@customer.local`, role: "CUSTOMER", name: portalUser.customer.fullName };
