@@ -10,6 +10,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
+if (!process.env.PAYMENT_WEBHOOK_SECRET && process.env.PAYMENT_GATEWAY_WEBHOOK_SECRET) {
+  process.env.PAYMENT_WEBHOOK_SECRET = process.env.PAYMENT_GATEWAY_WEBHOOK_SECRET;
+}
+
 const SESSION_COOKIE_NAME = process.env.AUTH_COOKIE_NAME || "koga_session";
 
 function readCookieValue(cookieHeader: string | undefined, name: string) {
