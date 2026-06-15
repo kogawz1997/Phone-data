@@ -7,6 +7,8 @@ import { baht } from "@repo/shared";
 type Installment = { id: string; installmentNo: number; dueDate: string; amount: string; paidAmount: string; status: string };
 type Contract = { id: string; contractNo: string; status: string; legalTitleStatus?: string; totalAmount: string; customer: { fullName: string; phone: string }; device: { brand: string; model: string; imei?: string; controlStatus: string }; installments: Installment[] };
 type PaymentRequest = { id: string; amount: string; status: string; qrImageDataUrl?: string; qrPayload?: string; paymentUrl?: string; submittedSlipUrl?: string; submittedNote?: string; contract: Contract; installment: Installment; expiresAt?: string };
+type Payment = { id: string; amount: string; status: string; method: string; paidAt?: string; slipUrl?: string; createdAt: string; contract: Contract; installment?: Installment };
+type PortalSettings = { slug?: string; brandColor?: string; welcomeText?: string; contactLine?: string; supportPhone?: string; releasePolicy?: string };
 
 function getPortalToken() { if (typeof window === "undefined") return ""; return localStorage.getItem("koga_customer_token") ?? ""; }
 function setPortalToken(token: string) { if (typeof window !== "undefined") localStorage.setItem("koga_customer_token", token); }
@@ -43,6 +45,8 @@ export default function CustomerPortal() {
   const [storeName, setStoreName] = useState("");
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [requests, setRequests] = useState<PaymentRequest[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [portalSettings, setPortalSettings] = useState<PortalSettings>({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [slipUploading, setSlipUploading] = useState("");
@@ -57,16 +61,20 @@ export default function CustomerPortal() {
   }, []);
 
   async function loadPortal() {
-    const [me, cs, prs] = await Promise.all([
-      portalApi<{ customer: { fullName: string; phone: string }; store: { name: string; slug?: string } }>("/portal/me"),
+    const [me, cs, prs, ps] = await Promise.all([
+      portalApi<{ customer: { fullName: string; phone: string }; store: { name: string; slug?: string; phone?: string }; portalSettings?: PortalSettings }>("/portal/me"),
       portalApi<Contract[]>("/portal/contracts"),
       portalApi<PaymentRequest[]>("/portal/payment-requests"),
+      portalApi<Payment[]>("/portal/payments"),
     ]);
     setCustomerName(me.customer.fullName);
     setPhone(me.customer.phone);
     setStoreName(me.store.name);
+    setStoreSlug(me.store.slug || "");
+    setPortalSettings(me.portalSettings || {});
     setContracts(cs);
     setRequests(prs);
+    setPayments(ps);
   }
 
   async function login(e: React.FormEvent) {
@@ -82,11 +90,13 @@ export default function CustomerPortal() {
       }).then(async (r) => {
         const j = await r.json();
         if (!j.ok) throw new Error(j.error?.message ?? "Login failed");
-        return j.data as { token: string; customer: { fullName: string }; store: { name: string } };
+        return j.data as { token: string; customer: { fullName: string }; store: { name: string; slug?: string }; portalSettings?: PortalSettings };
       });
       setPortalToken(result.token);
       setCustomerName(result.customer.fullName);
       setStoreName(result.store.name);
+      setStoreSlug(result.store.slug || storeSlug);
+      setPortalSettings(result.portalSettings || {});
       await loadPortal();
     } catch (e) {
       setError(e instanceof Error ? e.message : "เข้าสู่ระบบไม่สำเร็จ");
@@ -117,9 +127,13 @@ export default function CustomerPortal() {
   }, [contracts]);
   const nextDue = useMemo(() => contracts.flatMap((c) => c.installments.map((i) => ({ ...i, contractNo: c.contractNo }))).filter((i) => remainingOf(i) > 0).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0], [contracts]);
   const loggedIn = Boolean(customerName && getPortalToken());
+  const brandColor = portalSettings.brandColor || "#38bdf8";
+  const welcomeText = portalSettings.welcomeText || "เข้าสู่ระบบด้วยรหัสร้าน เบอร์โทร และ PIN เพื่อดูยอดค้าง งวดถัดไป QR ชำระเงิน และสถานะการตรวจสลิป";
+  const supportPhone = portalSettings.supportPhone || "";
+  const contactLine = portalSettings.contactLine || "";
 
   return (
-    <main className="portal customer-shell">
+    <main className="portal customer-shell" style={{ ["--brand" as string]: brandColor }}>
       <header className="portal-topbar">
         <div className="portal-brand"><div className="portal-logo">K</div><div><span>Customer Portal</span><strong>{storeName || "KOGA Portal"}</strong></div></div>
         {loggedIn && <button className="btn secondary" onClick={() => { clearPortalToken(); location.reload(); }}>ออกจากระบบ</button>}
@@ -129,10 +143,11 @@ export default function CustomerPortal() {
         <div className="hero-copy">
           <span className="badge">ชำระงวด · ดูสัญญา · สถานะเครื่อง</span>
           <h1>{loggedIn ? `สวัสดี ${customerName}` : "จัดการงวดและสัญญาได้ง่ายในหน้าเดียว"}</h1>
-          <p>{loggedIn ? `ร้าน ${storeName || "-"} · เบอร์/บัญชี ${phone || "-"}` : "เข้าสู่ระบบด้วยรหัสร้าน เบอร์โทร และ PIN เพื่อดูยอดค้าง งวดถัดไป QR ชำระเงิน และสถานะการตรวจสลิป"}</p>
+          <p>{loggedIn ? `${welcomeText} · ร้าน ${storeName || "-"}` : welcomeText}</p>
           <div className="hero-metrics" aria-label="ทางลัดสำคัญ">
             <a href="#pay">ชำระเงิน</a>
             <a href="#contracts">สัญญา</a>
+            <a href="#history">ประวัติ</a>
             <a href="#help">ช่วยเหลือ</a>
           </div>
         </div>
@@ -164,15 +179,17 @@ export default function CustomerPortal() {
       {loggedIn && <section className="grid portal-content">
         <div className="grid cols-3 portal-summary">
           <div className="card stat-card accent"><span className="eyebrow">จ่ายแล้วโดยรวม</span><h2>{paidPercent}%</h2><div className="progress"><span style={{ width: `${paidPercent}%` }} /></div><p className="small">รวมทุกสัญญาที่อยู่ในบัญชีนี้</p></div>
-          <div className="card stat-card"><span className="eyebrow">งวดถัดไป</span>{nextDue ? <><h2>{baht(remainingOf(nextDue))}</h2><p>สัญญา {nextDue.contractNo}</p><p className="small">ครบกำหนด {dateTH(nextDue.dueDate)}</p></> : <><span className="badge good">ไม่มีงวดค้าง</span><p>เมื่อจ่ายครบ ร้านจะดำเนินการปลด MDM / โอนกรรมสิทธิ์ตามสัญญา</p></>}</div>
+          <div className="card stat-card"><span className="eyebrow">งวดถัดไป</span>{nextDue ? <><h2>{baht(remainingOf(nextDue))}</h2><p>สัญญา {nextDue.contractNo}</p><p className="small">ครบกำหนด {dateTH(nextDue.dueDate)}</p></> : <><span className="badge good">ไม่มีงวดค้าง</span><p>{portalSettings.releasePolicy || "เมื่อจ่ายครบ ร้านจะดำเนินการปลด MDM / โอนกรรมสิทธิ์ตามสัญญา"}</p></>}</div>
           <div className="card stat-card"><span className="eyebrow">รอตรวจ</span><h2>{requests.length}</h2><p className="small">รายการ QR/สลิปที่เปิดให้ชำระหรือรอตรวจ</p></div>
         </div>
 
         <div id="pay" className="card section-card"><div className="section-heading"><div><span className="eyebrow">ชำระเงิน</span><h2>QR และแจ้งชำระ</h2></div><p className="small">สแกนจ่าย แล้วอัปโหลดรูปสลิปให้ร้านตรวจ</p></div><div className="grid cols-3">{requests.length === 0 && <div className="notice">ยังไม่มีคำขอชำระจากร้าน</div>}{requests.map((r) => <div className="card payment-request-card" key={r.id}><div className="payment-card-head"><span className={`badge ${statusTone(r.status)}`}>{r.status}</span><span className="small">งวด {r.installment.installmentNo}</span></div><h3>{r.contract.contractNo}</h3><p className="small">ครบกำหนด {dateTH(r.installment.dueDate)}</p><p className="amount">{baht(r.amount)}</p>{r.qrImageDataUrl ? <img src={r.qrImageDataUrl} alt="PromptPay QR" className="qr-image" /> : <div className="notice">ร้านยังไม่ได้ตั้ง PromptPay</div>}<input id={`slip-${r.id}`} hidden type="file" accept="image/*,.pdf" onChange={(event) => { const file = event.currentTarget.files?.[0]; if (file) void submitSlipFile(r, file); event.currentTarget.value = ""; }} /><button className="btn" disabled={slipUploading === r.id} onClick={() => document.getElementById(`slip-${r.id}`)?.click()}>{slipUploading === r.id ? "กำลังอัปโหลด..." : "อัปโหลดสลิป / แจ้งชำระ"}</button>{r.submittedSlipUrl && <p className="small">ส่งสลิปแล้ว: {r.submittedSlipUrl}</p>}</div>)}</div></div>
 
-        <div id="contracts" className="card section-card"><div className="section-heading"><div><span className="eyebrow">สัญญา</span><h2>ตารางงวดทั้งหมด</h2></div><p className="small">ดูยอด จ่ายแล้ว คงเหลือ และสถานะทุกงวด</p></div><div className="table-wrap"><table className="table"><thead><tr><th>สัญญา</th><th>เครื่อง</th><th>งวด</th><th>ครบกำหนด</th><th>ยอด</th><th>จ่ายแล้ว</th><th>คงเหลือ</th><th>Status</th></tr></thead><tbody>{contracts.flatMap((c) => c.installments.map((i) => <tr key={i.id}><td><b>{c.contractNo}</b><div className="small">{c.status} / {c.legalTitleStatus}</div></td><td>{c.device.brand} {c.device.model}<div className="small">{c.device.imei ?? "-"}</div></td><td>#{i.installmentNo}</td><td>{dateTH(i.dueDate)}</td><td>{baht(i.amount)}</td><td>{baht(i.paidAmount)}</td><td>{baht(remainingOf(i))}</td><td><span className={`badge ${statusTone(i.status)}`}>{i.status}</span></td></tr>))}</tbody></table></div></div>
+        <div id="contracts" className="card section-card"><div className="section-heading"><div><span className="eyebrow">สัญญา</span><h2>ตารางงวดทั้งหมด</h2></div><p className="small">ดูยอด จ่ายแล้ว คงเหลือ และสถานะทุกงวด</p></div><div className="table-wrap"><table className="table"><thead><tr><th>สัญญา</th><th>เครื่อง</th><th>งวด</th><th>ครบกำหนด</th><th>ยอด</th><th>จ่ายแล้ว</th><th>คงเหลือ</th><th>Status</th><th>เอกสาร</th></tr></thead><tbody>{contracts.flatMap((c) => c.installments.map((i) => <tr key={i.id}><td><b>{c.contractNo}</b><div className="small">{c.status} / {c.legalTitleStatus}</div></td><td>{c.device.brand} {c.device.model}<div className="small">{c.device.imei ?? "-"}</div></td><td>#{i.installmentNo}</td><td>{dateTH(i.dueDate)}</td><td>{baht(i.amount)}</td><td>{baht(i.paidAmount)}</td><td>{baht(remainingOf(i))}</td><td><span className={`badge ${statusTone(i.status)}`}>{i.status}</span></td><td><button className="btn tiny secondary" onClick={() => window.open(`${API_BASE_URL}/portal/contract-documents/${c.id}`, "_blank")}>ดูสัญญา</button></td></tr>))}</tbody></table></div></div>
 
-        <div id="help" className="card section-card help-card"><span className="eyebrow">ช่วยเหลือ</span><h2>ต้องการให้ร้านช่วย?</h2><p>ถ้ายอดไม่ตรง สลิปไม่ผ่าน หรือเครื่องติดสถานะผิด ให้ติดต่อร้านพร้อมเลขสัญญาและสลิปชำระเงินล่าสุด</p></div>
+        <div id="history" className="card section-card"><div className="section-heading"><div><span className="eyebrow">ประวัติชำระเงิน</span><h2>รายการล่าสุด</h2></div><p className="small">ดูสถานะสลิปและยอดที่ร้านตรวจแล้ว</p></div><div className="grid cols-3">{payments.length === 0 && <div className="notice">ยังไม่มีประวัติชำระเงิน</div>}{payments.map((p) => <div className="card" key={p.id}><span className={`badge ${statusTone(p.status)}`}>{p.status}</span><h3>{baht(p.amount)}</h3><p className="small">{p.contract.contractNo} · {p.method}</p><p className="small">วันที่ {dateTH(p.paidAt || p.createdAt)}</p>{p.slipUrl && <a className="btn tiny secondary" href={`${API_BASE_URL}${p.slipUrl}`} target="_blank">ดูสลิป</a>}</div>)}</div></div>
+
+        <div id="help" className="card section-card help-card"><span className="eyebrow">ช่วยเหลือ</span><h2>ต้องการให้ร้านช่วย?</h2><p>{portalSettings.releasePolicy || "ถ้ายอดไม่ตรง สลิปไม่ผ่าน หรือเครื่องติดสถานะผิด ให้ติดต่อร้านพร้อมเลขสัญญาและสลิปชำระเงินล่าสุด"}</p><div className="hero-actions">{supportPhone && <a className="btn secondary" href={`tel:${supportPhone}`}>โทรหาร้าน</a>}{contactLine && <a className="btn secondary" href={contactLine} target="_blank">LINE ร้าน</a>}</div></div>
       </section>}
     </main>
   );
