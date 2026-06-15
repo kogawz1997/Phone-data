@@ -15,6 +15,7 @@ if (!process.env.PAYMENT_WEBHOOK_SECRET && process.env.PAYMENT_GATEWAY_WEBHOOK_S
 }
 
 const SESSION_COOKIE_NAME = process.env.AUTH_COOKIE_NAME || "koga_session";
+const listenPort = Number(process.env.PORT ?? process.env.API_PORT ?? PORT);
 
 function readCookieValue(cookieHeader: string | undefined, name: string) {
   if (!cookieHeader) return "";
@@ -35,6 +36,9 @@ function assertProductionHardening() {
   }
   if (ALLOWED_ORIGINS.length === 0) {
     problems.push("ALLOWED_ORIGINS or ADMIN_WEB_URL/CUSTOMER_WEB_URL must be set in production");
+  }
+  if (!Number.isFinite(listenPort) || listenPort <= 0) {
+    problems.push("PORT or API_PORT must be a valid TCP port");
   }
 
   if (problems.length) {
@@ -72,7 +76,7 @@ app.setErrorHandler((error, _request, reply) => {
   return fail(reply, 500, "INTERNAL_ERROR", message);
 });
 
-app.listen({ port: PORT, host: "0.0.0.0" }).catch((error) => {
+app.listen({ port: listenPort, host: "0.0.0.0" }).catch((error) => {
   app.log.error(error);
   process.exit(1);
 });
