@@ -29,19 +29,31 @@ function inferFromText(value = "") {
   return "";
 }
 
+function describeCandidate(name, value) {
+  if (!value) return `${name}=<empty>`;
+  const text = String(value);
+  if (text.length <= 80) return `${name}=${text}`;
+  return `${name}=${text.slice(0, 32)}...${text.slice(-16)}`;
+}
+
 export function resolveRailwayTarget() {
-  const candidates = [
-    process.env.KOGA_RAILWAY_TARGET,
-    process.env.KOGA_APP,
-    process.env.RAILWAY_SERVICE_NAME,
-    process.env.RAILWAY_SERVICE_ID,
-    process.env.RAILWAY_PUBLIC_DOMAIN,
-    process.env.RAILWAY_STATIC_URL,
+  const namedCandidates = [
+    ["KOGA_RAILWAY_TARGET", process.env.KOGA_RAILWAY_TARGET],
+    ["KOGA_APP", process.env.KOGA_APP],
+    ["RAILWAY_SERVICE_NAME", process.env.RAILWAY_SERVICE_NAME],
+    ["RAILWAY_SERVICE_ID", process.env.RAILWAY_SERVICE_ID],
+    ["RAILWAY_PUBLIC_DOMAIN", process.env.RAILWAY_PUBLIC_DOMAIN],
+    ["RAILWAY_STATIC_URL", process.env.RAILWAY_STATIC_URL],
   ];
 
-  for (const candidate of candidates) {
+  console.log(`[railway-target] candidates: ${namedCandidates.map(([name, value]) => describeCandidate(name, value)).join(" | ")}`);
+
+  for (const [name, candidate] of namedCandidates) {
     const target = inferFromText(candidate);
-    if (target) return target;
+    if (target) {
+      console.log(`[railway-target] selected ${target} from ${name}`);
+      return target;
+    }
   }
 
   const fallback = process.env.KOGA_RAILWAY_TARGET_FALLBACK || "admin-web";
