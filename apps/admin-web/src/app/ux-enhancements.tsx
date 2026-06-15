@@ -18,7 +18,6 @@ const navItems = [
   { label: "ภาพรวม", tab: "ภาพรวม" },
   { label: "ลูกค้า", tab: "ลูกค้า" },
   { label: "สัญญา", tab: "สัญญา" },
-  { label: "ชำระ", tab: "ชำระเงิน" },
 ] as const;
 
 const statusRules = [
@@ -281,8 +280,6 @@ export default function UXEnhancements() {
         {toasts.map((toast) => <div key={toast.id} className={`ux-toast ${toast.tone}`}>{toast.message}</div>)}
       </div>
 
-      <button className="ux-fab" type="button" onClick={() => { setSheet(sheet === "quick" ? "none" : "quick"); setCommandOpen(false); }} aria-label="Quick actions">+</button>
-
       <nav className="ux-bottom-nav" aria-label="เมนูหลักบนมือถือ">
         {navItems.map((item) => <button key={item.label} type="button" onClick={() => goTab(item.tab)}>{item.label}</button>)}
         <button type="button" onClick={() => setSheet(sheet === "more" ? "none" : "more")}>เพิ่มเติม</button>
@@ -303,6 +300,8 @@ export default function UXEnhancements() {
         <aside className="ux-sheet">
           <div className="ux-sheet-handle" />
           <h3>เมนูเพิ่มเติม</h3>
+          <button type="button" onClick={() => setCommandOpen(true)}>ค้นหา / คำสั่ง</button>
+          <button type="button" onClick={() => goTab("ชำระเงิน")}>ชำระเงิน</button>
           <button type="button" onClick={() => goPath("/platform")}>Owner / Platform</button>
           <button type="button" onClick={() => goPath("/customer-access")}>Users ลูกค้า</button>
           <button type="button" onClick={() => goPath("/integrations")}>Integrations</button>
