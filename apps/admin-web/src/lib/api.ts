@@ -1,25 +1,28 @@
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
 
+const SESSION_MARKER_KEY = "koga_admin_token";
+
 export function getToken() {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("koga_admin_token") ?? "";
+  // Token is now stored in an HttpOnly cookie by the API. Keep this function for old call sites,
+  // but never expose the real bearer token to browser JavaScript.
+  return "";
 }
 
-export function setToken(token: string) {
-  if (typeof window !== "undefined") localStorage.setItem("koga_admin_token", token);
+export function setToken(_token: string) {
+  if (typeof window !== "undefined") localStorage.setItem(SESSION_MARKER_KEY, "cookie-session");
 }
 
 export function clearToken() {
-  if (typeof window !== "undefined") localStorage.removeItem("koga_admin_token");
+  if (typeof window !== "undefined") localStorage.removeItem(SESSION_MARKER_KEY);
+  void fetch(`${API_BASE_URL}/auth/logout`, { method: "POST", credentials: "include" }).catch(() => null);
 }
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getToken();
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers ?? {}),
     },
   });
@@ -29,10 +32,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
 }
 
 export async function downloadCsv(path: string, filename: string) {
-  const token = getToken();
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  const res = await fetch(`${API_BASE_URL}${path}`, { credentials: "include" });
   if (!res.ok) throw new Error(`Download failed: ${res.status}`);
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
@@ -44,10 +44,7 @@ export async function downloadCsv(path: string, filename: string) {
 }
 
 export async function openHtml(path: string) {
-  const token = getToken();
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  const res = await fetch(`${API_BASE_URL}${path}`, { credentials: "include" });
   if (!res.ok) throw new Error(`Open failed: ${res.status}`);
   const html = await res.text();
   const blob = new Blob([html], { type: "text/html" });
