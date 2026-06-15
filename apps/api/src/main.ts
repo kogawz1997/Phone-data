@@ -16,12 +16,21 @@ if (!process.env.PAYMENT_WEBHOOK_SECRET && process.env.PAYMENT_GATEWAY_WEBHOOK_S
 
 const SESSION_COOKIE_NAME = process.env.AUTH_COOKIE_NAME || "koga_session";
 const listenPort = Number(process.env.PORT ?? process.env.API_PORT ?? PORT);
+const RAILWAY_DEPLOYMENT_ORIGINS = [
+  "https://kogaadmin-web-production.up.railway.app",
+  "https://kogacustomer-web-production.up.railway.app",
+];
 
 function normalizeOrigin(origin: string) {
-  return origin.trim().replace(/\/+$/, "").toLowerCase();
+  const cleaned = origin.trim().replace(/^['\"]+|['\"]+$/g, "").replace(/\/+$/, "");
+  try {
+    return new URL(cleaned).origin.toLowerCase();
+  } catch {
+    return cleaned.toLowerCase();
+  }
 }
 
-const normalizedAllowedOrigins = new Set(ALLOWED_ORIGINS.map(normalizeOrigin));
+const normalizedAllowedOrigins = new Set([...ALLOWED_ORIGINS, ...RAILWAY_DEPLOYMENT_ORIGINS].map(normalizeOrigin));
 
 function readCookieValue(cookieHeader: string | undefined, name: string) {
   if (!cookieHeader) return "";
@@ -40,7 +49,7 @@ function assertProductionHardening() {
   if (!JWT_SECRET || JWT_SECRET === "change-this-in-production" || JWT_SECRET.length < 32) {
     problems.push("JWT_SECRET must be set to a strong value with at least 32 characters");
   }
-  if (ALLOWED_ORIGINS.length === 0) {
+  if (normalizedAllowedOrigins.size === 0) {
     problems.push("ALLOWED_ORIGINS or ADMIN_WEB_URL/CUSTOMER_WEB_URL must be set in production");
   }
   if (!Number.isFinite(listenPort) || listenPort <= 0) {
@@ -58,13 +67,15 @@ const app = Fastify({ logger: true });
 
 await app.register(cors, {
   origin(origin, cb) {
-    if (!IS_PRODUCTION || !origin || normalizedAllowedOrigins.size === 0 || normalizedAllowedOrigins.has(normalizeOrigin(origin))) {
+    if (!IS_PRODUCTION || !origin || normalizedAllowedOrigins.has(normalizeOrigin(origin))) {
       return cb(null, true);
     }
-    app.log.warn({ origin, allowedOrigins: ALLOWED_ORIGINS }, "CORS origin blocked");
+    app.log.warn({ origin, allowedOrigins: Array.from(normalizedAllowedOrigins) }, "CORS origin blocked");
     return cb(new Error(`CORS origin blocked: ${origin}`), false);
   },
   credentials: true,
+  methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-koga-webhook-secret"],
 });
 
 app.addHook("preHandler", async (request, reply) => {
