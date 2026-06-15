@@ -1,6 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import type { Prisma } from "@repo/db";
-import type { AuthedRequest, CustomerPortalRequest } from "../../core/app-context";
+import type { AuthedRequest } from "../../core/app-context";
 import * as ctx from "../../core/app-context";
 
 function formatLoginValidationMessage(issues: Array<{ path: Array<string | number>; message?: string }>) {
@@ -11,117 +10,87 @@ function formatLoginValidationMessage(issues: Array<{ path: Array<string | numbe
   return "ข้อมูลเข้าสู่ระบบไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง";
 }
 
+function buildSessionCookie(token: string, isProduction: boolean) {
+  const name = process.env.AUTH_COOKIE_NAME || "koga_session";
+  const maxAge = 7 * 24 * 60 * 60;
+  const parts = [
+    `${name}=${encodeURIComponent(token)}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    `Max-Age=${maxAge}`,
+  ];
+  if (isProduction) parts.push("Secure");
+  return parts.join("; ");
+}
+
+function buildClearSessionCookie(isProduction: boolean) {
+  const name = process.env.AUTH_COOKIE_NAME || "koga_session";
+  const parts = [
+    `${name}=`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    "Max-Age=0",
+  ];
+  if (isProduction) parts.push("Secure");
+  return parts.join("; ");
+}
+
 export async function registerAuthRoutes(app: FastifyInstance) {
   const {
-    crypto,
-    fs,
-    path,
-    bcrypt,
-    QRCode,
     prisma,
+    bcrypt,
     signSession,
-    verifySession,
-    createContractSchema,
-    createCustomerSchema,
-    createDeviceSchema,
-    createPaymentSchema,
     loginSchema,
-    calculateInstallments,
-    generateContractNo,
-    getOverdueLevel,
-    createPromptPayEmvPayload,
-    normalizePaymentAmount,
-    assertSafeDeviceAction,
-    buildUnsignedMdmMobileConfig,
-    createAndroidProvider,
-    createAppleProvider,
-    createDeviceControlAdapter,
-    getDualProviderStatus,
-    sendNotification,
-    getPermissionsForRole,
-    API_ROUTE_GROUPS,
-    countRoutes,
-    deviceAdapter,
     JWT_SECRET,
-    PORT,
     IS_PRODUCTION,
-    ALLOWED_ORIGINS,
     rateLimit,
-    constantTimeEquals,
-    requireSharedSecret,
-    envStatus,
-    safeUploadName,
-    saveBase64Upload,
-    maybeSignMobileConfig,
-    buildAppleCommandPlist,
-    providerTypeForPlatform,
-    providerNameFromEnv,
-    buildDeviceContext,
-    ok,
     cleanEmptyStrings,
     fail,
-    getUserFromRequest,
+    ok,
     requireAuth,
-    requireCustomerAuth,
     audit,
-    isPlatformOwner,
-    ensurePlatformOwner,
-    makeSlug,
-    planMonthlyFee,
-    planDeviceLimit,
-    addDays,
-    customerPortalBaseUrl,
-    makeCustomerPortalShareUrl,
-    generateCustomerPin,
-    buildPaymentQr,
-    createDefaultOnboarding,
-    integrationCatalog,
-    ensureDefaultIntegrations,
-    ensureDefaultOperationalTemplates,
-    riskGradeFromScore,
-    calculateCustomerRisk,
-    buildStoreHealth,
-    createInvoiceNo,
-    csvEscape,
-    toCsv,
-    htmlEscape,
-    formatThaiDate,
-    formatBaht,
-    renderContractHtml,
-    recalculateContractStatus
-  } = ctx as any;
+    getPermissionsForRole,
+  } = ctx;
 
-app.post("/auth/login", async (request, reply) => {
-  if (!rateLimit(request, reply, "login", 10, 60_000)) return;
-  const parsed = loginSchema.safeParse(cleanEmptyStrings(request.body));
-  if (!parsed.success) return fail(reply, 400, "BAD_REQUEST", formatLoginValidationMessage(parsed.error.issues));
+  app.post("/auth/login", async (request, reply) => {
+    if (!rateLimit(request, reply, "login", 10, 60_000)) return;
+    const parsed = loginSchema.safeParse(cleanEmptyStrings(request.body));
+    if (!parsed.success) return fail(reply, 400, "BAD_REQUEST", formatLoginValidationMessage(parsed.error.issues));
 
-  const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-  if (!user) return fail(reply, 401, "INVALID_LOGIN", "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+    const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+    if (!user) return fail(reply, 401, "INVALID_LOGIN", "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
 
-  const valid = await bcrypt.compare(parsed.data.password, user.passwordHash);
-  if (!valid) return fail(reply, 401, "INVALID_LOGIN", "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+    const valid = await bcrypt.compare(parsed.data.password, user.passwordHash);
+    if (!valid) return fail(reply, 401, "INVALID_LOGIN", "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
 
-  const sessionUser = {
-    id: user.id,
-    organizationId: user.organizationId,
-    email: user.email,
-    role: user.role,
-    name: user.name,
-  };
+    const sessionUser = {
+      id: user.id,
+      organizationId: user.organizationId,
+      email: user.email,
+      role: user.role,
+      name: user.name,
+    };
 
-  const token = signSession(sessionUser, JWT_SECRET);
-  await audit({ organizationId: user.organizationId, actorId: user.id, action: "LOGIN", targetType: "User", targetId: user.id });
-  return ok({ token, user: sessionUser });
-});
+    const token = signSession(sessionUser, JWT_SECRET);
+    reply.header("Set-Cookie", buildSessionCookie(token, IS_PRODUCTION));
 
+    await audit({ organizationId: user.organizationId, actorId: user.id, action: "LOGIN", targetType: "User", targetId: user.id });
 
-app.get("/auth/me", { preHandler: requireAuth }, async (request) => ok((request as AuthedRequest).user));
+    // token is returned for old clients during migration, but web apps now rely on the HttpOnly cookie.
+    return ok({ token, user: sessionUser });
+  });
 
+  app.post("/auth/logout", async (_request, reply) => {
+    reply.header("Set-Cookie", buildClearSessionCookie(IS_PRODUCTION));
+    return ok({ loggedOut: true });
+  });
 
-app.get("/auth/permissions", { preHandler: requireAuth }, async (request) => {
-  const user = (request as AuthedRequest).user;
-  return ok({ role: user.role, permissions: getPermissionsForRole(user.role) });
-});
+  app.get("/auth/me", { preHandler: requireAuth }, async (request) => ok((request as AuthedRequest).user));
 
+  app.get("/auth/permissions", { preHandler: requireAuth }, async (request) => {
+    const user = (request as AuthedRequest).user;
+    return ok({ role: user.role, permissions: getPermissionsForRole(user.role) });
+  });
 }
