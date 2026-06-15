@@ -4,6 +4,7 @@ import "./mobile-premium.css";
 import "./motion-professional.css";
 import "./ux-enhancements.css";
 import "./login-clean.css";
+import "./admin-compact-header.css";
 import type { ReactNode } from "react";
 import UXEnhancements from "./ux-enhancements";
 
