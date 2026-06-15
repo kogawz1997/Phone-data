@@ -56,15 +56,15 @@ export function resolveRailwayTarget() {
     }
   }
 
-  const fallback = process.env.KOGA_RAILWAY_TARGET_FALLBACK || "admin-web";
+  const fallback = process.env.KOGA_RAILWAY_TARGET_FALLBACK || "api";
   console.warn(`[railway-target] Cannot infer target from Railway env. Falling back to ${fallback}. Set KOGA_RAILWAY_TARGET explicitly to api, admin-web, or customer-web.`);
-  return inferFromText(fallback) || "admin-web";
+  return inferFromText(fallback) || "api";
 }
 
 export function commandForTarget(target, phase) {
   const commands = {
     api: {
-      build: "corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm --filter @repo/db db:generate:postgres && pnpm --filter @koga/api build",
+      build: "corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm db:generate:postgres && pnpm --filter @koga/api build",
       start: "corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm --filter @koga/api start",
     },
     "admin-web": {
