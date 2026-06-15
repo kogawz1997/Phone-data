@@ -25,6 +25,14 @@ async function portalApi<T>(path: string, options: RequestInit = {}): Promise<T>
 function remainingOf(i: Installment) { return Math.max(0, Number(i.amount) - Number(i.paidAmount)); }
 function dateTH(value?: string) { return value ? new Date(value).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" }) : "-"; }
 function statusTone(status?: string) { if (!status) return ""; if (["PAID", "PAID_OFF", "CONFIRMED", "ACTIVE", "RELEASED", "TRANSFERRED"].includes(status)) return "good"; if (["OPEN", "SUBMITTED", "DUE_SOON", "PENDING", "VERIFYING", "PARTIAL"].includes(status)) return "warn"; return "bad"; }
+function fileToBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error || new Error("อ่านไฟล์ไม่ได้"));
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function CustomerPortal() {
   const [storeSlug, setStoreSlug] = useState("");
@@ -37,6 +45,7 @@ export default function CustomerPortal() {
   const [requests, setRequests] = useState<PaymentRequest[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [slipUploading, setSlipUploading] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -84,12 +93,20 @@ export default function CustomerPortal() {
     } finally { setLoading(false); }
   }
 
-  async function submitSlip(req: PaymentRequest) {
-    const slipUrl = window.prompt("ใส่ลิงก์สลิปหรือรูปสลิปที่ร้านให้ส่ง", req.submittedSlipUrl ?? "");
-    if (!slipUrl) return;
-    const note = window.prompt("หมายเหตุเพิ่มเติม", "โอนแล้ว รอตรวจสอบ") ?? "";
-    await portalApi(`/portal/payment-requests/${req.id}/submit-slip`, { method: "POST", body: JSON.stringify({ slipUrl, note }) });
-    await loadPortal();
+  async function submitSlipFile(req: PaymentRequest, file: File) {
+    setError("");
+    setSlipUploading(req.id);
+    try {
+      if (file.size > 8_000_000) throw new Error("ไฟล์ใหญ่เกิน 8MB");
+      const contentBase64 = await fileToBase64(file);
+      const saved = await portalApi<{ url: string }>("/portal/uploads/base64", { method: "POST", body: JSON.stringify({ filename: file.name, contentBase64, folder: "portal-slips" }) });
+      await portalApi(`/portal/payment-requests/${req.id}/submit-slip`, { method: "POST", body: JSON.stringify({ slipUrl: saved.url, note: `อัปโหลดสลิป: ${file.name}` }) });
+      await loadPortal();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "อัปโหลดสลิปไม่สำเร็จ");
+    } finally {
+      setSlipUploading("");
+    }
   }
 
   const paidPercent = useMemo(() => {
@@ -151,7 +168,7 @@ export default function CustomerPortal() {
           <div className="card stat-card"><span className="eyebrow">รอตรวจ</span><h2>{requests.length}</h2><p className="small">รายการ QR/สลิปที่เปิดให้ชำระหรือรอตรวจ</p></div>
         </div>
 
-        <div id="pay" className="card section-card"><div className="section-heading"><div><span className="eyebrow">ชำระเงิน</span><h2>QR และแจ้งชำระ</h2></div><p className="small">สแกนจ่าย แล้วกดแนบสลิปให้ร้านตรวจ</p></div><div className="grid cols-3">{requests.length === 0 && <div className="notice">ยังไม่มีคำขอชำระจากร้าน</div>}{requests.map((r) => <div className="card payment-request-card" key={r.id}><div className="payment-card-head"><span className={`badge ${statusTone(r.status)}`}>{r.status}</span><span className="small">งวด {r.installment.installmentNo}</span></div><h3>{r.contract.contractNo}</h3><p className="small">ครบกำหนด {dateTH(r.installment.dueDate)}</p><p className="amount">{baht(r.amount)}</p>{r.qrImageDataUrl ? <img src={r.qrImageDataUrl} alt="PromptPay QR" className="qr-image" /> : <div className="notice">ร้านยังไม่ได้ตั้ง PromptPay</div>}<button className="btn" onClick={() => submitSlip(r)}>แนบสลิป / แจ้งชำระ</button>{r.submittedSlipUrl && <p className="small">ส่งสลิปแล้ว: {r.submittedSlipUrl}</p>}</div>)}</div></div>
+        <div id="pay" className="card section-card"><div className="section-heading"><div><span className="eyebrow">ชำระเงิน</span><h2>QR และแจ้งชำระ</h2></div><p className="small">สแกนจ่าย แล้วอัปโหลดรูปสลิปให้ร้านตรวจ</p></div><div className="grid cols-3">{requests.length === 0 && <div className="notice">ยังไม่มีคำขอชำระจากร้าน</div>}{requests.map((r) => <div className="card payment-request-card" key={r.id}><div className="payment-card-head"><span className={`badge ${statusTone(r.status)}`}>{r.status}</span><span className="small">งวด {r.installment.installmentNo}</span></div><h3>{r.contract.contractNo}</h3><p className="small">ครบกำหนด {dateTH(r.installment.dueDate)}</p><p className="amount">{baht(r.amount)}</p>{r.qrImageDataUrl ? <img src={r.qrImageDataUrl} alt="PromptPay QR" className="qr-image" /> : <div className="notice">ร้านยังไม่ได้ตั้ง PromptPay</div>}<input id={`slip-${r.id}`} hidden type="file" accept="image/*,.pdf" onChange={(event) => { const file = event.currentTarget.files?.[0]; if (file) void submitSlipFile(r, file); event.currentTarget.value = ""; }} /><button className="btn" disabled={slipUploading === r.id} onClick={() => document.getElementById(`slip-${r.id}`)?.click()}>{slipUploading === r.id ? "กำลังอัปโหลด..." : "อัปโหลดสลิป / แจ้งชำระ"}</button>{r.submittedSlipUrl && <p className="small">ส่งสลิปแล้ว: {r.submittedSlipUrl}</p>}</div>)}</div></div>
 
         <div id="contracts" className="card section-card"><div className="section-heading"><div><span className="eyebrow">สัญญา</span><h2>ตารางงวดทั้งหมด</h2></div><p className="small">ดูยอด จ่ายแล้ว คงเหลือ และสถานะทุกงวด</p></div><div className="table-wrap"><table className="table"><thead><tr><th>สัญญา</th><th>เครื่อง</th><th>งวด</th><th>ครบกำหนด</th><th>ยอด</th><th>จ่ายแล้ว</th><th>คงเหลือ</th><th>Status</th></tr></thead><tbody>{contracts.flatMap((c) => c.installments.map((i) => <tr key={i.id}><td><b>{c.contractNo}</b><div className="small">{c.status} / {c.legalTitleStatus}</div></td><td>{c.device.brand} {c.device.model}<div className="small">{c.device.imei ?? "-"}</div></td><td>#{i.installmentNo}</td><td>{dateTH(i.dueDate)}</td><td>{baht(i.amount)}</td><td>{baht(i.paidAmount)}</td><td>{baht(remainingOf(i))}</td><td><span className={`badge ${statusTone(i.status)}`}>{i.status}</span></td></tr>))}</tbody></table></div></div>
 
