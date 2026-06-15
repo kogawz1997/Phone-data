@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable && corepack prepare pnpm@9.15.4 --activate
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @repo/db db:generate
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build API
+        run: pnpm --filter @koga/api build
+
+      - name: Build Admin Web
+        run: pnpm --filter @koga/admin-web build
+
+      - name: Build Customer Web
+        run: pnpm --filter @koga/customer-web build
