@@ -3,6 +3,14 @@ import type { Prisma } from "@repo/db";
 import type { AuthedRequest, CustomerPortalRequest } from "../../core/app-context";
 import * as ctx from "../../core/app-context";
 
+function formatLoginValidationMessage(issues: Array<{ path: Array<string | number>; message?: string }>) {
+  const missing = new Set(issues.map((issue) => String(issue.path?.[0] ?? "")));
+  if (missing.has("email") && missing.has("password")) return "กรุณากรอกอีเมลและรหัสผ่าน";
+  if (missing.has("email")) return "กรุณากรอกอีเมล";
+  if (missing.has("password")) return "กรุณากรอกรหัสผ่าน";
+  return "ข้อมูลเข้าสู่ระบบไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง";
+}
+
 export async function registerAuthRoutes(app: FastifyInstance) {
   const {
     crypto,
@@ -86,13 +94,13 @@ export async function registerAuthRoutes(app: FastifyInstance) {
 app.post("/auth/login", async (request, reply) => {
   if (!rateLimit(request, reply, "login", 10, 60_000)) return;
   const parsed = loginSchema.safeParse(cleanEmptyStrings(request.body));
-  if (!parsed.success) return fail(reply, 400, "BAD_REQUEST", parsed.error.message);
+  if (!parsed.success) return fail(reply, 400, "BAD_REQUEST", formatLoginValidationMessage(parsed.error.issues));
 
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-  if (!user) return fail(reply, 401, "INVALID_LOGIN", "Email or password is incorrect");
+  if (!user) return fail(reply, 401, "INVALID_LOGIN", "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
 
   const valid = await bcrypt.compare(parsed.data.password, user.passwordHash);
-  if (!valid) return fail(reply, 401, "INVALID_LOGIN", "Email or password is incorrect");
+  if (!valid) return fail(reply, 401, "INVALID_LOGIN", "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
 
   const sessionUser = {
     id: user.id,
