@@ -94,22 +94,43 @@ export default function CustomerPortal() {
 
   return (
     <main className="portal">
-      <section className="hero" style={{ marginBottom: 18 }}>
-        <span className="badge">Customer Portal</span>
-        <h1>ดูงวดและชำระเงินของร้าน</h1>
-        <p style={{ maxWidth: 820 }}>ลูกค้าแต่ละร้านเข้า Portal แยกกันด้วย Store + เบอร์ + PIN เห็นเฉพาะสัญญา งวด และ QR ของร้านตัวเอง ไม่ใช่เอาข้อมูลทุกคนไปปั่นรวมเหมือนหม้อสุกี้ฐานข้อมูล 🫠</p>
-        {!loggedIn && <form className="card grid cols-4" onSubmit={login} style={{ marginTop: 18, alignItems: "end" }}><label>รหัสร้าน / Store<input className="input" value={storeSlug} onChange={(e) => setStoreSlug(e.target.value)} placeholder="store-slug" required /></label><label>เบอร์โทร<input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} required /></label><label>PIN / Password<input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></label><button className="btn" disabled={loading}>{loading ? "กำลังเข้า..." : "เข้าสู่ระบบ"}</button></form>}
-        {loggedIn && <div className="card topbar" style={{ marginTop: 18 }}><div><h2>{customerName}</h2><p className="small">ร้าน: {storeName} / เบอร์: {phone}</p></div><button className="btn secondary" onClick={() => { clearPortalToken(); location.reload(); }}>ออกจากระบบ</button></div>}
+      <section className="hero dashboard-hero">
+        <div className="hero-copy">
+          <span className="badge">Customer Portal</span>
+          <h1>จัดการงวด ชำระเงิน และสถานะเครื่องในที่เดียว</h1>
+          <p>
+            Portal ลูกค้ารูปแบบใหม่สำหรับดูสัญญา งวดถัดไป QR ชำระเงิน และสถานะการตรวจสลิป
+            แบบแยกร้านด้วย Store + เบอร์ + PIN เพื่อให้ข้อมูลชัดเจนและปลอดภัยกว่าเดิม
+          </p>
+          <div className="hero-metrics" aria-label="จุดเด่นของพอร์ทัล">
+            <span>Multi-tenant secure</span>
+            <span>PromptPay ready</span>
+            <span>MDM release flow</span>
+          </div>
+        </div>
+        <div className="hero-orb" aria-hidden="true">
+          <div className="phone-preview">
+            <span className="phone-speaker" />
+            <div className="phone-screen-card">
+              <small>ยอดคงเหลือถัดไป</small>
+              <strong>{nextDue ? baht(remainingOf(nextDue)) : "พร้อมใช้งาน"}</strong>
+              <span>{nextDue ? `ครบกำหนด ${dateTH(nextDue.dueDate)}` : "ไม่มีงวดค้าง"}</span>
+            </div>
+            <div className="mini-progress"><span style={{ width: `${paidPercent}%` }} /></div>
+          </div>
+        </div>
+        {!loggedIn && <form className="card login-card grid cols-4" onSubmit={login}><label>รหัสร้าน / Store<input className="input" value={storeSlug} onChange={(e) => setStoreSlug(e.target.value)} placeholder="store-slug" required /></label><label>เบอร์โทร / Email<input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} required /></label><label>PIN / Password<input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></label><button className="btn" disabled={loading}>{loading ? "กำลังเข้า..." : "เข้าสู่ระบบ"}</button></form>}
+        {loggedIn && <div className="card topbar signed-in-card"><div><span className="eyebrow">เข้าสู่ระบบแล้ว</span><h2>{customerName}</h2><p className="small">ร้าน: {storeName} / Login: {phone}</p></div><button className="btn secondary" onClick={() => { clearPortalToken(); location.reload(); }}>ออกจากระบบ</button></div>}
       </section>
 
       {error && <div className="notice error" style={{ marginBottom: 16 }}>{error}</div>}
 
-      {loggedIn && <section className="grid">
-        <div className="grid cols-3"><div className="card"><h2>ความคืบหน้ารวม</h2><div style={{ fontSize: 44, fontWeight: 1000 }}>{paidPercent}%</div><div className="progress"><span style={{ width: `${paidPercent}%` }} /></div></div><div className="card"><h2>งวดถัดไป</h2>{nextDue ? <><div style={{ fontSize: 24, fontWeight: 900 }}>สัญญา {nextDue.contractNo}</div><p>ครบกำหนด {dateTH(nextDue.dueDate)}</p><p>ยอดคงเหลือ <b style={{ color: "#fff" }}>{baht(remainingOf(nextDue))}</b></p></> : <><span className="badge good">ไม่มีงวดค้าง</span><p>ถ้าจ่ายครบ ร้านจะดำเนินการปลด MDM / โอนกรรมสิทธิ์ตามสัญญา</p></>}</div><div className="card"><h2>คำขอชำระ</h2><div style={{ fontSize: 44, fontWeight: 1000 }}>{requests.length}</div><p className="small">รายการ QR/สลิปที่รอตรวจหรือเปิดให้จ่าย</p></div></div>
+      {loggedIn && <section className="grid portal-content">
+        <div className="grid cols-3"><div className="card stat-card accent"><span className="eyebrow">ภาพรวม</span><h2>ความคืบหน้ารวม</h2><div className="stat-value">{paidPercent}%</div><div className="progress"><span style={{ width: `${paidPercent}%` }} /></div></div><div className="card stat-card"><span className="eyebrow">Next due</span><h2>งวดถัดไป</h2>{nextDue ? <><div className="stat-title">สัญญา {nextDue.contractNo}</div><p>ครบกำหนด {dateTH(nextDue.dueDate)}</p><p>ยอดคงเหลือ <b>{baht(remainingOf(nextDue))}</b></p></> : <><span className="badge good">ไม่มีงวดค้าง</span><p>ถ้าจ่ายครบ ร้านจะดำเนินการปลด MDM / โอนกรรมสิทธิ์ตามสัญญา</p></>}</div><div className="card stat-card"><span className="eyebrow">Payment requests</span><h2>คำขอชำระ</h2><div className="stat-value">{requests.length}</div><p className="small">รายการ QR/สลิปที่รอตรวจหรือเปิดให้จ่าย</p></div></div>
 
-        <div className="card"><h2>QR ชำระงวด</h2><div className="grid cols-3">{requests.length === 0 && <p className="small">ยังไม่มีคำขอชำระจากร้าน</p>}{requests.map((r) => <div className="card" key={r.id} style={{ background: "rgba(255,255,255,.04)" }}><span className={`badge ${statusTone(r.status)}`}>{r.status}</span><h3>{r.contract.contractNo}</h3><p>งวด {r.installment.installmentNo} / {dateTH(r.installment.dueDate)}</p><p style={{ fontSize: 26, fontWeight: 1000 }}>{baht(r.amount)}</p>{r.qrImageDataUrl ? <img src={r.qrImageDataUrl} alt="PromptPay QR" style={{ width: "100%", maxWidth: 260, background: "#fff", borderRadius: 16, padding: 8 }} /> : <div className="notice">ร้านยังไม่ได้ตั้ง PromptPay</div>}<button className="btn" style={{ marginTop: 12 }} onClick={() => submitSlip(r)}>แนบสลิป / แจ้งชำระ</button>{r.submittedSlipUrl && <p className="small">ส่งสลิปแล้ว: {r.submittedSlipUrl}</p>}</div>)}</div></div>
+        <div className="card section-card"><div className="section-heading"><div><span className="eyebrow">PromptPay</span><h2>QR ชำระงวด</h2></div><p className="small">สแกนจ่ายและแนบสลิปให้ร้านตรวจได้จากหน้าเดียว</p></div><div className="grid cols-3">{requests.length === 0 && <p className="small">ยังไม่มีคำขอชำระจากร้าน</p>}{requests.map((r) => <div className="card payment-request-card" key={r.id}><span className={`badge ${statusTone(r.status)}`}>{r.status}</span><h3>{r.contract.contractNo}</h3><p>งวด {r.installment.installmentNo} / {dateTH(r.installment.dueDate)}</p><p className="amount">{baht(r.amount)}</p>{r.qrImageDataUrl ? <img src={r.qrImageDataUrl} alt="PromptPay QR" className="qr-image" /> : <div className="notice">ร้านยังไม่ได้ตั้ง PromptPay</div>}<button className="btn" onClick={() => submitSlip(r)}>แนบสลิป / แจ้งชำระ</button>{r.submittedSlipUrl && <p className="small">ส่งสลิปแล้ว: {r.submittedSlipUrl}</p>}</div>)}</div></div>
 
-        <div className="card"><h2>สัญญาและตารางงวด</h2><div className="table-wrap"><table className="table"><thead><tr><th>สัญญา</th><th>เครื่อง</th><th>งวด</th><th>ครบกำหนด</th><th>ยอด</th><th>จ่ายแล้ว</th><th>คงเหลือ</th><th>Status</th></tr></thead><tbody>{contracts.flatMap((c) => c.installments.map((i) => <tr key={i.id}><td><b>{c.contractNo}</b><div className="small">{c.status} / {c.legalTitleStatus}</div></td><td>{c.device.brand} {c.device.model}<div className="small">{c.device.imei ?? "-"}</div></td><td>#{i.installmentNo}</td><td>{dateTH(i.dueDate)}</td><td>{baht(i.amount)}</td><td>{baht(i.paidAmount)}</td><td>{baht(remainingOf(i))}</td><td><span className={`badge ${statusTone(i.status)}`}>{i.status}</span></td></tr>))}</tbody></table></div></div>
+        <div className="card section-card"><div className="section-heading"><div><span className="eyebrow">Contract timeline</span><h2>สัญญาและตารางงวด</h2></div></div><div className="table-wrap"><table className="table"><thead><tr><th>สัญญา</th><th>เครื่อง</th><th>งวด</th><th>ครบกำหนด</th><th>ยอด</th><th>จ่ายแล้ว</th><th>คงเหลือ</th><th>Status</th></tr></thead><tbody>{contracts.flatMap((c) => c.installments.map((i) => <tr key={i.id}><td><b>{c.contractNo}</b><div className="small">{c.status} / {c.legalTitleStatus}</div></td><td>{c.device.brand} {c.device.model}<div className="small">{c.device.imei ?? "-"}</div></td><td>#{i.installmentNo}</td><td>{dateTH(i.dueDate)}</td><td>{baht(i.amount)}</td><td>{baht(i.paidAmount)}</td><td>{baht(remainingOf(i))}</td><td><span className={`badge ${statusTone(i.status)}`}>{i.status}</span></td></tr>))}</tbody></table></div></div>
       </section>}
     </main>
   );

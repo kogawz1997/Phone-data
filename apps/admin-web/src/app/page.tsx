@@ -115,6 +115,32 @@ type Readiness = {
 };
 
 type Tab = "overview" | "customers" | "inventory" | "contracts" | "payments" | "collection" | "actions" | "mdm" | "reports" | "readiness" | "audit";
+type PermissionKey =
+  | "platform:*"
+  | "store:*"
+  | "store:read_all"
+  | "billing:manage"
+  | "mdm:platform_manage"
+  | "audit:read_all"
+  | "users:manage"
+  | "customers:manage"
+  | "customers:read"
+  | "contracts:manage"
+  | "contracts:read"
+  | "payments:manage"
+  | "payments:review"
+  | "payments:create"
+  | "payments:read"
+  | "devices:manage"
+  | "collection:manage"
+  | "collection:read"
+  | "disputes:manage"
+  | "reports:read"
+  | "integrations:manage"
+  | "mdm:request"
+  | "portal:own_data";
+
+type PermissionState = { role: string; permissions: PermissionKey[] };
 
 const tabs: Array<[Tab, string, string]> = [
   ["overview", "ภาพรวม", "ศูนย์บัญชาการ"],
@@ -129,6 +155,30 @@ const tabs: Array<[Tab, string, string]> = [
   ["readiness", "หน้างานจริง", "สิ่งที่ต้องต่อ"],
   ["audit", "Audit", "หลักฐานระบบ"],
 ];
+
+const tabPermissions: Record<Tab, PermissionKey[]> = {
+  overview: ["customers:read", "contracts:read", "payments:read"],
+  customers: ["customers:read", "customers:manage"],
+  inventory: ["devices:manage"],
+  contracts: ["contracts:read", "contracts:manage"],
+  payments: ["payments:read", "payments:create", "payments:review", "payments:manage"],
+  collection: ["collection:read", "collection:manage"],
+  actions: ["mdm:request", "devices:manage"],
+  mdm: ["mdm:request", "devices:manage", "integrations:manage"],
+  reports: ["reports:read"],
+  readiness: ["integrations:manage"],
+  audit: ["audit:read_all"],
+};
+
+function can(permissions: PermissionKey[], permission: PermissionKey) {
+  if (permission === "platform:*") return permissions.includes("platform:*");
+  if (permission === "store:*") return permissions.includes("store:*") || permissions.includes("platform:*");
+  return permissions.includes(permission) || permissions.includes("platform:*") || permissions.includes("store:*");
+}
+
+function canAny(permissions: PermissionKey[], required: PermissionKey[]) {
+  return required.some((permission) => can(permissions, permission));
+}
 
 function statusTone(status?: string): "good" | "warn" | "bad" | "neutral" | "" {
   if (!status) return "";
@@ -173,6 +223,7 @@ export default function AdminPage() {
   const [actions, setActions] = useState<DeviceAction[]>([]);
   const [audits, setAudits] = useState<AuditLog[]>([]);
   const [readiness, setReadiness] = useState<Readiness | null>(null);
+  const [authz, setAuthz] = useState<PermissionState>({ role: "", permissions: [] });
 
   useEffect(() => {
     setLoggedIn(Boolean(localStorage.getItem("koga_admin_token")));
@@ -183,7 +234,8 @@ export default function AdminPage() {
     setError("");
     setLoading(true);
     try {
-      const [s, c, d, ct, p, a, logs] = await Promise.all([
+      const [auth, s, c, d, ct, p, a, logs] = await Promise.all([
+        api<PermissionState>("/auth/permissions"),
         api<Summary>("/reports/summary"),
         api<Customer[]>("/customers"),
         api<Device[]>("/devices"),
@@ -192,6 +244,7 @@ export default function AdminPage() {
         api<DeviceAction[]>("/device-actions"),
         api<AuditLog[]>("/audit-logs"),
       ]);
+      setAuthz(auth);
       setSummary(s);
       setCustomers(c);
       setDevices(d);
@@ -219,6 +272,11 @@ export default function AdminPage() {
   const pendingPayments = payments.filter((p) => !["CONFIRMED", "REJECTED", "REFUNDED"].includes(p.status));
   const overdueContracts = contracts.filter((c) => ["OVERDUE", "GRACE_PERIOD", "REVIEW_REQUIRED", "RECOVERY", "RESTRICTED"].includes(c.status));
   const pendingActions = actions.filter((a) => ["PENDING_APPROVAL", "QUEUED"].includes(a.status));
+  const visibleTabs = tabs.filter(([key]) => canAny(authz.permissions, tabPermissions[key]));
+  const activeTab = visibleTabs.some(([key]) => key === tab) ? tab : visibleTabs[0]?.[0] ?? "overview";
+  const canManageContracts = can(authz.permissions, "contracts:manage");
+  const canReviewPayments = can(authz.permissions, "payments:review") || can(authz.permissions, "payments:manage");
+  const canRunCollection = can(authz.permissions, "collection:manage");
 
   return (
     <main className="app-shell">
@@ -232,8 +290,17 @@ export default function AdminPage() {
         </div>
         <div className="pill-list">
           <span className={`badge ${readiness?.status === "ready" ? "good" : "warn"}`}>API {readiness?.status ?? "checking"}</span>
+          <span className="badge neutral">Role: {authz.role || "loading"}</span>
           <span className="badge neutral">Provider: {readiness?.deviceControlProvider ?? "local"}</span>
-          <a className="btn secondary" href="/platform">Owner</a><a className="btn secondary" href="/integrations">Integrations</a><a className="btn secondary" href="/collection">Collection</a><a className="btn secondary" href="/risk">Risk</a><a className="btn secondary" href="/customer-access">Users ลูกค้า</a><a className="btn secondary" href="/payment-requests">QR งวด</a><a className="btn secondary" href="/apple-custody">iCloud ร้าน</a><a className="btn secondary" href="/all-systems">All Systems</a><button className="btn secondary" onClick={loadAll}>{loading ? "กำลังโหลด..." : "รีเฟรช"}</button>
+          {can(authz.permissions, "platform:*") && <a className="btn secondary" href="/platform">Owner</a>}
+          {can(authz.permissions, "integrations:manage") && <a className="btn secondary" href="/integrations">Integrations</a>}
+          {canAny(authz.permissions, ["collection:read", "collection:manage"]) && <a className="btn secondary" href="/collection">Collection</a>}
+          {canAny(authz.permissions, ["collection:read", "collection:manage", "reports:read"]) && <a className="btn secondary" href="/risk">Risk</a>}
+          {can(authz.permissions, "users:manage") && <a className="btn secondary" href="/customer-access">Users ลูกค้า</a>}
+          {canAny(authz.permissions, ["payments:create", "payments:manage"]) && <a className="btn secondary" href="/payment-requests">QR งวด</a>}
+          {canAny(authz.permissions, ["mdm:request", "devices:manage"]) && <a className="btn secondary" href="/apple-custody">iCloud ร้าน</a>}
+          {canAny(authz.permissions, ["platform:*", "integrations:manage", "reports:read"]) && <a className="btn secondary" href="/all-systems">All Systems</a>}
+          <button className="btn secondary" onClick={loadAll}>{loading ? "กำลังโหลด..." : "รีเฟรช"}</button>
           <button className="btn danger" onClick={() => { clearToken(); setLoggedIn(false); }}>ออกจากระบบ</button>
         </div>
       </header>
@@ -246,9 +313,9 @@ export default function AdminPage() {
             คอนโซลนี้เป็นพื้นที่ของแต่ละร้าน ร้านเห็นเฉพาะข้อมูลตัวเอง: ลูกค้า สต็อกเครื่อง สัญญา การชำระ การติดตามงวด และ MDM/release workflow ส่วนเจ้าของแพลตฟอร์มไปดู /platform เพื่อจัดการร้าน แพ็กเกจ และค่าบริการ
           </p>
           <div className="hero-actions">
-            <button className="btn" onClick={() => setTab("contracts")}>+ สร้างสัญญา</button>
-            <button className="btn secondary" onClick={() => setTab("payments")}>ตรวจรายการชำระ {pendingPayments.length > 0 ? `(${pendingPayments.length})` : ""}</button>
-            <button className="btn secondary" onClick={async () => { await api("/jobs/overdue-check", { method: "POST", body: "{}" }); await loadAll(); }}>รัน Overdue Check</button>
+            {canManageContracts && <button className="btn" onClick={() => setTab("contracts")}>+ สร้างสัญญา</button>}
+            {canReviewPayments && <button className="btn secondary" onClick={() => setTab("payments")}>ตรวจรายการชำระ {pendingPayments.length > 0 ? `(${pendingPayments.length})` : ""}</button>}
+            {canRunCollection && <button className="btn secondary" onClick={async () => { await api("/jobs/overdue-check", { method: "POST", body: "{}" }); await loadAll(); }}>รัน Overdue Check</button>}
           </div>
         </div>
         <div className="card strong">
@@ -262,24 +329,24 @@ export default function AdminPage() {
       </section>
 
       <nav className="nav">
-        {tabs.map(([key, label, sub]) => (
-          <button key={key} className={`tab-btn ${key === tab ? "active" : ""}`} onClick={() => setTab(key)} title={sub}>{label}</button>
+        {visibleTabs.map(([key, label, sub]) => (
+          <button key={key} className={`tab-btn ${key === activeTab ? "active" : ""}`} onClick={() => setTab(key)} title={sub}>{label}</button>
         ))}
       </nav>
 
       {error && <div className="notice error" style={{ marginBottom: 16 }}>{error}</div>}
 
-      {tab === "overview" && <Overview summary={summary} contracts={contracts} payments={payments} actions={actions} setTab={setTab} />}
-      {tab === "customers" && <Customers customers={customers} onDone={loadAll} />}
-      {tab === "inventory" && <Devices devices={devices} onDone={loadAll} />}
-      {tab === "contracts" && <Contracts contracts={contracts} customers={customers} devices={devices} onDone={loadAll} />}
-      {tab === "payments" && <Payments payments={payments} contracts={contracts} onDone={loadAll} />}
-      {tab === "collection" && <Collection contracts={contracts} customers={customers} onDone={loadAll} />}
-      {tab === "actions" && <Actions actions={actions} contracts={contracts} onDone={loadAll} />}
-      {tab === "mdm" && <MdmSetup devices={devices} contracts={contracts} />}
-      {tab === "reports" && <Reports summary={summary} />}
-      {tab === "readiness" && <ReadinessPanel readiness={readiness} />}
-      {tab === "audit" && <AuditLogs logs={audits} />}
+      {activeTab === "overview" && <Overview summary={summary} contracts={contracts} payments={payments} actions={actions} setTab={setTab} permissions={authz.permissions} />}
+      {activeTab === "customers" && <Customers customers={customers} onDone={loadAll} canManage={can(authz.permissions, "customers:manage")} />}
+      {activeTab === "inventory" && <Devices devices={devices} onDone={loadAll} canManage={can(authz.permissions, "devices:manage")} />}
+      {activeTab === "contracts" && <Contracts contracts={contracts} customers={customers} devices={devices} onDone={loadAll} canManage={canManageContracts} />}
+      {activeTab === "payments" && <Payments payments={payments} contracts={contracts} onDone={loadAll} canCreate={canAny(authz.permissions, ["payments:create", "payments:manage"])} canReview={canReviewPayments} />}
+      {activeTab === "collection" && <Collection contracts={contracts} customers={customers} onDone={loadAll} canManage={canRunCollection} />}
+      {activeTab === "actions" && <Actions actions={actions} contracts={contracts} onDone={loadAll} canCreate={can(authz.permissions, "mdm:request")} canApprove={can(authz.permissions, "devices:manage")} />}
+      {activeTab === "mdm" && <MdmSetup devices={devices} contracts={contracts} canManage={canAny(authz.permissions, ["mdm:request", "devices:manage", "integrations:manage"])} />}
+      {activeTab === "reports" && <Reports summary={summary} canExport={can(authz.permissions, "reports:read")} />}
+      {activeTab === "readiness" && <ReadinessPanel readiness={readiness} />}
+      {activeTab === "audit" && <AuditLogs logs={audits} />}
     </main>
   );
 }
@@ -333,7 +400,7 @@ function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
   );
 }
 
-function Overview({ summary, contracts, payments, actions, setTab }: { summary: Summary | null; contracts: Contract[]; payments: Payment[]; actions: DeviceAction[]; setTab: (tab: Tab) => void }) {
+function Overview({ summary, contracts, payments, actions, setTab, permissions }: { summary: Summary | null; contracts: Contract[]; payments: Payment[]; actions: DeviceAction[]; setTab: (tab: Tab) => void; permissions: PermissionKey[] }) {
   const revenueTarget = Math.max(1, contracts.reduce((sum, c) => sum + Number(c.totalAmount), 0));
   const confirmed = summary?.confirmedRevenue ?? 0;
   const revenuePercent = Math.round((confirmed / revenueTarget) * 100);
@@ -360,13 +427,13 @@ function Overview({ summary, contracts, payments, actions, setTab }: { summary: 
           <h2>Payment Queue</h2>
           <div className="metric-value">{payments.filter((p) => !["CONFIRMED", "REJECTED"].includes(p.status)).length}</div>
           <p className="small">รายการชำระที่ต้องตรวจ ไม่ใช่ให้มันแก่ตายในตาราง</p>
-          <button className="btn secondary" onClick={() => setTab("payments")}>ไปตรวจ</button>
+          {canAny(permissions, ["payments:review", "payments:manage"]) && <button className="btn secondary" onClick={() => setTab("payments")}>ไปตรวจ</button>}
         </div>
         <div className="card bad">
           <h2>Action Approval</h2>
           <div className="metric-value">{actions.filter((a) => ["PENDING_APPROVAL", "QUEUED"].includes(a.status)).length}</div>
           <p className="small">ทุกคำสั่งต้องผ่านคนตรวจและมีเหตุผล</p>
-          <button className="btn secondary" onClick={() => setTab("actions")}>ไปอนุมัติ</button>
+          {can(permissions, "devices:manage") && <button className="btn secondary" onClick={() => setTab("actions")}>ไปอนุมัติ</button>}
         </div>
       </section>
       <section className="grid cols-2">
@@ -391,20 +458,45 @@ function StatusBadge({ status }: { status?: string }) {
   return <span className={`badge ${statusTone(status)}`}>{status ?? "-"}</span>;
 }
 
-function Customers({ customers, onDone }: { customers: Customer[]; onDone: () => Promise<void> }) {
+function Customers({ customers, onDone, canManage }: { customers: Customer[]; onDone: () => Promise<void>; canManage: boolean }) {
   const [search, setSearch] = useState("");
+  const [lastInvite, setLastInvite] = useState<{ shareUrl: string; temporaryPassword: string; phone: string; email?: string } | null>(null);
   const filtered = customers.filter((c) => `${c.fullName} ${c.phone}`.toLowerCase().includes(search.toLowerCase()));
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    await api("/customers", { method: "POST", body: JSON.stringify(Object.fromEntries(fd)) });
+    const customerPayload = {
+      fullName: String(fd.get("fullName") || ""),
+      phone: String(fd.get("phone") || ""),
+      address: String(fd.get("address") || "") || undefined,
+      riskScore: String(fd.get("riskScore") || "0"),
+    };
+    const customer = await api<Customer>("/customers", { method: "POST", body: JSON.stringify(customerPayload) });
+    const portalPassword = String(fd.get("portalPassword") || "");
+    const portalEmail = String(fd.get("portalEmail") || "");
+    const portalPhone = String(fd.get("portalPhone") || customer.phone);
+    const shouldCreatePortalUser = fd.get("createPortalUser") === "on" || Boolean(portalPassword || portalEmail);
+    if (shouldCreatePortalUser) {
+      const invite = await api<{ shareUrl: string; temporaryPassword: string }>(`/customers/${customer.id}/portal-user`, {
+        method: "POST",
+        body: JSON.stringify({
+          email: portalEmail || undefined,
+          phone: portalPhone,
+          password: portalPassword || undefined,
+          expiresInDays: 14,
+        }),
+      });
+      setLastInvite({ ...invite, phone: portalPhone, email: portalEmail || undefined });
+    } else {
+      setLastInvite(null);
+    }
     e.currentTarget.reset();
     await onDone();
   }
-  return <div className="layout-rail"><form className="card form-grid" onSubmit={submit}><div><h2>เพิ่มลูกค้า</h2><p className="small">เก็บเท่าที่จำเป็น ใช้จริงค่อยต่อ KYC/เอกสาร อย่าเก็บทุกอย่างเหมือนสะสมโปเกมอนข้อมูลส่วนตัว</p></div><label>ชื่อ-นามสกุล<input name="fullName" className="input" placeholder="เช่น สมชาย ตัวอย่าง" required /></label><label>เบอร์โทร<input name="phone" className="input" placeholder="08xxxxxxxx" required /></label><label>ที่อยู่<textarea name="address" className="input" placeholder="ที่อยู่ตามสัญญา" /></label><label>Risk score<input name="riskScore" className="input" placeholder="0-100" defaultValue="0" /></label><button className="btn">บันทึกลูกค้า</button></form><div className="card"><div className="topbar"><div><h2>ลูกค้า</h2><p className="small">ค้นหาและดูจำนวนสัญญา</p></div><input className="input" style={{ maxWidth: 280 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหาชื่อ/เบอร์" /></div><div className="table-wrap"><table className="table"><thead><tr><th>ลูกค้า</th><th>เบอร์</th><th>Risk</th><th>Status</th><th>สัญญา</th></tr></thead><tbody>{filtered.map(c => <tr key={c.id}><td><b>{c.fullName}</b><div className="small">{c.address ?? "ไม่ระบุที่อยู่"}</div></td><td>{c.phone}</td><td><StatusBadge status={Number(c.riskScore) >= 70 ? "HIGH" : Number(c.riskScore) >= 40 ? "MEDIUM" : "LOW"} /></td><td><StatusBadge status={c.status ?? "ACTIVE"} /></td><td>{c.contracts?.length ?? 0}</td></tr>)}</tbody></table></div></div></div>;
+  return <div className="layout-rail">{canManage && <form className="card form-grid" onSubmit={submit}><div><h2>เพิ่มลูกค้า</h2><p className="small">สร้างข้อมูลลูกค้าและเลือกเปิดบัญชี Customer Portal ได้ทันที เพื่อให้ลูกค้านำเบอร์/PIN ไปเข้าเว็บลูกค้าสำหรับดูงวดและแจ้งชำระ</p></div>{lastInvite && <div className="notice"><b>ส่งข้อมูลนี้ให้ลูกค้าเข้าเว็บลูกค้า</b><br />ลิงก์: <code>{lastInvite.shareUrl}</code><br />เบอร์ Login: <code>{lastInvite.phone}</code>{lastInvite.email ? <><br />Email: <code>{lastInvite.email}</code></> : null}<br />PIN/รหัส: <code>{lastInvite.temporaryPassword}</code></div>}<label>ชื่อ-นามสกุล<input name="fullName" className="input" placeholder="เช่น สมชาย ตัวอย่าง" required /></label><label>เบอร์โทร<input name="phone" className="input" placeholder="08xxxxxxxx" required /></label><label>ที่อยู่<textarea name="address" className="input" placeholder="ที่อยู่ตามสัญญา" /></label><label>Risk score<input name="riskScore" className="input" placeholder="0-100" defaultValue="0" /></label><div className="notice"><label className="pill-list"><input name="createPortalUser" type="checkbox" defaultChecked /> เปิดบัญชี Customer Portal ให้ลูกค้าคนนี้</label><p className="small">ลูกค้าใช้ Store + เบอร์ Login + PIN/Password เพื่อเข้าเว็บลูกค้า หากไม่กรอก PIN ระบบจะสุ่มให้</p></div><div className="grid cols-2"><label>เบอร์ Login ลูกค้า<input name="portalPhone" className="input" placeholder="เว้นว่างเพื่อใช้เบอร์โทรด้านบน" /></label><label>Email ลูกค้า optional<input name="portalEmail" className="input" type="email" placeholder="customer@email.com" /></label></div><label>PIN/Password สำหรับเว็บลูกค้า<input name="portalPassword" className="input" placeholder="เช่น 123456 หรือเว้นว่างให้ระบบสุ่ม" /></label><button className="btn">บันทึกลูกค้าและบัญชีเว็บลูกค้า</button></form>}<div className="card"><div className="topbar"><div><h2>ลูกค้า</h2><p className="small">ค้นหาและดูจำนวนสัญญา</p></div><input className="input" style={{ maxWidth: 280 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหาชื่อ/เบอร์" /></div><div className="table-wrap"><table className="table"><thead><tr><th>ลูกค้า</th><th>เบอร์</th><th>Risk</th><th>Status</th><th>สัญญา</th></tr></thead><tbody>{filtered.map(c => <tr key={c.id}><td><b>{c.fullName}</b><div className="small">{c.address ?? "ไม่ระบุที่อยู่"}</div></td><td>{c.phone}</td><td><StatusBadge status={Number(c.riskScore) >= 70 ? "HIGH" : Number(c.riskScore) >= 40 ? "MEDIUM" : "LOW"} /></td><td><StatusBadge status={c.status ?? "ACTIVE"} /></td><td>{c.contracts?.length ?? 0}</td></tr>)}</tbody></table></div></div></div>;
 }
 
-function Devices({ devices, onDone }: { devices: Device[]; onDone: () => Promise<void> }) {
+function Devices({ devices, onDone, canManage }: { devices: Device[]; onDone: () => Promise<void>; canManage: boolean }) {
   const [search, setSearch] = useState("");
   const filtered = devices.filter((d) => `${d.brand} ${d.model} ${d.imei} ${d.serialNumber}`.toLowerCase().includes(search.toLowerCase()));
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -414,10 +506,10 @@ function Devices({ devices, onDone }: { devices: Device[]; onDone: () => Promise
     e.currentTarget.reset();
     await onDone();
   }
-  return <div className="layout-rail"><form className="card form-grid" onSubmit={submit}><div><h2>เพิ่มเครื่องเข้าสต็อก</h2><p className="small">ใช้ IMEI/Serial เป็นหลักฐานคุมทรัพย์สิน</p></div><div className="form-row"><label>Brand<input name="brand" className="input" placeholder="Samsung" required /></label><label>Model<input name="model" className="input" placeholder="Galaxy A55" required /></label></div><label>Platform<select name="platform" className="input" defaultValue="ANDROID"><option>ANDROID</option><option>IOS</option><option>IPADOS</option><option>MACOS</option><option>OTHER</option></select></label><label>โหมดควบคุม<select name="controlMode" className="input" defaultValue="NONE"><option value="NONE">ไม่มี / ยังไม่ตั้งค่า</option><option value="ANDROID_ENTERPRISE">Android Enterprise</option><option value="APPLE_MDM_ADE">Apple MDM / ADE</option><option value="ICLOUD_CUSTODY">iCloud ร้าน (Legacy Custody)</option></select></label><label>Apple ID alias ร้าน<input name="icloudAppleIdAlias" className="input" placeholder="branch-a-device-01@icloud.com" /></label><label>IMEI<input name="imei" className="input" placeholder="IMEI" /></label><label>Serial<input name="serialNumber" className="input" placeholder="Serial Number" /></label><div className="form-row"><label>Storage<input name="storage" className="input" placeholder="128GB" /></label><label>Color<input name="color" className="input" placeholder="Black" /></label></div><button className="btn">บันทึกเครื่อง</button></form><div className="card"><div className="topbar"><div><h2>สต็อกและเครื่องที่ขายแล้ว</h2><p className="small">สถานะเครื่องกับ control แยกกัน อย่าปน เดี๋ยวระบบกลายเป็นผัดรวม</p></div><input className="input" style={{ maxWidth: 280 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหารุ่น/IMEI" /></div><div className="table-wrap"><table className="table"><thead><tr><th>เครื่อง</th><th>IMEI/Serial</th><th>Platform</th><th>Stock Status</th><th>Control</th><th>Mode</th></tr></thead><tbody>{filtered.map(d => <tr key={d.id}><td><b>{d.brand} {d.model}</b><div className="small">{[d.storage, d.color].filter(Boolean).join(" / ")}</div></td><td>{d.imei ?? "-"}<div className="small">{d.serialNumber ?? "-"}</div></td><td>{d.platform}</td><td><StatusBadge status={d.deviceStatus} /></td><td><StatusBadge status={d.controlStatus} /></td><td><StatusBadge status={(d as any).controlMode ?? "NONE"} /></td></tr>)}</tbody></table></div></div></div>;
+  return <div className="layout-rail">{canManage && <form className="card form-grid" onSubmit={submit}><div><h2>เพิ่มเครื่องเข้าสต็อก</h2><p className="small">ใช้ IMEI/Serial เป็นหลักฐานคุมทรัพย์สิน</p></div><div className="form-row"><label>Brand<input name="brand" className="input" placeholder="Samsung" required /></label><label>Model<input name="model" className="input" placeholder="Galaxy A55" required /></label></div><label>Platform<select name="platform" className="input" defaultValue="ANDROID"><option>ANDROID</option><option>IOS</option><option>IPADOS</option><option>MACOS</option><option>OTHER</option></select></label><label>โหมดควบคุม<select name="controlMode" className="input" defaultValue="NONE"><option value="NONE">ไม่มี / ยังไม่ตั้งค่า</option><option value="ANDROID_ENTERPRISE">Android Enterprise</option><option value="APPLE_MDM_ADE">Apple MDM / ADE</option><option value="ICLOUD_CUSTODY">iCloud ร้าน (Legacy Custody)</option></select></label><label>Apple ID alias ร้าน<input name="icloudAppleIdAlias" className="input" placeholder="branch-a-device-01@icloud.com" /></label><label>IMEI<input name="imei" className="input" placeholder="IMEI" /></label><label>Serial<input name="serialNumber" className="input" placeholder="Serial Number" /></label><div className="form-row"><label>Storage<input name="storage" className="input" placeholder="128GB" /></label><label>Color<input name="color" className="input" placeholder="Black" /></label></div><button className="btn">บันทึกเครื่อง</button></form>}<div className="card"><div className="topbar"><div><h2>สต็อกและเครื่องที่ขายแล้ว</h2><p className="small">สถานะเครื่องกับ control แยกกัน อย่าปน เดี๋ยวระบบกลายเป็นผัดรวม</p></div><input className="input" style={{ maxWidth: 280 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหารุ่น/IMEI" /></div><div className="table-wrap"><table className="table"><thead><tr><th>เครื่อง</th><th>IMEI/Serial</th><th>Platform</th><th>Stock Status</th><th>Control</th><th>Mode</th></tr></thead><tbody>{filtered.map(d => <tr key={d.id}><td><b>{d.brand} {d.model}</b><div className="small">{[d.storage, d.color].filter(Boolean).join(" / ")}</div></td><td>{d.imei ?? "-"}<div className="small">{d.serialNumber ?? "-"}</div></td><td>{d.platform}</td><td><StatusBadge status={d.deviceStatus} /></td><td><StatusBadge status={d.controlStatus} /></td><td><StatusBadge status={(d as any).controlMode ?? "NONE"} /></td></tr>)}</tbody></table></div></div></div>;
 }
 
-function Contracts({ contracts, customers, devices, onDone }: { contracts: Contract[]; customers: Customer[]; devices: Device[]; onDone: () => Promise<void> }) {
+function Contracts({ contracts, customers, devices, onDone, canManage }: { contracts: Contract[]; customers: Customer[]; devices: Device[]; onDone: () => Promise<void>; canManage: boolean }) {
   const stockDevices = devices.filter((d) => d.deviceStatus === "IN_STOCK");
   const [search, setSearch] = useState("");
   const filtered = contracts.filter((c) => `${c.contractNo} ${c.customer.fullName} ${c.customer.phone} ${c.device.brand} ${c.device.model}`.toLowerCase().includes(search.toLowerCase()));
@@ -430,10 +522,10 @@ function Contracts({ contracts, customers, devices, onDone }: { contracts: Contr
   }
   async function sign(id: string) { await api(`/contracts/${id}/sign`, { method: "POST", body: "{}" }); await onDone(); }
   async function cancel(id: string) { if (confirm("ยกเลิกสัญญานี้?")) { await api(`/contracts/${id}/cancel`, { method: "POST", body: "{}" }); await onDone(); } }
-  return <div className="grid"><form className="card form-grid" onSubmit={submit}><div className="topbar"><div><h2>สร้างสัญญา Lease-to-own</h2><p className="small">ร้านถือกรรมสิทธิ์ก่อน ลูกค้าเซ็นยินยอม MDM แล้วจ่ายครบจึง release/โอนกรรมสิทธิ์</p></div><span className="badge warn">เครื่องในสต็อก {stockDevices.length}</span></div><div className="grid cols-3"><label>ลูกค้า<select name="customerId" className="input" required><option value="">เลือกลูกค้า</option>{customers.map(c => <option key={c.id} value={c.id}>{c.fullName} - {c.phone}</option>)}</select></label><label>เครื่อง<select name="deviceId" className="input" required><option value="">เลือกเครื่องในสต็อก</option>{stockDevices.map(d => <option key={d.id} value={d.id}>{d.brand} {d.model} {d.imei}</option>)}</select></label><label>วันครบกำหนดงวดแรก<input name="firstDueDate" className="input" type="date" required /></label></div><div className="grid cols-4"><label>ราคาเครื่อง<input name="salePrice" className="input" placeholder="12900" required /></label><label>เงินดาวน์<input name="downPayment" className="input" placeholder="2900" defaultValue="0" /></label><label>ดอก/ค่าธรรมเนียม<input name="interestAmount" className="input" placeholder="1200" defaultValue="0" /></label><label>จำนวนงวด<input name="installmentCount" className="input" placeholder="6" defaultValue="6" /></label></div><input type="hidden" name="agreementType" value="LEASE_TO_OWN" /><input type="hidden" name="managementPurpose" value="LEASE_TO_OWN_ASSET_PROTECTION" /><button className="btn">สร้างสัญญา Lease-to-own</button></form><div className="card"><div className="topbar"><div><h2>รายการสัญญา</h2><p className="small">พิมพ์สัญญา/บันทึก PDF จาก browser ได้</p></div><input className="input" style={{ maxWidth: 340 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหาเลขสัญญา/ลูกค้า/เครื่อง" /></div><div className="table-wrap"><table className="table"><thead><tr><th>สัญญา</th><th>ลูกค้า</th><th>เครื่อง</th><th>ยอดรวม</th><th>จ่ายแล้ว</th><th>งวดถัดไป</th><th>Status / กรรมสิทธิ์</th><th>จัดการ</th></tr></thead><tbody>{filtered.map(c => { const pct = paidPercent(c); const due = nextDue(c); return <tr key={c.id}><td><b>{c.contractNo}</b><div className="small">signed: {dateTH(c.signedAt)}</div></td><td>{c.customer.fullName}<div className="small">{c.customer.phone}</div></td><td>{c.device.brand} {c.device.model}<div className="small">{c.device.imei}</div></td><td>{baht(c.totalAmount)}</td><td><div className="progress"><span style={{ width: `${pct}%` }} /></div><div className="small">{pct}%</div></td><td>{due ? <>งวด {due.installmentNo}<div className="small">{dateTH(due.dueDate)} / {baht(remainingOf(due))}</div></> : "-"}</td><td><StatusBadge status={c.status} /> <StatusBadge status={c.legalTitleStatus} /></td><td><div className="pill-list"><button className="btn secondary" onClick={() => openHtml(`/contracts/${c.id}/print`)}>Print</button>{c.status === "DRAFT" && <button className="btn secondary" onClick={() => sign(c.id)}>Sign</button>}{c.status !== "CANCELLED" && c.status !== "PAID_OFF" && <button className="btn danger" onClick={() => cancel(c.id)}>Cancel</button>}</div></td></tr>; })}</tbody></table></div></div></div>;
+  return <div className="grid">{canManage && <form className="card form-grid" onSubmit={submit}><div className="topbar"><div><h2>สร้างสัญญา Lease-to-own</h2><p className="small">ร้านถือกรรมสิทธิ์ก่อน ลูกค้าเซ็นยินยอม MDM แล้วจ่ายครบจึง release/โอนกรรมสิทธิ์</p></div><span className="badge warn">เครื่องในสต็อก {stockDevices.length}</span></div><div className="grid cols-3"><label>ลูกค้า<select name="customerId" className="input" required><option value="">เลือกลูกค้า</option>{customers.map(c => <option key={c.id} value={c.id}>{c.fullName} - {c.phone}</option>)}</select></label><label>เครื่อง<select name="deviceId" className="input" required><option value="">เลือกเครื่องในสต็อก</option>{stockDevices.map(d => <option key={d.id} value={d.id}>{d.brand} {d.model} {d.imei}</option>)}</select></label><label>วันครบกำหนดงวดแรก<input name="firstDueDate" className="input" type="date" required /></label></div><div className="grid cols-4"><label>ราคาเครื่อง<input name="salePrice" className="input" placeholder="12900" required /></label><label>เงินดาวน์<input name="downPayment" className="input" placeholder="2900" defaultValue="0" /></label><label>ดอก/ค่าธรรมเนียม<input name="interestAmount" className="input" placeholder="1200" defaultValue="0" /></label><label>จำนวนงวด<input name="installmentCount" className="input" placeholder="6" defaultValue="6" /></label></div><input type="hidden" name="agreementType" value="LEASE_TO_OWN" /><input type="hidden" name="managementPurpose" value="LEASE_TO_OWN_ASSET_PROTECTION" /><button className="btn">สร้างสัญญา Lease-to-own</button></form>}<div className="card"><div className="topbar"><div><h2>รายการสัญญา</h2><p className="small">พิมพ์สัญญา/บันทึก PDF จาก browser ได้</p></div><input className="input" style={{ maxWidth: 340 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหาเลขสัญญา/ลูกค้า/เครื่อง" /></div><div className="table-wrap"><table className="table"><thead><tr><th>สัญญา</th><th>ลูกค้า</th><th>เครื่อง</th><th>ยอดรวม</th><th>จ่ายแล้ว</th><th>งวดถัดไป</th><th>Status / กรรมสิทธิ์</th><th>จัดการ</th></tr></thead><tbody>{filtered.map(c => { const pct = paidPercent(c); const due = nextDue(c); return <tr key={c.id}><td><b>{c.contractNo}</b><div className="small">signed: {dateTH(c.signedAt)}</div></td><td>{c.customer.fullName}<div className="small">{c.customer.phone}</div></td><td>{c.device.brand} {c.device.model}<div className="small">{c.device.imei}</div></td><td>{baht(c.totalAmount)}</td><td><div className="progress"><span style={{ width: `${pct}%` }} /></div><div className="small">{pct}%</div></td><td>{due ? <>งวด {due.installmentNo}<div className="small">{dateTH(due.dueDate)} / {baht(remainingOf(due))}</div></> : "-"}</td><td><StatusBadge status={c.status} /> <StatusBadge status={c.legalTitleStatus} /></td><td><div className="pill-list"><button className="btn secondary" onClick={() => openHtml(`/contracts/${c.id}/print`)}>Print</button>{canManage && c.status === "DRAFT" && <button className="btn secondary" onClick={() => sign(c.id)}>Sign</button>}{canManage && c.status !== "CANCELLED" && c.status !== "PAID_OFF" && <button className="btn danger" onClick={() => cancel(c.id)}>Cancel</button>}</div></td></tr>; })}</tbody></table></div></div></div>;
 }
 
-function Payments({ payments, contracts, onDone }: { payments: Payment[]; contracts: Contract[]; onDone: () => Promise<void> }) {
+function Payments({ payments, contracts, onDone, canCreate, canReview }: { payments: Payment[]; contracts: Contract[]; onDone: () => Promise<void>; canCreate: boolean; canReview: boolean }) {
   const activeContracts = useMemo(() => contracts.filter((c) => !["PAID_OFF", "CANCELLED"].includes(c.status)), [contracts]);
   const [selectedContract, setSelectedContract] = useState("");
   const contract = activeContracts.find((c) => c.id === selectedContract);
@@ -448,10 +540,10 @@ function Payments({ payments, contracts, onDone }: { payments: Payment[]; contra
   }
   async function confirmPayment(id: string) { await api(`/payments/${id}/confirm`, { method: "POST", body: "{}" }); await onDone(); }
   async function rejectPayment(id: string) { await api(`/payments/${id}/reject`, { method: "POST", body: "{}" }); await onDone(); }
-  return <div className="grid"><div className="grid cols-3"><Metric label="รอตรวจ" value={pending.length} note="รายการที่ยังไม่ confirmed" tone="warn" /><Metric label="ยืนยันแล้ว" value={payments.filter(p => p.status === "CONFIRMED").length} note="ยอดรับเงินจริง" tone="good" /><Metric label="ถูกปฏิเสธ" value={payments.filter(p => p.status === "REJECTED").length} note="ต้องแจ้งลูกค้า" tone="bad" /></div><form className="card form-grid" onSubmit={submit}><div><h2>บันทึก/รับแจ้งชำระ</h2><p className="small">MVP รับ slipUrl ก่อน ใช้จริงค่อยต่อ upload storage + slip verify provider</p></div><div className="grid cols-3"><label>สัญญา<select name="contractId" className="input" required value={selectedContract} onChange={(e) => setSelectedContract(e.target.value)}><option value="">เลือกสัญญา</option>{activeContracts.map(c => <option key={c.id} value={c.id}>{c.contractNo} - {c.customer.fullName}</option>)}</select></label><label>งวด<select name="installmentId" className="input"><option value="">ไม่ระบุงวด</option>{contract?.installments.filter(i => remainingOf(i) > 0).map(i => <option key={i.id} value={i.id}>งวด {i.installmentNo} - เหลือ {baht(remainingOf(i))} - {i.status}</option>)}</select></label><label>ยอดเงิน<input name="amount" className="input" placeholder="2800" required /></label></div><div className="grid cols-3"><label>วิธีชำระ<select name="method" className="input" defaultValue="BANK_TRANSFER"><option>BANK_TRANSFER</option><option>PROMPTPAY</option><option>CASH</option><option>CARD</option><option>OTHER</option></select></label><label>Slip URL<input name="slipUrl" className="input" placeholder="https://..." /></label><label>หมายเหตุ<input name="note" className="input" placeholder="ลูกค้าส่งผ่าน LINE" /></label></div><button className="btn">บันทึกรายการชำระ</button></form><div className="card"><h2>รายการชำระ</h2><div className="table-wrap"><table className="table"><thead><tr><th>สัญญา</th><th>ลูกค้า</th><th>ยอด</th><th>งวด</th><th>วิธี</th><th>Status</th><th>สลิป</th><th>จัดการ</th></tr></thead><tbody>{payments.map(p => <tr key={p.id}><td>{p.contract.contractNo}</td><td>{p.contract.customer.fullName}</td><td>{baht(p.amount)}</td><td>{p.installment ? `งวด ${p.installment.installmentNo}` : "-"}</td><td>{p.method}</td><td><StatusBadge status={p.status} /></td><td>{p.slipUrl ? <a className="badge neutral" href={p.slipUrl} target="_blank">เปิด</a> : <span className="small">ไม่มี</span>}</td><td>{!["CONFIRMED", "REJECTED"].includes(p.status) && <div className="pill-list"><button className="btn secondary" onClick={() => confirmPayment(p.id)}>Confirm</button><button className="btn danger" onClick={() => rejectPayment(p.id)}>Reject</button></div>}</td></tr>)}</tbody></table></div></div></div>;
+  return <div className="grid"><div className="grid cols-3"><Metric label="รอตรวจ" value={pending.length} note="รายการที่ยังไม่ confirmed" tone="warn" /><Metric label="ยืนยันแล้ว" value={payments.filter(p => p.status === "CONFIRMED").length} note="ยอดรับเงินจริง" tone="good" /><Metric label="ถูกปฏิเสธ" value={payments.filter(p => p.status === "REJECTED").length} note="ต้องแจ้งลูกค้า" tone="bad" /></div>{canCreate && <form className="card form-grid" onSubmit={submit}><div><h2>บันทึก/รับแจ้งชำระ</h2><p className="small">MVP รับ slipUrl ก่อน ใช้จริงค่อยต่อ upload storage + slip verify provider</p></div><div className="grid cols-3"><label>สัญญา<select name="contractId" className="input" required value={selectedContract} onChange={(e) => setSelectedContract(e.target.value)}><option value="">เลือกสัญญา</option>{activeContracts.map(c => <option key={c.id} value={c.id}>{c.contractNo} - {c.customer.fullName}</option>)}</select></label><label>งวด<select name="installmentId" className="input"><option value="">ไม่ระบุงวด</option>{contract?.installments.filter(i => remainingOf(i) > 0).map(i => <option key={i.id} value={i.id}>งวด {i.installmentNo} - เหลือ {baht(remainingOf(i))} - {i.status}</option>)}</select></label><label>ยอดเงิน<input name="amount" className="input" placeholder="2800" required /></label></div><div className="grid cols-3"><label>วิธีชำระ<select name="method" className="input" defaultValue="BANK_TRANSFER"><option>BANK_TRANSFER</option><option>PROMPTPAY</option><option>CASH</option><option>CARD</option><option>OTHER</option></select></label><label>Slip URL<input name="slipUrl" className="input" placeholder="https://..." /></label><label>หมายเหตุ<input name="note" className="input" placeholder="ลูกค้าส่งผ่าน LINE" /></label></div><button className="btn">บันทึกรายการชำระ</button></form>}<div className="card"><h2>รายการชำระ</h2><div className="table-wrap"><table className="table"><thead><tr><th>สัญญา</th><th>ลูกค้า</th><th>ยอด</th><th>งวด</th><th>วิธี</th><th>Status</th><th>สลิป</th><th>จัดการ</th></tr></thead><tbody>{payments.map(p => <tr key={p.id}><td>{p.contract.contractNo}</td><td>{p.contract.customer.fullName}</td><td>{baht(p.amount)}</td><td>{p.installment ? `งวด ${p.installment.installmentNo}` : "-"}</td><td>{p.method}</td><td><StatusBadge status={p.status} /></td><td>{p.slipUrl ? <a className="badge neutral" href={p.slipUrl} target="_blank">เปิด</a> : <span className="small">ไม่มี</span>}</td><td>{canReview && !["CONFIRMED", "REJECTED"].includes(p.status) && <div className="pill-list"><button className="btn secondary" onClick={() => confirmPayment(p.id)}>Confirm</button><button className="btn danger" onClick={() => rejectPayment(p.id)}>Reject</button></div>}</td></tr>)}</tbody></table></div></div></div>;
 }
 
-function Collection({ contracts, customers, onDone }: { contracts: Contract[]; customers: Customer[]; onDone: () => Promise<void> }) {
+function Collection({ contracts, customers, onDone, canManage }: { contracts: Contract[]; customers: Customer[]; onDone: () => Promise<void>; canManage: boolean }) {
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [logs, setLogs] = useState<ContactLog[]>([]);
   const risky = contracts.filter((c) => ["OVERDUE", "GRACE_PERIOD", "REVIEW_REQUIRED", "RECOVERY", "RESTRICTED", "DUE_SOON"].includes(c.status));
@@ -470,10 +562,10 @@ function Collection({ contracts, customers, onDone }: { contracts: Contract[]; c
     await loadLogs(selectedCustomer);
     await onDone();
   }
-  return <div className="grid cols-2"><div className="card"><h2>งานติดตามงวด</h2><p className="small">ใช้เป็นหน้าทำงานของคนโทร/LINE หาลูกค้า เก็บหลักฐานทุกครั้ง หยุดการทวงแบบจำจากอารมณ์เถอะ โลกเหนื่อยแล้ว</p><div className="table-wrap"><table className="table"><thead><tr><th>สัญญา</th><th>ลูกค้า</th><th>งวดถัดไป</th><th>ยอดค้าง</th><th>Status</th><th></th></tr></thead><tbody>{risky.map((c) => { const due = nextDue(c); return <tr key={c.id}><td>{c.contractNo}</td><td>{c.customer.fullName}<div className="small">{c.customer.phone}</div></td><td>{due ? `${dateTH(due.dueDate)} / งวด ${due.installmentNo}` : "-"}</td><td>{due ? baht(remainingOf(due)) : "-"}</td><td><StatusBadge status={c.status} /></td><td><button className="btn secondary" onClick={() => loadLogs(c.customer.id)}>บันทึกการติดต่อ</button></td></tr>; })}</tbody></table></div></div><div className="card form-grid"><h2>Contact Log</h2>{customer ? <><div className="notice"><b>{customer.fullName}</b><div className="small">{customer.phone} | risk {customer.riskScore}</div></div><form className="form-grid" onSubmit={submitLog}><label>ช่องทาง<select name="channel" className="input" defaultValue="PHONE"><option>PHONE</option><option>LINE</option><option>SMS</option><option>EMAIL</option><option>OTHER</option></select></label><label>ข้อความ/ผลการติดต่อ<textarea name="message" className="input" placeholder="เช่น โทรแจ้งงวดที่ 2 ลูกค้าขอจ่ายวันศุกร์" required /></label><button className="btn">บันทึก Log</button></form><div className="timeline">{logs.map((log) => <div className="timeline-item" key={log.id}><span className="dot" /><div><b>{log.channel}</b><div className="small">{new Date(log.createdAt).toLocaleString("th-TH")}</div><p style={{ marginTop: 6 }}>{log.message}</p></div></div>)}</div></> : <p className="muted">เลือกลูกค้าจากรายการด้านซ้ายเพื่อบันทึกการติดต่อ</p>}</div></div>;
+  return <div className="grid cols-2"><div className="card"><h2>งานติดตามงวด</h2><p className="small">ใช้เป็นหน้าทำงานของคนโทร/LINE หาลูกค้า เก็บหลักฐานทุกครั้ง หยุดการทวงแบบจำจากอารมณ์เถอะ โลกเหนื่อยแล้ว</p><div className="table-wrap"><table className="table"><thead><tr><th>สัญญา</th><th>ลูกค้า</th><th>งวดถัดไป</th><th>ยอดค้าง</th><th>Status</th><th></th></tr></thead><tbody>{risky.map((c) => { const due = nextDue(c); return <tr key={c.id}><td>{c.contractNo}</td><td>{c.customer.fullName}<div className="small">{c.customer.phone}</div></td><td>{due ? `${dateTH(due.dueDate)} / งวด ${due.installmentNo}` : "-"}</td><td>{due ? baht(remainingOf(due)) : "-"}</td><td><StatusBadge status={c.status} /></td><td>{canManage && <button className="btn secondary" onClick={() => loadLogs(c.customer.id)}>บันทึกการติดต่อ</button>}</td></tr>; })}</tbody></table></div></div><div className="card form-grid"><h2>Contact Log</h2>{customer ? <><div className="notice"><b>{customer.fullName}</b><div className="small">{customer.phone} | risk {customer.riskScore}</div></div>{canManage && <form className="form-grid" onSubmit={submitLog}><label>ช่องทาง<select name="channel" className="input" defaultValue="PHONE"><option>PHONE</option><option>LINE</option><option>SMS</option><option>EMAIL</option><option>OTHER</option></select></label><label>ข้อความ/ผลการติดต่อ<textarea name="message" className="input" placeholder="เช่น โทรแจ้งงวดที่ 2 ลูกค้าขอจ่ายวันศุกร์" required /></label><button className="btn">บันทึก Log</button></form>}<div className="timeline">{logs.map((log) => <div className="timeline-item" key={log.id}><span className="dot" /><div><b>{log.channel}</b><div className="small">{new Date(log.createdAt).toLocaleString("th-TH")}</div><p style={{ marginTop: 6 }}>{log.message}</p></div></div>)}</div></> : <p className="muted">เลือกลูกค้าจากรายการด้านซ้ายเพื่อบันทึกการติดต่อ</p>}</div></div>;
 }
 
-function Actions({ actions, contracts, onDone }: { actions: DeviceAction[]; contracts: Contract[]; onDone: () => Promise<void> }) {
+function Actions({ actions, contracts, onDone, canCreate, canApprove }: { actions: DeviceAction[]; contracts: Contract[]; onDone: () => Promise<void>; canCreate: boolean; canApprove: boolean }) {
   const [selectedContract, setSelectedContract] = useState("");
   const contract = contracts.find((c) => c.id === selectedContract);
   async function approve(id: string) { await api(`/device-actions/${id}/approve`, { method: "POST", body: "{}" }); await onDone(); }
@@ -487,11 +579,11 @@ function Actions({ actions, contracts, onDone }: { actions: DeviceAction[]; cont
     setSelectedContract("");
     await onDone();
   }
-  return <div className="grid"><div className="notice"><b>Device-control ส่งเข้า provider ตาม DEVICE_CONTROL_PROVIDER แล้ว</b><br />โหมด local ใช้ทดสอบเท่านั้น ถ้าตั้งเป็น android/apple/dual ระบบจะเรียก adapter จริงและต้องมี providerDeviceName/cert/token ครบก่อนอนุมัติคำสั่ง ไม่ใช่กดแล้วหวังว่าจักรวาลจะรู้จักเครื่องเอง</div><form className="card form-grid" onSubmit={create}><h2>สร้าง Device Action</h2><div className="grid cols-3"><label>สัญญา<select className="input" value={selectedContract} onChange={(e) => setSelectedContract(e.target.value)} required><option value="">เลือกสัญญา</option>{contracts.map((c) => <option key={c.id} value={c.id}>{c.contractNo} - {c.customer.fullName}</option>)}</select></label><label>Action<select name="type" className="input" defaultValue="SEND_REMINDER"><option>SEND_REMINDER</option><option>REQUEST_LIMITED_MODE</option><option>REQUEST_RESTRICT</option><option>REQUEST_RELEASE</option><option>CONFIRM_OWNERSHIP_TRANSFER</option><option>MARK_RECOVERY</option></select></label><label>เครื่อง<input className="input" value={contract ? `${contract.device.brand} ${contract.device.model}` : ""} readOnly placeholder="เลือกสัญญาก่อน" /></label></div><label>เหตุผล<textarea name="reason" className="input" placeholder="เช่น ค้างชำระเกิน X วัน หลังแจ้งเตือนแล้ว" required /></label><button className="btn">สร้างคำสั่งรออนุมัติ</button></form><div className="card"><h2>Device Actions</h2><div className="table-wrap"><table className="table"><thead><tr><th>Type</th><th>เครื่อง</th><th>สัญญา</th><th>เหตุผล</th><th>Status / กรรมสิทธิ์</th><th>จัดการ</th></tr></thead><tbody>{actions.map(a => <tr key={a.id}><td>{a.type}</td><td>{a.device.brand} {a.device.model}<div className="small">{a.device.imei}</div></td><td>{a.contract?.contractNo ?? "-"}</td><td>{a.reason}</td><td><StatusBadge status={a.status} /></td><td>{["PENDING_APPROVAL", "QUEUED"].includes(a.status) && <div className="pill-list"><button className="btn secondary" onClick={() => approve(a.id)}>Approve</button><button className="btn danger" onClick={() => reject(a.id)}>Reject</button></div>}</td></tr>)}</tbody></table></div></div></div>;
+  return <div className="grid"><div className="notice"><b>Device-control ส่งเข้า provider ตาม DEVICE_CONTROL_PROVIDER แล้ว</b><br />โหมด local ใช้ทดสอบเท่านั้น ถ้าตั้งเป็น android/apple/dual ระบบจะเรียก adapter จริงและต้องมี providerDeviceName/cert/token ครบก่อนอนุมัติคำสั่ง ไม่ใช่กดแล้วหวังว่าจักรวาลจะรู้จักเครื่องเอง</div>{canCreate && <form className="card form-grid" onSubmit={create}><h2>สร้าง Device Action</h2><div className="grid cols-3"><label>สัญญา<select className="input" value={selectedContract} onChange={(e) => setSelectedContract(e.target.value)} required><option value="">เลือกสัญญา</option>{contracts.map((c) => <option key={c.id} value={c.id}>{c.contractNo} - {c.customer.fullName}</option>)}</select></label><label>Action<select name="type" className="input" defaultValue="SEND_REMINDER"><option>SEND_REMINDER</option><option>REQUEST_LIMITED_MODE</option><option>REQUEST_RESTRICT</option><option>REQUEST_RELEASE</option><option>CONFIRM_OWNERSHIP_TRANSFER</option><option>MARK_RECOVERY</option></select></label><label>เครื่อง<input className="input" value={contract ? `${contract.device.brand} ${contract.device.model}` : ""} readOnly placeholder="เลือกสัญญาก่อน" /></label></div><label>เหตุผล<textarea name="reason" className="input" placeholder="เช่น ค้างชำระเกิน X วัน หลังแจ้งเตือนแล้ว" required /></label><button className="btn">สร้างคำสั่งรออนุมัติ</button></form>}<div className="card"><h2>Device Actions</h2><div className="table-wrap"><table className="table"><thead><tr><th>Type</th><th>เครื่อง</th><th>สัญญา</th><th>เหตุผล</th><th>Status / กรรมสิทธิ์</th><th>จัดการ</th></tr></thead><tbody>{actions.map(a => <tr key={a.id}><td>{a.type}</td><td>{a.device.brand} {a.device.model}<div className="small">{a.device.imei}</div></td><td>{a.contract?.contractNo ?? "-"}</td><td>{a.reason}</td><td><StatusBadge status={a.status} /></td><td>{canApprove && ["PENDING_APPROVAL", "QUEUED"].includes(a.status) && <div className="pill-list"><button className="btn secondary" onClick={() => approve(a.id)}>Approve</button><button className="btn danger" onClick={() => reject(a.id)}>Reject</button></div>}</td></tr>)}</tbody></table></div></div></div>;
 }
 
 
-function MdmSetup({ devices, contracts }: { devices: Device[]; contracts: Contract[] }) {
+function MdmSetup({ devices, contracts, canManage }: { devices: Device[]; contracts: Contract[]; canManage: boolean }) {
   const [result, setResult] = useState<any>(null);
   const [selectedContract, setSelectedContract] = useState(contracts[0]?.id ?? "");
   const contract = contracts.find((c) => c.id === selectedContract);
@@ -526,25 +618,25 @@ function MdmSetup({ devices, contracts }: { devices: Device[]; contracts: Contra
   return <div className="grid">
     <div className="notice"><b>MDM Setup: Android + iOS ใช้งานจริง</b><br />หน้านี้ไม่ได้เป็น demo แล้ว: Android มี enterprise signup flow, enrollment token, policy publish; Apple มี profile, check-in/connect และ command queue. ส่วนบัญชี/cert/token ต้องสมัครข้างนอกตามคู่มือ เพราะผมยังไม่ได้กลายเป็นฝ่ายอนุมัติของ Google/Apple แบบน่าเสียดาย</div>
     <div className="grid cols-2">
-      <div className="card form-grid"><h2>1) เลือกสัญญา/เครื่อง</h2><label>สัญญา<select className="input" value={selectedContract} onChange={(e) => setSelectedContract(e.target.value)}><option value="">เลือกสัญญา</option>{contracts.map((c) => <option key={c.id} value={c.id}>{c.contractNo} - {c.customer.fullName} - {c.device.platform}</option>)}</select></label>{contract && <div className="notice"><b>{contract.device.brand} {contract.device.model}</b><div className="small">IMEI {contract.device.imei ?? "-"} | Serial {contract.device.serialNumber ?? "-"} | {contract.device.platform}</div><div className="small">Provider device: {contract.device.providerDeviceName ?? "ยังไม่ bind"}</div></div>}<button className="btn secondary" onClick={loadStatus}>ตรวจสถานะ provider</button>{contract && <form className="form-grid" onSubmit={bindProviderDevice}><h3>Bind Provider Device หลัง enroll จริง</h3><label>providerDeviceName<input name="providerDeviceName" className="input" placeholder="Android: enterprises/.../devices/... | Apple: UDID" /></label><label>providerEnrollmentId<input name="providerEnrollmentId" className="input" placeholder="enrollment token/profile id" /></label><div className="grid cols-2"><label>Apple deviceToken<input name="providerDeviceToken" className="input" placeholder="จาก Apple check-in" /></label><label>Apple PushMagic<input name="providerPushMagic" className="input" placeholder="จาก Apple check-in" /></label></div><button className="btn secondary">บันทึก binding</button></form>}</div>
+      <div className="card form-grid"><h2>1) เลือกสัญญา/เครื่อง</h2><label>สัญญา<select className="input" value={selectedContract} onChange={(e) => setSelectedContract(e.target.value)}><option value="">เลือกสัญญา</option>{contracts.map((c) => <option key={c.id} value={c.id}>{c.contractNo} - {c.customer.fullName} - {c.device.platform}</option>)}</select></label>{contract && <div className="notice"><b>{contract.device.brand} {contract.device.model}</b><div className="small">IMEI {contract.device.imei ?? "-"} | Serial {contract.device.serialNumber ?? "-"} | {contract.device.platform}</div><div className="small">Provider device: {contract.device.providerDeviceName ?? "ยังไม่ bind"}</div></div>}<button className="btn secondary" onClick={loadStatus}>ตรวจสถานะ provider</button>{canManage && contract && <form className="form-grid" onSubmit={bindProviderDevice}><h3>Bind Provider Device หลัง enroll จริง</h3><label>providerDeviceName<input name="providerDeviceName" className="input" placeholder="Android: enterprises/.../devices/... | Apple: UDID" /></label><label>providerEnrollmentId<input name="providerEnrollmentId" className="input" placeholder="enrollment token/profile id" /></label><div className="grid cols-2"><label>Apple deviceToken<input name="providerDeviceToken" className="input" placeholder="จาก Apple check-in" /></label><label>Apple PushMagic<input name="providerPushMagic" className="input" placeholder="จาก Apple check-in" /></label></div><button className="btn secondary">บันทึก binding</button></form>}</div>
       <div className="card"><h2>สิ่งที่ต้องสมัคร</h2><div className="timeline"><div className="timeline-item"><span className="dot" /><div><b>Android</b><div className="small">Google Cloud → Enable Android Management API → Service Account → Enterprise signup URL → Enterprise name → Device quota</div></div></div><div className="timeline-item"><span className="dot" /><div><b>iOS/iPadOS</b><div className="small">Apple Business → APNs MDM certificate → ADE server token → HTTPS MDM server → supervised devices</div></div></div></div></div>
     </div>
-    <div className="grid cols-2">
+    {canManage && <div className="grid cols-2">
       <form className="card form-grid" onSubmit={androidSignupUrl}><h2>2) Android Enterprise Signup</h2><label>Callback URL<input name="callbackUrl" className="input" placeholder="https://api.example.com/mdm/android/signup-callback" /></label><label>Admin email<input name="adminEmail" className="input" placeholder="it@company.com" /></label><button className="btn">สร้าง signup URL</button></form>
       <form className="card form-grid" onSubmit={androidEnterprise}><h2>3) สร้าง Android Enterprise</h2><label>enterpriseToken<input name="enterpriseToken" className="input" placeholder="จาก callback" /></label><label>signupUrlName<input name="signupUrlName" className="input" placeholder="signupUrls/..." /></label><label>Display name<input name="displayName" className="input" placeholder="ชื่อบริษัท" /></label><button className="btn">สร้าง Enterprise</button></form>
-    </div>
-    <div className="grid cols-2">
+    </div>}
+    {canManage && <div className="grid cols-2">
       <div className="card"><h2>Android Management API</h2><p className="small">ใช้กับเครื่อง Android company-owned / fully managed ที่ enroll ก่อนส่งมอบ</p><div className="pill-list"><button className="btn" onClick={androidEnroll}>สร้าง Android Enrollment</button><button className="btn secondary" onClick={publishAndroidBasic}>Publish lease-basic policy</button></div></div>
       <div className="card"><h2>Apple MDM / ADE</h2><p className="small">ใช้กับ iPhone/iPad ที่เข้า Apple Business Manager และ supervised/ADE</p><div className="pill-list"><button className="btn" onClick={appleEnroll}>สร้าง Apple Enrollment Profile</button><button className="btn secondary" onClick={publishAppleProfile}>Publish Apple Profile</button><button className="btn secondary" onClick={syncAppleAbm}>Sync ABM</button></div></div>
-    </div>
+    </div>}
     <div className="card"><h2>ผลลัพธ์ API</h2><pre style={{ whiteSpace: "pre-wrap", overflow: "auto" }}>{result ? JSON.stringify(result, null, 2) : "กดปุ่มด้านบนเพื่อเริ่มตั้งค่า"}</pre></div>
     <div className="grid cols-3"><Checklist title="Android docs" items={["docs/providers/android-management-api-setup-th.md", "docs/providers/google-cloud-service-account-th.md", "docs/providers/android-enrollment-test-plan-th.md"]} /><Checklist title="Apple docs" items={["docs/providers/apple-business-manager-setup-th.md", "docs/providers/apple-mdm-certificate-apns-th.md", "docs/providers/apple-ade-server-token-th.md"]} /><Checklist title="ใช้จริง" items={["enroll ก่อนส่งมอบ", "ลูกค้าเซ็น consent", "จ่ายครบแล้ว release", "เก็บ audit ทุก action"]} /></div>
   </div>;
 }
 
 
-function Reports({ summary }: { summary: Summary | null }) {
-  return <div className="grid cols-2"><div className="card"><h2>Export รายงาน</h2><p className="muted">ไฟล์ CSV เปิดใน Excel/Google Sheets ได้ ไม่ต้องก็อปจากตารางทีละแถวเหมือนชดใช้กรรมดิจิทัล</p><div className="pill-list"><button className="btn" onClick={() => downloadCsv("/reports/contracts.csv", "contracts.csv")}>Contracts CSV</button><button className="btn" onClick={() => downloadCsv("/reports/payments.csv", "payments.csv")}>Payments CSV</button><button className="btn" onClick={() => downloadCsv("/reports/overdue.csv", "overdue.csv")}>Overdue CSV</button></div></div><div className="card"><h2>ตัวเลขสรุป</h2><div className="grid cols-2"><Metric label="ลูกค้า" value={summary?.customers ?? 0} note="ทั้งหมด" /><Metric label="ค้างชำระ" value={summary?.overdueContracts ?? 0} note="ต้องติดตาม" tone="bad" /><Metric label="จ่ายครบ" value={summary?.paidOffContracts ?? 0} note="พร้อม release/โอน" tone="good" /><Metric label="รายรับ" value={baht(summary?.confirmedRevenue ?? 0)} note="confirmed" tone="good" /><Metric label="รอโอนกรรมสิทธิ์" value={summary?.transferPendingContracts ?? 0} note="release แล้ว/กำลังรอ" tone="warn" /></div></div><div className="card" style={{ gridColumn: "1 / -1" }}><h2>เอกสารก่อนใช้จริง</h2><div className="grid cols-3"><Checklist title="สัญญา" items={["ให้ทนายตรวจเทมเพลต", "ระบุเงื่อนไขค้างชำระ", "ระบุการปลดเมื่อจ่ายครบ"]} /><Checklist title="การเงิน" items={["เปิดบัญชีร้าน", "ต่อ payment gateway", "เก็บใบเสร็จ/ภาษี"]} /><Checklist title="ข้อมูลส่วนบุคคล" items={["ทำ privacy notice", "กำหนด retention", "จำกัดสิทธิ์พนักงาน"]} /></div></div></div>;
+function Reports({ summary, canExport }: { summary: Summary | null; canExport: boolean }) {
+  return <div className="grid cols-2"><div className="card"><h2>Export รายงาน</h2><p className="muted">ไฟล์ CSV เปิดใน Excel/Google Sheets ได้ ไม่ต้องก็อปจากตารางทีละแถวเหมือนชดใช้กรรมดิจิทัล</p>{canExport ? <div className="pill-list"><button className="btn" onClick={() => downloadCsv("/reports/contracts.csv", "contracts.csv")}>Contracts CSV</button><button className="btn" onClick={() => downloadCsv("/reports/payments.csv", "payments.csv")}>Payments CSV</button><button className="btn" onClick={() => downloadCsv("/reports/overdue.csv", "overdue.csv")}>Overdue CSV</button></div> : <p className="small">บัญชีนี้ดูตัวเลขได้ แต่ไม่มีสิทธิ์ export ไฟล์</p>}</div><div className="card"><h2>ตัวเลขสรุป</h2><div className="grid cols-2"><Metric label="ลูกค้า" value={summary?.customers ?? 0} note="ทั้งหมด" /><Metric label="ค้างชำระ" value={summary?.overdueContracts ?? 0} note="ต้องติดตาม" tone="bad" /><Metric label="จ่ายครบ" value={summary?.paidOffContracts ?? 0} note="พร้อม release/โอน" tone="good" /><Metric label="รายรับ" value={baht(summary?.confirmedRevenue ?? 0)} note="confirmed" tone="good" /><Metric label="รอโอนกรรมสิทธิ์" value={summary?.transferPendingContracts ?? 0} note="release แล้ว/กำลังรอ" tone="warn" /></div></div><div className="card" style={{ gridColumn: "1 / -1" }}><h2>เอกสารก่อนใช้จริง</h2><div className="grid cols-3"><Checklist title="สัญญา" items={["ให้ทนายตรวจเทมเพลต", "ระบุเงื่อนไขค้างชำระ", "ระบุการปลดเมื่อจ่ายครบ"]} /><Checklist title="การเงิน" items={["เปิดบัญชีร้าน", "ต่อ payment gateway", "เก็บใบเสร็จ/ภาษี"]} /><Checklist title="ข้อมูลส่วนบุคคล" items={["ทำ privacy notice", "กำหนด retention", "จำกัดสิทธิ์พนักงาน"]} /></div></div></div>;
 }
 
 function ReadinessPanel({ readiness }: { readiness: Readiness | null }) {
