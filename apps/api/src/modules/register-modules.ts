@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { registerCoreRoutes } from "./core/register-core";
 import { registerAuthRoutes } from "./auth/register-auth";
 import { registerStoreRoutes } from "./store/register-store";
+import { registerSettingsRoutes } from "./settings/register-settings";
 import { registerIntegrationsRoutes } from "./integrations/register-integrations";
 import { registerPlatformRoutes } from "./platform/register-platform";
 import { registerCustomersRoutes } from "./customers/register-customers";
@@ -22,6 +23,7 @@ export async function registerApiModules(app: FastifyInstance) {
   await registerCoreRoutes(app);
   await registerAuthRoutes(app);
   await registerStoreRoutes(app);
+  await registerSettingsRoutes(app);
   await registerIntegrationsRoutes(app);
   await registerPlatformRoutes(app);
   await registerCustomersRoutes(app);
