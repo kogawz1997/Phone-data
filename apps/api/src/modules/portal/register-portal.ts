@@ -14,6 +14,7 @@ import {
   rateLimit,
   renderContractHtml,
   requireCustomerAuth,
+  saveBase64Upload,
   signSession,
 } from "../../core/app-context";
 
@@ -80,7 +81,6 @@ export async function registerPortalRoutes(app: FastifyInstance) {
     const token = signSession(sessionUser, JWT_SECRET);
     reply.header("Set-Cookie", buildSessionCookie(token, IS_PRODUCTION));
 
-    // token is returned for old clients during migration, but customer-web now relies on the HttpOnly cookie.
     return ok({ token, customer: portalUser.customer, store: { id: org.id, name: org.name, slug: org.slug, phone: org.phone } });
   });
 
@@ -93,6 +93,15 @@ export async function registerPortalRoutes(app: FastifyInstance) {
     const portalUser = (request as CustomerPortalRequest).portalUser;
     const data = await prisma.customerPortalUser.findFirst({ where: { id: portalUser.id }, include: { customer: true, organization: true } });
     return ok({ customer: data?.customer, store: data?.organization });
+  });
+
+  app.post("/portal/uploads/base64", { preHandler: requireCustomerAuth }, async (request, reply) => {
+    const portalUser = (request as CustomerPortalRequest).portalUser;
+    const body = cleanEmptyStrings(request.body) as { filename?: string; contentBase64?: string; folder?: string };
+    if (!body.filename || !body.contentBase64) return fail(reply, 400, "BAD_REQUEST", "filename and contentBase64 are required");
+    const saved = await saveBase64Upload({ filename: body.filename, contentBase64: body.contentBase64, folder: body.folder ?? `portal-slips/${portalUser.organizationId}/${portalUser.customerId}` });
+    await audit({ organizationId: portalUser.organizationId, action: "PORTAL_UPLOAD_FILE", targetType: "Customer", targetId: portalUser.customerId, metadata: { url: saved.url, size: saved.size, filename: body.filename } });
+    return ok(saved);
   });
 
   app.get("/portal/contracts", { preHandler: requireCustomerAuth }, async (request) => {
@@ -130,10 +139,11 @@ export async function registerPortalRoutes(app: FastifyInstance) {
     const row = await prisma.customerPaymentRequest.findFirst({ where: { id, organizationId: portalUser.organizationId, customerId: portalUser.customerId } });
     if (!row) return fail(reply, 404, "NOT_FOUND", "Payment request not found");
     if (!["OPEN", "REJECTED"].includes(row.status)) return fail(reply, 409, "INVALID_STATE", "Payment request is not open");
+    if (!body.slipUrl) return fail(reply, 400, "BAD_REQUEST", "slipUrl is required");
 
     const updated = await prisma.customerPaymentRequest.update({ where: { id }, data: { status: "SUBMITTED", submittedSlipUrl: body.slipUrl, submittedNote: body.note, submittedAt: new Date() } });
     await prisma.payment.create({ data: { organizationId: portalUser.organizationId, contractId: row.contractId, installmentId: row.installmentId, amount: row.amount, method: "PROMPTPAY", status: "VERIFYING", slipUrl: body.slipUrl, providerRef: row.id, note: body.note } });
-    await audit({ organizationId: portalUser.organizationId, action: "PORTAL_SUBMIT_PAYMENT_REQUEST", targetType: "CustomerPaymentRequest", targetId: id });
+    await audit({ organizationId: portalUser.organizationId, action: "PORTAL_SUBMIT_PAYMENT_REQUEST", targetType: "CustomerPaymentRequest", targetId: id, metadata: { slipUrl: body.slipUrl } });
     return ok(updated);
   });
 
