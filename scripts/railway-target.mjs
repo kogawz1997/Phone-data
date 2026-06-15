@@ -16,7 +16,7 @@ const aliases = new Map([
 ]);
 
 function normalize(value = "") {
-  return value.toLowerCase().trim();
+  return String(value).toLowerCase().trim();
 }
 
 function inferFromText(value = "") {
@@ -34,6 +34,7 @@ export function resolveRailwayTarget() {
     process.env.KOGA_RAILWAY_TARGET,
     process.env.KOGA_APP,
     process.env.RAILWAY_SERVICE_NAME,
+    process.env.RAILWAY_SERVICE_ID,
     process.env.RAILWAY_PUBLIC_DOMAIN,
     process.env.RAILWAY_STATIC_URL,
   ];
@@ -43,11 +44,9 @@ export function resolveRailwayTarget() {
     if (target) return target;
   }
 
-  throw new Error([
-    "Cannot determine Railway target for this monorepo service.",
-    "Set KOGA_RAILWAY_TARGET to one of: api, admin-web, customer-web.",
-    "This keeps one shared railway.json from accidentally starting the wrong app. Because apparently clouds also need name tags.",
-  ].join(" "));
+  const fallback = process.env.KOGA_RAILWAY_TARGET_FALLBACK || "admin-web";
+  console.warn(`[railway-target] Cannot infer target from Railway env. Falling back to ${fallback}. Set KOGA_RAILWAY_TARGET explicitly to api, admin-web, or customer-web.`);
+  return inferFromText(fallback) || "admin-web";
 }
 
 export function commandForTarget(target, phase) {
