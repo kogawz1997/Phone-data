@@ -33,9 +33,17 @@ type PaymentSetting = {
   isActive: boolean;
 };
 
+type PortalSettings = {
+  slug?: string;
+  brandColor?: string;
+  welcomeText?: string;
+  contactLine?: string;
+  supportPhone?: string;
+  releasePolicy?: string;
+};
+
 type Integration = { id: string; provider: string; category: string; displayName: string; status: string; configJson?: Record<string, string> };
 type NotificationTemplate = { key: string; channel: string; title: string; body: string };
-
 type Tab = "store" | "payment" | "portal" | "notifications" | "documents" | "integrations";
 
 const tabs: Array<{ id: Tab; label: string; hint: string }> = [
@@ -67,11 +75,12 @@ export default function StoreSettingsPage() {
   async function load() {
     setError("");
     try {
-      const [profileRes, payments, templatesRes, integrationRows] = await Promise.all([
+      const [profileRes, payments, templatesRes, integrationRows, portalSettings] = await Promise.all([
         api<StoreProfile>("/store/profile"),
         api<PaymentSetting[]>("/store/payment-settings"),
         api<{ notifications: NotificationTemplate[] }>("/templates"),
         api<Integration[]>("/integrations"),
+        api<PortalSettings>("/store/portal-settings"),
       ]);
       setProfile(profileRes);
       setStoreForm({
@@ -83,12 +92,12 @@ export default function StoreSettingsPage() {
         address: text(profileRes.organization.address),
       });
       setPortalForm({
-        slug: text(profileRes.organization.slug),
-        brandColor: "#38bdf8",
-        welcomeText: "ตรวจสอบยอด ชำระงวด และดูสัญญาได้จากหน้านี้",
-        contactLine: "",
-        supportPhone: text(profileRes.organization.phone),
-        releasePolicy: "เมื่อชำระครบ ร้านจะตรวจสอบยอดและดำเนินการปลดเครื่องตามขั้นตอน",
+        slug: text(portalSettings.slug || profileRes.organization.slug),
+        brandColor: text(portalSettings.brandColor || "#38bdf8"),
+        welcomeText: text(portalSettings.welcomeText || "ตรวจสอบยอด ชำระงวด และดูสัญญาได้จากหน้านี้"),
+        contactLine: text(portalSettings.contactLine),
+        supportPhone: text(portalSettings.supportPhone || profileRes.organization.phone),
+        releasePolicy: text(portalSettings.releasePolicy || "เมื่อชำระครบ ร้านจะตรวจสอบยอดและดำเนินการปลดเครื่องตามขั้นตอน"),
       });
       const activePayment = payments.find((item) => item.isActive) ?? payments[0];
       if (activePayment) setPayment(activePayment);
@@ -135,10 +144,7 @@ export default function StoreSettingsPage() {
   async function savePortal() {
     setBusy("portal"); setError(""); setNotice("");
     try {
-      const connector = integrations.find((x) => x.provider === "WEBHOOK") || integrations[0];
-      if (connector) {
-        await api(`/integrations/${connector.id}`, { method: "PATCH", body: JSON.stringify({ configJson: { ...(connector.configJson ?? {}), portalSettings: JSON.stringify(portalForm) }, status: "CONNECTING" }) });
-      }
+      await api("/store/portal-settings", { method: "PUT", body: JSON.stringify(portalForm) });
       setNotice("บันทึก Portal settings แล้ว");
       await load();
     } catch (e) { setError(e instanceof Error ? e.message : "บันทึก Portal settings ไม่สำเร็จ"); }
