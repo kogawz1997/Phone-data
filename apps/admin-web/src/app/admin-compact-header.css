@@ -1,0 +1,96 @@
+/* Compact mobile header for the authenticated admin console. */
+@media (max-width: 760px) {
+  .app-shell {
+    padding-top: 10px !important;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: grid !important;
+    grid-template-columns: auto 1fr auto !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin: -12px -12px 10px !important;
+    padding: max(10px, env(safe-area-inset-top)) 12px 10px !important;
+    border-radius: 0 0 18px 18px !important;
+    background: rgba(7, 10, 18, .88) !important;
+    border-bottom: 1px solid rgba(148, 163, 184, .12) !important;
+    backdrop-filter: blur(18px) !important;
+  }
+
+  .topbar .brand {
+    display: contents !important;
+  }
+
+  .topbar .brand .logo {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 14px !important;
+    font-size: 18px !important;
+  }
+
+  .topbar .brand > div:last-child {
+    min-width: 0 !important;
+  }
+
+  .topbar .brand .kicker {
+    display: none !important;
+  }
+
+  .topbar .brand h2 {
+    max-width: 42vw !important;
+    margin: 0 !important;
+    font-size: 20px !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .topbar .pill-list {
+    display: flex !important;
+    grid-column: 3 !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: 7px !important;
+    min-width: 0 !important;
+  }
+
+  .topbar .pill-list .badge,
+  .topbar .pill-list .btn {
+    width: auto !important;
+    min-height: 34px !important;
+    padding: 8px 10px !important;
+    border-radius: 999px !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+  }
+
+  .topbar .pill-list .badge.good,
+  .topbar .pill-list .badge.warn {
+    display: inline-flex !important;
+    max-width: 90px !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .topbar .pill-list .badge.neutral,
+  .topbar .pill-list .btn.secondary,
+  .topbar .pill-list .btn:not(.danger) {
+    display: none !important;
+  }
+
+  .topbar .pill-list .btn.danger {
+    max-width: 72px !important;
+    color: #fecaca !important;
+    background: rgba(127, 29, 29, .32) !important;
+    border-color: rgba(248, 113, 113, .38) !important;
+  }
+
+  .hero.hero-grid {
+    margin-top: 12px !important;
+  }
+}
