@@ -43,6 +43,7 @@ function toastMessageFor(pathname: string, method: string) {
   if (pathname.includes("contract")) return method === "POST" ? "สร้างสัญญาแล้ว" : "อัปเดตสัญญาแล้ว";
   if (pathname.includes("device")) return method === "POST" ? "เพิ่มเครื่องในระบบแล้ว" : "อัปเดตข้อมูลเครื่องแล้ว";
   if (pathname.includes("mdm") || pathname.includes("action")) return "ส่งคำสั่งเข้าระบบแล้ว";
+  if (pathname.includes("setting") || pathname.includes("profile") || pathname.includes("template")) return "บันทึกการตั้งค่าแล้ว";
   return "บันทึกรายการเรียบร้อย";
 }
 
@@ -94,19 +95,15 @@ function decorateEmptyStates() {
 function buildInsights() {
   const hero = document.querySelector<HTMLElement>(".app-shell .hero");
   if (!hero || document.querySelector(".ux-insight-strip")) return;
-
   const metrics = Array.from(document.querySelectorAll<HTMLElement>(".metric")).slice(0, 4);
   if (metrics.length === 0) return;
-
   const strip = document.createElement("section");
   strip.className = "ux-insight-strip";
-  strip.innerHTML = metrics
-    .map((metric) => {
-      const label = metric.querySelector(".metric-label")?.textContent?.trim() || "ข้อมูล";
-      const value = metric.querySelector(".metric-value")?.textContent?.trim() || "0";
-      return `<div class="ux-insight-card"><span>${label}</span><strong>${value}</strong></div>`;
-    })
-    .join("");
+  strip.innerHTML = metrics.map((metric) => {
+    const label = metric.querySelector(".metric-label")?.textContent?.trim() || "ข้อมูล";
+    const value = metric.querySelector(".metric-value")?.textContent?.trim() || "0";
+    return `<div class="ux-insight-card"><span>${label}</span><strong>${value}</strong></div>`;
+  }).join("");
   hero.insertAdjacentElement("afterend", strip);
 }
 
@@ -161,6 +158,7 @@ export default function UXEnhancements() {
     { id: "contracts", label: "ไปหน้าสัญญา", hint: "Contracts", group: "เมนู", run: () => goTab("สัญญา") },
     { id: "payments", label: "ไปหน้าชำระเงิน", hint: "Payments", group: "เมนู", run: () => goTab("ชำระเงิน") },
     { id: "devices", label: "ไปหน้าสต็อกเครื่อง", hint: "Devices", group: "เมนู", run: () => goTab("สต็อก") },
+    { id: "settings", label: "ไปหน้าตั้งค่าร้าน", hint: "Store settings", group: "ระบบ", run: () => goPath("/settings") },
     { id: "audit", label: "ไปหน้า Audit", hint: "Logs", group: "เมนู", run: () => goTab("Audit") },
     { id: "owner", label: "ไปหน้า Owner", hint: "Platform owner", group: "ระบบ", run: () => goPath("/platform") },
     { id: "users", label: "ไปหน้า Users ลูกค้า", hint: "Customer access", group: "ระบบ", run: () => goPath("/customer-access") },
@@ -198,9 +196,7 @@ export default function UXEnhancements() {
         if (isMutation) window.setTimeout(() => document.documentElement.classList.remove("ux-busy"), 450);
       }
     };
-    return () => {
-      window.fetch = originalFetch;
-    };
+    return () => { window.fetch = originalFetch; };
   }, []);
 
   useEffect(() => {
@@ -246,9 +242,7 @@ export default function UXEnhancements() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    setFilterResult(filterPage(query, status));
-  }, [query, status]);
+  useEffect(() => { setFilterResult(filterPage(query, status)); }, [query, status]);
 
   const confirmNow = () => {
     const target = confirmAction?.target;
@@ -262,86 +256,24 @@ export default function UXEnhancements() {
   return (
     <>
       <div className="ux-loading-bar" />
-
       <section className="ux-smart-search" aria-label="ค้นหาและตัวกรอง">
         <button className="ux-command-trigger" type="button" onClick={() => setCommandOpen(true)}>⌘K</button>
         <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหาในหน้านี้" aria-label="ค้นหาในหน้านี้" />
         <select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="ตัวกรองสถานะ">
-          <option value="all">ทุกสถานะ</option>
-          <option value="active">Active</option>
-          <option value="pending">Pending</option>
-          <option value="overdue">Overdue</option>
-          <option value="confirmed">Confirmed</option>
+          <option value="all">ทุกสถานะ</option><option value="active">Active</option><option value="pending">Pending</option><option value="overdue">Overdue</option><option value="confirmed">Confirmed</option>
         </select>
         {filterResult.total > 0 && <span>{filterResult.visible}/{filterResult.total}</span>}
       </section>
-
-      <div className="ux-toast-stack" aria-live="polite">
-        {toasts.map((toast) => <div key={toast.id} className={`ux-toast ${toast.tone}`}>{toast.message}</div>)}
-      </div>
-
+      <div className="ux-toast-stack" aria-live="polite">{toasts.map((toast) => <div key={toast.id} className={`ux-toast ${toast.tone}`}>{toast.message}</div>)}</div>
       <nav className="ux-bottom-nav" aria-label="เมนูหลักบนมือถือ">
         {navItems.map((item) => <button key={item.label} type="button" onClick={() => goTab(item.tab)}>{item.label}</button>)}
         <button type="button" onClick={() => setSheet(sheet === "more" ? "none" : "more")}>เพิ่มเติม</button>
       </nav>
-
       {sheet !== "none" && <div className="ux-sheet-backdrop" onClick={() => setSheet("none")} />}
-      {sheet === "quick" && (
-        <aside className="ux-sheet">
-          <div className="ux-sheet-handle" />
-          <h3>Quick Actions</h3>
-          <button type="button" onClick={() => goTab("ลูกค้า")}>เพิ่มลูกค้า</button>
-          <button type="button" onClick={() => goTab("สต็อก")}>เพิ่มเครื่อง</button>
-          <button type="button" onClick={() => goTab("สัญญา")}>สร้างสัญญา</button>
-          <button type="button" onClick={() => goTab("ชำระเงิน")}>บันทึกชำระเงิน</button>
-        </aside>
-      )}
-      {sheet === "more" && (
-        <aside className="ux-sheet">
-          <div className="ux-sheet-handle" />
-          <h3>เมนูเพิ่มเติม</h3>
-          <button type="button" onClick={() => setCommandOpen(true)}>ค้นหา / คำสั่ง</button>
-          <button type="button" onClick={() => goTab("ชำระเงิน")}>ชำระเงิน</button>
-          <button type="button" onClick={() => goPath("/platform")}>Owner / Platform</button>
-          <button type="button" onClick={() => goPath("/customer-access")}>Users ลูกค้า</button>
-          <button type="button" onClick={() => goPath("/integrations")}>Integrations</button>
-          <button type="button" onClick={() => goTab("สต็อก")}>สต็อกเครื่อง</button>
-          <button type="button" onClick={() => goTab("ติดตาม")}>ติดตามงวด</button>
-          <button type="button" onClick={() => goTab("MDM")}>MDM</button>
-          <button type="button" onClick={() => goTab("รายงาน")}>รายงาน</button>
-          <button type="button" onClick={() => goTab("Audit")}>Audit</button>
-        </aside>
-      )}
-
-      {commandOpen && (
-        <div className="ux-command-backdrop" onMouseDown={() => setCommandOpen(false)}>
-          <div className="ux-command" onMouseDown={(event) => event.stopPropagation()}>
-            <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหาเมนู คำสั่ง หรือข้อมูล" />
-            <div className="ux-command-list">
-              {filteredCommands.slice(0, 12).map((command) => (
-                <button key={command.id} type="button" onClick={command.run}>
-                  <strong>{command.label}</strong>
-                  <span>{command.group} · {command.hint}</span>
-                </button>
-              ))}
-              {filteredCommands.length === 0 && <div className="ux-command-empty">ไม่พบคำสั่งที่ตรงกัน</div>}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {confirmAction && (
-        <div className="ux-confirm-backdrop" onMouseDown={() => setConfirmAction(null)}>
-          <div className="ux-confirm" onMouseDown={(event) => event.stopPropagation()}>
-            <h3>ยืนยันรายการ</h3>
-            <p>{confirmAction.message}</p>
-            <div>
-              <button type="button" className="secondary" onClick={() => setConfirmAction(null)}>ยกเลิก</button>
-              <button type="button" onClick={confirmNow}>ยืนยัน</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {sheet === "quick" && <aside className="ux-sheet"><div className="ux-sheet-handle" /><h3>Quick Actions</h3><button type="button" onClick={() => goTab("ลูกค้า")}>เพิ่มลูกค้า</button><button type="button" onClick={() => goTab("สต็อก")}>เพิ่มเครื่อง</button><button type="button" onClick={() => goTab("สัญญา")}>สร้างสัญญา</button><button type="button" onClick={() => goTab("ชำระเงิน")}>บันทึกชำระเงิน</button></aside>}
+      {sheet === "more" && <aside className="ux-sheet"><div className="ux-sheet-handle" /><h3>เมนูเพิ่มเติม</h3><button type="button" onClick={() => setCommandOpen(true)}>ค้นหา / คำสั่ง</button><button type="button" onClick={() => goPath("/settings")}>ตั้งค่าร้าน</button><button type="button" onClick={() => goTab("ชำระเงิน")}>ชำระเงิน</button><button type="button" onClick={() => goPath("/platform")}>Owner / Platform</button><button type="button" onClick={() => goPath("/customer-access")}>Users ลูกค้า</button><button type="button" onClick={() => goPath("/integrations")}>Integrations</button><button type="button" onClick={() => goTab("สต็อก")}>สต็อกเครื่อง</button><button type="button" onClick={() => goTab("ติดตาม")}>ติดตามงวด</button><button type="button" onClick={() => goTab("MDM")}>MDM</button><button type="button" onClick={() => goTab("รายงาน")}>รายงาน</button><button type="button" onClick={() => goTab("Audit")}>Audit</button></aside>}
+      {commandOpen && <div className="ux-command-backdrop" onMouseDown={() => setCommandOpen(false)}><div className="ux-command" onMouseDown={(event) => event.stopPropagation()}><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหาเมนู คำสั่ง หรือข้อมูล" /><div className="ux-command-list">{filteredCommands.slice(0, 12).map((command) => <button key={command.id} type="button" onClick={command.run}><strong>{command.label}</strong><span>{command.group} · {command.hint}</span></button>)}{filteredCommands.length === 0 && <div className="ux-command-empty">ไม่พบคำสั่งที่ตรงกัน</div>}</div></div></div>}
+      {confirmAction && <div className="ux-confirm-backdrop" onMouseDown={() => setConfirmAction(null)}><div className="ux-confirm" onMouseDown={(event) => event.stopPropagation()}><h3>ยืนยันรายการ</h3><p>{confirmAction.message}</p><div><button type="button" className="secondary" onClick={() => setConfirmAction(null)}>ยกเลิก</button><button type="button" onClick={confirmNow}>ยืนยัน</button></div></div></div>}
     </>
   );
 }
