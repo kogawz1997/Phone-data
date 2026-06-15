@@ -1,7 +1,8 @@
-/* Compact mobile header for the authenticated admin console. */
+/* Compact mobile header and simplified navigation for the authenticated admin console. */
 @media (max-width: 760px) {
   .app-shell {
     padding-top: 10px !important;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important;
   }
 
   .topbar {
@@ -92,5 +93,48 @@
 
   .hero.hero-grid {
     margin-top: 12px !important;
+  }
+
+  .ux-smart-search {
+    display: none !important;
+  }
+
+  .ux-fab {
+    display: none !important;
+  }
+
+  .ux-bottom-nav {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: max(10px, env(safe-area-inset-bottom)) !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+    min-height: 62px !important;
+    padding: 8px !important;
+    border-radius: 22px !important;
+  }
+
+  .ux-bottom-nav button {
+    min-width: 0 !important;
+    padding: 10px 4px !important;
+    border-radius: 16px !important;
+    font-size: 13px !important;
+    white-space: nowrap !important;
+  }
+
+  .ux-sheet {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: calc(82px + env(safe-area-inset-bottom)) !important;
+    max-height: min(62vh, 520px) !important;
+    overflow-y: auto !important;
+    border-radius: 24px !important;
+  }
+
+  .ux-command {
+    width: calc(100vw - 24px) !important;
+    max-height: 76vh !important;
+    margin: 12vh auto 0 !important;
   }
 }
