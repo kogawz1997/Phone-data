@@ -2,7 +2,9 @@ import "./globals.css";
 import "./production-compact.css";
 import "./mobile-premium.css";
 import "./motion-professional.css";
+import "./ux-enhancements.css";
 import type { ReactNode } from "react";
+import UXEnhancements from "./ux-enhancements";
 
 export const metadata = {
   title: "KOGA Lease MDM SaaS",
@@ -13,7 +15,10 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="th">
-      <body>{children}</body>
+      <body>
+        {children}
+        <UXEnhancements />
+      </body>
     </html>
   );
 }
