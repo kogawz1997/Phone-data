@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@repo/db": [
+        "packages/db/src/index.ts"
+      ],
+      "@repo/shared": [
+        "packages/shared/src/index.ts"
+      ],
+      "@repo/device-control": [
+        "packages/device-control/src/index.ts"
+      ],
+      "@repo/contracts": [
+        "packages/contracts/src/index.ts"
+      ],
+      "@repo/payments": [
+        "packages/payments/src/index.ts"
+      ],
+      "@repo/notifications": [
+        "packages/notifications/src/index.ts"
+      ],
+      "@repo/auth": [
+        "packages/auth/src/index.ts"
+      ],
+      "@repo/storage": [
+        "packages/storage/src/index.ts"
+      ]
+    }
+  }
+}

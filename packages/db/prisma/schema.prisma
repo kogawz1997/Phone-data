@@ -1,0 +1,1253 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String?  @unique
+  storeCode String?  @unique
+  ownerName String?
+  email     String?
+  billingEmail String?
+  taxId     String?
+  phone     String?
+  address   String?
+  status    TenantStatus @default(TRIAL)
+  plan      TenantPlan @default(STARTER)
+  billingStatus BillingStatus @default(TRIALING)
+  monthlyFee Decimal @default(990)
+  trialEndsAt DateTime?
+  suspendedAt DateTime?
+  lastBillingAt DateTime?
+  nextBillingAt DateTime?
+  lastActiveAt DateTime?
+  platformNotes String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  branches  Branch[]
+  customers Customer[]
+  devices   Device[]
+  contracts Contract[]
+  audits    AuditLog[]
+  platformSubscriptions PlatformSubscription[]
+  platformInvoices PlatformInvoice[]
+  integrationConnectors IntegrationConnector[]
+  onboardingSteps StoreOnboardingStep[]
+  customerPortalUsers CustomerPortalUser[]
+  customerPortalInvites CustomerPortalInvite[]
+  paymentRequests CustomerPaymentRequest[]
+  paymentSettings StorePaymentSetting[]
+  mdmProviderConnections MdmProviderConnection[]
+  mdmEnterprises MdmEnterprise[]
+  mdmEnrollments MdmEnrollment[]
+  mdmPolicies MdmPolicy[]
+  appleCustodyRecords AppleCustodyRecord[]
+  platformSettlements PlatformSettlement[]
+  ledgerEntries StoreLedgerEntry[]
+  riskAssessments CustomerRiskAssessment[]
+  collectionTasks CollectionTask[]
+  disputes DisputeCase[]
+  notificationTemplates NotificationTemplate[]
+  templateItems TemplateCenterItem[]
+  automationRules AutomationRule[]
+  consentSnapshots ConsentDocumentSnapshot[]
+  storeHealthSnapshots StoreHealthSnapshot[]
+  reportExports ReportExport[]
+
+  @@index([status])
+  @@index([plan])
+  @@index([billingStatus])
+  @@index([createdAt])
+}
+
+enum TenantStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+enum TenantPlan {
+  STARTER
+  STANDARD
+  PRO
+  ENTERPRISE
+}
+
+enum BillingStatus {
+  TRIALING
+  CURRENT
+  OVERDUE
+  SUSPENDED
+  CANCELLED
+}
+
+model User {
+  id             String   @id @default(cuid())
+  organizationId String
+  email          String   @unique
+  passwordHash   String
+  name           String
+  role           UserRole @default(STAFF)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  auditLogs    AuditLog[]
+
+  @@index([organizationId])
+  @@index([role])
+}
+
+enum UserRole {
+  PLATFORM_OWNER
+  OWNER
+  ADMIN
+  MANAGER
+  STAFF
+  COLLECTION
+}
+
+model Branch {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  address        String?
+  phone          String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+}
+
+model Customer {
+  id             String   @id @default(cuid())
+  organizationId String
+  fullName       String
+  phone          String
+  nationalIdHash String?
+  address        String?
+  riskScore      Int      @default(0)
+  status         CustomerStatus @default(ACTIVE)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  contracts    Contract[]
+  consents     Consent[]
+  contactLogs  ContactLog[]
+  portalUsers CustomerPortalUser[]
+  portalInvites CustomerPortalInvite[]
+  paymentRequests CustomerPaymentRequest[]
+  riskAssessments CustomerRiskAssessment[]
+  collectionTasks CollectionTask[]
+  disputes DisputeCase[]
+  consentSnapshots ConsentDocumentSnapshot[]
+
+  @@index([organizationId])
+  @@index([phone])
+}
+
+enum CustomerStatus {
+  ACTIVE
+  WATCHLIST
+  BLACKLISTED
+}
+
+model Device {
+  id             String   @id @default(cuid())
+  organizationId String
+  brand          String
+  model          String
+  imei           String?  @unique
+  serialNumber   String?  @unique
+  storage        String?
+  color          String?
+  platform       DevicePlatform
+  deviceStatus   DeviceStatus @default(IN_STOCK)
+  controlStatus  DeviceControlStatus @default(NOT_ENROLLED)
+  controlMode    DeviceControlMode @default(NONE)
+  providerDeviceName String?
+  providerEnrollmentId String?
+  providerDeviceToken String?
+  providerPushMagic String?
+  lastMdmSyncAt  DateTime?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  contract     Contract?
+  events       DeviceEvent[]
+  actions      DeviceAction[]
+  mdmEnrollments MdmEnrollment[]
+  mdmCommands MdmCommand[]
+  appleCustodyRecord AppleCustodyRecord?
+
+  @@index([organizationId])
+  @@index([platform])
+  @@index([deviceStatus])
+
+  @@index([controlMode])
+  @@index([controlStatus])
+  @@index([organizationId, deviceStatus])
+}
+
+enum DevicePlatform {
+  ANDROID
+  IOS
+  IPADOS
+  MACOS
+  OTHER
+}
+
+enum DeviceStatus {
+  IN_STOCK
+  LEASE_ACTIVE
+  SOLD_INSTALLMENT
+  PAID_OFF
+  RELEASED
+  RETURNED
+  LOST
+  DAMAGED
+}
+
+enum DeviceControlStatus {
+  NOT_ENROLLED
+  ENROLL_PENDING
+  ENROLLED
+  REMINDER_SENT
+  RESTRICT_PENDING
+  RESTRICTED
+  RELEASE_PENDING
+  RELEASED
+  FAILED
+}
+
+enum DeviceControlMode {
+  NONE
+  ANDROID_ENTERPRISE
+  APPLE_MDM_ADE
+  APPLE_MDM_MANUAL
+  ICLOUD_CUSTODY
+}
+
+model Contract {
+  id               String   @id @default(cuid())
+  organizationId   String
+  customerId       String
+  deviceId         String   @unique
+  contractNo       String   @unique
+
+  salePrice        Decimal
+  downPayment      Decimal
+  principalAmount  Decimal
+  interestAmount   Decimal
+  totalAmount      Decimal
+  installmentCount Int
+  status           ContractStatus @default(DRAFT)
+  agreementType    AgreementType @default(LEASE_TO_OWN)
+  legalTitleStatus LegalTitleStatus @default(ORGANIZATION_OWNED)
+  managementPurpose String @default("LEASE_TO_OWN_ASSET_PROTECTION")
+  releaseDueAt     DateTime?
+  releaseCompletedAt DateTime?
+  ownershipTransferredAt DateTime?
+
+  signedAt         DateTime?
+  paidOffAt        DateTime?
+  cancelledAt      DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  customer     Customer     @relation(fields: [customerId], references: [id])
+  device       Device       @relation(fields: [deviceId], references: [id])
+  installments Installment[]
+  payments     Payment[]
+  paymentRequests CustomerPaymentRequest[]
+  consents     Consent[]
+  actions      DeviceAction[]
+  mdmEnrollments MdmEnrollment[]
+  mdmCommands MdmCommand[]
+  appleCustodyRecords AppleCustodyRecord[]
+  collectionTasks CollectionTask[]
+  disputes DisputeCase[]
+  consentSnapshots ConsentDocumentSnapshot[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([contractNo])
+
+  @@index([customerId])
+  @@index([deviceId])
+  @@index([legalTitleStatus])
+  @@index([organizationId, status])
+  @@index([createdAt])
+}
+
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  DUE_SOON
+  OVERDUE
+  GRACE_PERIOD
+  REVIEW_REQUIRED
+  RESTRICTED
+  RECOVERY
+  PAID_OFF
+  CANCELLED
+}
+
+enum AgreementType {
+  LEASE_TO_OWN
+  RENTAL
+  INSTALLMENT_ONLY
+}
+
+enum LegalTitleStatus {
+  ORGANIZATION_OWNED
+  TRANSFER_PENDING
+  TRANSFERRED
+  RETURNED
+  DISPUTED
+}
+
+model Installment {
+  id            String   @id @default(cuid())
+  contractId    String
+  installmentNo Int
+  dueDate       DateTime
+  amount        Decimal
+  paidAmount    Decimal @default(0)
+  status        InstallmentStatus @default(PENDING)
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  payments Payment[]
+  paymentRequests CustomerPaymentRequest[]
+
+  @@unique([contractId, installmentNo])
+  @@index([dueDate])
+  @@index([status])
+
+  @@index([contractId])
+  @@index([contractId, status])
+  @@index([status, dueDate])
+}
+
+enum InstallmentStatus {
+  PENDING
+  DUE_SOON
+  PAID
+  PARTIAL
+  OVERDUE
+  WAIVED
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  organizationId String
+  contractId    String
+  installmentId String?
+  amount        Decimal
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  slipUrl       String?
+  providerRef   String?
+  note          String?
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  contract    Contract     @relation(fields: [contractId], references: [id])
+  installment Installment? @relation(fields: [installmentId], references: [id])
+
+  @@index([organizationId])
+  @@index([contractId])
+  @@index([status])
+
+  @@index([installmentId])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([organizationId, createdAt])
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  PROMPTPAY
+  CARD
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFYING
+  CONFIRMED
+  REJECTED
+  REFUNDED
+}
+
+model StorePaymentSetting {
+  id             String   @id @default(cuid())
+  organizationId String
+  provider       PaymentProviderType @default(PROMPTPAY_MANUAL)
+  displayName    String   @default("PromptPay Manual")
+  promptPayId    String?
+  bankName       String?
+  accountNo      String?
+  accountName    String?
+  instructions   String?
+  isActive       Boolean  @default(false)
+  configJson     Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([provider])
+}
+
+enum PaymentProviderType {
+  PROMPTPAY_MANUAL
+  BANK_TRANSFER
+  PAYMENT_GATEWAY
+}
+
+model CustomerPortalUser {
+  id             String   @id @default(cuid())
+  organizationId String
+  customerId     String
+  email          String?
+  phone          String
+  passwordHash   String
+  status         CustomerPortalUserStatus @default(ACTIVE)
+  lastLoginAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  customer     Customer     @relation(fields: [customerId], references: [id])
+  invites      CustomerPortalInvite[]
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([phone])
+}
+
+enum CustomerPortalUserStatus {
+  INVITED
+  ACTIVE
+  DISABLED
+}
+
+model CustomerPortalInvite {
+  id             String   @id @default(cuid())
+  organizationId String
+  customerId     String
+  portalUserId   String?
+  token          String   @unique
+  shareUrl       String?
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  customer     Customer     @relation(fields: [customerId], references: [id])
+  portalUser   CustomerPortalUser? @relation(fields: [portalUserId], references: [id])
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([expiresAt])
+}
+
+model CustomerPaymentRequest {
+  id             String   @id @default(cuid())
+  organizationId String
+  customerId     String
+  contractId     String
+  installmentId  String
+  amount         Decimal
+  status         PaymentRequestStatus @default(OPEN)
+  qrPayload      String?
+  qrImageDataUrl String?
+  paymentUrl     String?
+  providerRef    String?
+  submittedSlipUrl String?
+  submittedNote  String?
+  expiresAt      DateTime?
+  submittedAt    DateTime?
+  confirmedAt    DateTime?
+  rejectedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  customer     Customer     @relation(fields: [customerId], references: [id])
+  contract     Contract     @relation(fields: [contractId], references: [id])
+  installment  Installment  @relation(fields: [installmentId], references: [id])
+  disputes DisputeCase[]
+  ledgerEntries StoreLedgerEntry[]
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([contractId])
+  @@index([installmentId])
+  @@index([status])
+
+  @@index([organizationId, status])
+  @@index([createdAt])
+}
+
+enum PaymentRequestStatus {
+  OPEN
+  SUBMITTED
+  CONFIRMED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+model Consent {
+  id         String   @id @default(cuid())
+  customerId String
+  contractId String?
+  type       ConsentType
+  version    String
+  acceptedAt DateTime @default(now())
+  ipAddress  String?
+  userAgent  String?
+
+  customer Customer  @relation(fields: [customerId], references: [id])
+  contract Contract? @relation(fields: [contractId], references: [id])
+
+  @@index([customerId])
+  @@index([contractId])
+}
+
+enum ConsentType {
+  INSTALLMENT_CONTRACT
+  LEASE_TO_OWN_TERMS
+  OWNERSHIP_RETENTION
+  PAYMENT_REMINDER
+  DEVICE_MANAGEMENT
+  DATA_PROCESSING
+  RELEASE_PROCESS
+}
+
+model DeviceAction {
+  id          String   @id @default(cuid())
+  deviceId    String
+  contractId  String?
+  type        DeviceActionType
+  reason      String
+  status      DeviceActionStatus @default(PENDING_APPROVAL)
+  approvedBy  String?
+  resultJson  Json?
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+
+  device   Device    @relation(fields: [deviceId], references: [id])
+  contract Contract? @relation(fields: [contractId], references: [id])
+
+  @@index([deviceId])
+  @@index([contractId])
+  @@index([status])
+
+  @@index([status, createdAt])
+}
+
+enum DeviceActionType {
+  SEND_REMINDER
+  REQUEST_LIMITED_MODE
+  REQUEST_RESTRICT
+  REQUEST_RELEASE
+  CONFIRM_OWNERSHIP_TRANSFER
+  MARK_RECOVERY
+}
+
+enum DeviceActionStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  QUEUED
+  SENT
+  COMPLETED
+  FAILED
+}
+
+model DeviceEvent {
+  id        String   @id @default(cuid())
+  deviceId  String
+  type      String
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id])
+
+  @@index([deviceId])
+}
+
+model ContactLog {
+  id         String   @id @default(cuid())
+  customerId String
+  channel    ContactChannel
+  message    String
+  createdBy  String?
+  createdAt  DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@index([createdAt])
+}
+
+enum ContactChannel {
+  PHONE
+  LINE
+  SMS
+  EMAIL
+  IN_PERSON
+  OTHER
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String?
+  actorId        String?
+  action         String
+  targetType     String
+  targetId       String
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  actor       User?         @relation(fields: [actorId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([actorId])
+  @@index([targetType, targetId])
+}
+
+
+model MdmProviderConnection {
+  id             String   @id @default(cuid())
+  organizationId String
+  provider       MdmProviderType
+  status         MdmProviderStatus @default(SETUP_REQUIRED)
+  configJson     Json?
+  lastCheckedAt  DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([provider])
+}
+
+enum MdmProviderType {
+  MOCK
+  ANDROID_MANAGEMENT
+  APPLE_MDM_ADE
+}
+
+enum MdmProviderStatus {
+  SETUP_REQUIRED
+  ACTIVE
+  FAILED
+  SUSPENDED
+}
+
+model MdmEnterprise {
+  id             String   @id @default(cuid())
+  organizationId String
+  provider       MdmProviderType
+  providerRef    String?
+  displayName    String
+  status         String   @default("SETUP_REQUIRED")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([provider])
+}
+
+model MdmEnrollment {
+  id             String   @id @default(cuid())
+  organizationId String
+  deviceId       String?
+  platform       DevicePlatform
+  provider       MdmProviderType
+  mode           String
+  token          String?
+  providerToken  String?
+  qrPayload      Json?
+  enrollmentUrl  String?
+  status         String   @default("CREATED")
+  expiresAt      DateTime?
+  usedAt         DateTime?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  device       Device?      @relation(fields: [deviceId], references: [id])
+
+  @@index([organizationId])
+  @@index([deviceId])
+  @@index([platform])
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model MdmPolicy {
+  id             String   @id @default(cuid())
+  organizationId String
+  provider       MdmProviderType
+  platform       DevicePlatform
+  name           String
+  payload        Json
+  version        Int      @default(1)
+  status         String   @default("DRAFT")
+  providerRef    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([provider])
+
+  @@index([platform])
+  @@index([status])
+}
+
+model MdmCommand {
+  id          String   @id @default(cuid())
+  deviceId    String
+  provider    MdmProviderType
+  commandType String
+  payload     Json?
+  status      String   @default("QUEUED")
+  providerRef String?
+  resultJson  Json?
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+
+  device Device @relation(fields: [deviceId], references: [id])
+
+  @@index([deviceId])
+  @@index([provider])
+  @@index([status])
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+
+model AppleCustodyRecord {
+  id                String   @id @default(cuid())
+  organizationId    String
+  deviceId          String   @unique
+  contractId        String?
+  mode              AppleCustodyMode @default(ICLOUD_CUSTODY_TRACKING)
+  status            AppleCustodyStatus @default(ACTIVE)
+  appleIdAlias      String?
+  findMyStatus      FindMyStatus @default(UNKNOWN)
+  activationStatus  ActivationStatus @default(UNKNOWN)
+  evidenceUrls      Json?
+  releaseDueAt      DateTime?
+  releasedAt        DateTime?
+  releaseEvidenceUrls Json?
+  lastCheckedAt     DateTime?
+  checkedByUserId   String?
+  releaseCheckedBy  String?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  device       Device       @relation(fields: [deviceId], references: [id])
+  contract     Contract?    @relation(fields: [contractId], references: [id])
+
+  @@index([organizationId])
+  @@index([deviceId])
+  @@index([contractId])
+  @@index([status])
+
+  @@index([releaseDueAt])
+  @@index([releasedAt])
+}
+
+enum AppleCustodyMode {
+  ICLOUD_CUSTODY_TRACKING
+}
+
+enum AppleCustodyStatus {
+  ACTIVE
+  NEEDS_CHECK
+  RELEASE_DUE
+  RELEASED
+  DISPUTED
+}
+
+enum FindMyStatus {
+  UNKNOWN
+  ON
+  OFF
+}
+
+enum ActivationStatus {
+  UNKNOWN
+  ON
+  OFF
+}
+
+
+model PlatformSubscription {
+  id             String   @id @default(cuid())
+  organizationId String
+  plan           TenantPlan @default(STARTER)
+  status         BillingStatus @default(TRIALING)
+  monthlyFee     Decimal @default(990)
+  deviceLimit    Int @default(50)
+  storeUserLimit Int @default(5)
+  trialEndsAt    DateTime?
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelledAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([status])
+}
+
+model PlatformInvoice {
+  id             String   @id @default(cuid())
+  organizationId String
+  invoiceNo      String   @unique
+  periodLabel    String
+  amount         Decimal
+  status         InvoiceStatus @default(DRAFT)
+  dueDate        DateTime
+  paidAt         DateTime?
+  paymentRef     String?
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  OVERDUE
+  VOID
+}
+
+model IntegrationConnector {
+  id             String   @id @default(cuid())
+  organizationId String
+  provider       IntegrationProvider
+  category       IntegrationCategory
+  displayName    String
+  status         IntegrationStatus @default(SETUP_REQUIRED)
+  configJson     Json?
+  lastCheckedAt  DateTime?
+  lastError       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, provider])
+  @@index([organizationId])
+  @@index([category])
+  @@index([status])
+}
+
+enum IntegrationProvider {
+  ANDROID_MANAGEMENT
+  APPLE_BUSINESS_MANAGER
+  ICLOUD_CUSTODY_TRACKING
+  PROMPTPAY_MANUAL
+  PAYMENT_GATEWAY
+  SLIP_VERIFICATION
+  LINE_MESSAGING
+  SMS_GATEWAY
+  EMAIL_SMTP
+  STORAGE_S3_R2
+  WEBHOOK
+}
+
+enum IntegrationCategory {
+  MDM
+  PAYMENT
+  NOTIFICATION
+  STORAGE
+  AUTOMATION
+}
+
+enum IntegrationStatus {
+  SETUP_REQUIRED
+  CONNECTING
+  ACTIVE
+  DEGRADED
+  FAILED
+  DISABLED
+}
+
+model StoreOnboardingStep {
+  id             String   @id @default(cuid())
+  organizationId String
+  stepKey        String
+  title          String
+  description    String?
+  status         OnboardingStepStatus @default(PENDING)
+  completedAt    DateTime?
+  sortOrder      Int @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, stepKey])
+  @@index([organizationId])
+  @@index([status])
+}
+
+enum OnboardingStepStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  SKIPPED
+}
+
+
+model PlatformSettlement {
+  id             String   @id @default(cuid())
+  organizationId String
+  periodLabel    String
+  grossAmount     Decimal @default(0)
+  feeAmount       Decimal @default(0)
+  netAmount       Decimal @default(0)
+  status          SettlementStatus @default(DRAFT)
+  paidAt          DateTime?
+  note            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([status])
+
+  @@index([periodLabel])
+}
+
+enum SettlementStatus {
+  DRAFT
+  PENDING
+  PAID
+  HELD
+  CANCELLED
+}
+
+model StoreLedgerEntry {
+  id               String   @id @default(cuid())
+  organizationId   String
+  paymentRequestId String?
+  type             LedgerEntryType
+  amount           Decimal
+  status           String   @default("POSTED")
+  reference        String?
+  note             String?
+  createdAt        DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  paymentRequest CustomerPaymentRequest? @relation(fields: [paymentRequestId], references: [id])
+
+  @@index([organizationId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+enum LedgerEntryType {
+  CUSTOMER_PAYMENT
+  STORE_SUBSCRIPTION_FEE
+  PLATFORM_FEE
+  ADJUSTMENT
+  REFUND
+}
+
+model CustomerRiskAssessment {
+  id             String   @id @default(cuid())
+  organizationId String
+  customerId     String
+  grade          RiskGrade @default(B)
+  score          Int      @default(50)
+  reasons        Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([grade])
+}
+
+enum RiskGrade {
+  A
+  B
+  C
+  D
+}
+
+model CollectionTask {
+  id             String   @id @default(cuid())
+  organizationId String
+  customerId     String
+  contractId     String?
+  title          String
+  dueAt          DateTime?
+  priority       String   @default("NORMAL")
+  status         CollectionTaskStatus @default(OPEN)
+  channel        ContactChannel @default(PHONE)
+  note           String?
+  completedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+  contract Contract? @relation(fields: [contractId], references: [id])
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([dueAt])
+
+  @@index([customerId])
+  @@index([priority])
+}
+
+enum CollectionTaskStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  SNOOZED
+  CANCELLED
+}
+
+model DisputeCase {
+  id               String   @id @default(cuid())
+  organizationId   String
+  customerId       String
+  contractId       String?
+  paymentRequestId String?
+  title            String
+  category         String   @default("PAYMENT")
+  status           DisputeStatus @default(OPEN)
+  description      String?
+  evidenceUrls     Json?
+  resolution       String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+  contract Contract? @relation(fields: [contractId], references: [id])
+  paymentRequest CustomerPaymentRequest? @relation(fields: [paymentRequestId], references: [id])
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([customerId])
+}
+
+enum DisputeStatus {
+  OPEN
+  WAITING_STORE
+  WAITING_CUSTOMER
+  RESOLVED
+  REJECTED
+  ESCALATED
+}
+
+model NotificationTemplate {
+  id             String   @id @default(cuid())
+  organizationId String
+  key            String
+  channel        NotificationChannel @default(LINE)
+  title          String
+  body           String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, key, channel])
+  @@index([organizationId])
+}
+
+enum NotificationChannel {
+  LINE
+  SMS
+  EMAIL
+  WEBHOOK
+  IN_APP
+}
+
+model TemplateCenterItem {
+  id             String   @id @default(cuid())
+  organizationId String?
+  type           TemplateType
+  title          String
+  version        String   @default("1.0")
+  body           String
+  isSystem       Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([type])
+}
+
+enum TemplateType {
+  CONTRACT
+  MDM_CONSENT
+  PRIVACY_NOTICE
+  PAYMENT_REMINDER
+  PAID_OFF_RELEASE
+  ICLOUD_CUSTODY
+}
+
+model AutomationRule {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  trigger        AutomationTrigger
+  action         AutomationAction
+  configJson     Json?
+  status         RuleStatus @default(ACTIVE)
+  lastRunAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([status])
+
+  @@index([trigger])
+}
+
+enum AutomationTrigger {
+  BEFORE_DUE_3_DAYS
+  DUE_TODAY
+  OVERDUE_1_DAY
+  OVERDUE_3_DAYS
+  OVERDUE_7_DAYS
+  PAYMENT_CONFIRMED
+  PAID_OFF
+}
+
+enum AutomationAction {
+  SEND_LINE
+  SEND_SMS
+  CREATE_COLLECTION_TASK
+  CREATE_RELEASE_REQUEST
+  WEBHOOK
+}
+
+enum RuleStatus {
+  ACTIVE
+  PAUSED
+  DISABLED
+}
+
+model ConsentDocumentSnapshot {
+  id             String   @id @default(cuid())
+  organizationId String
+  customerId     String
+  contractId     String?
+  type           TemplateType
+  version        String
+  title          String
+  body           String
+  acceptedAt     DateTime?
+  ipAddress      String?
+  userAgent      String?
+  pdfUrl         String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+  contract Contract? @relation(fields: [contractId], references: [id])
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([contractId])
+
+  @@index([type])
+  @@index([createdAt])
+}
+
+model StoreHealthSnapshot {
+  id             String   @id @default(cuid())
+  organizationId String
+  score          Int      @default(80)
+  grade          String   @default("HEALTHY")
+  signals        Json?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([grade])
+
+  @@index([createdAt])
+}
+
+model ReportExport {
+  id             String   @id @default(cuid())
+  organizationId String?
+  reportType     String
+  status         String   @default("READY")
+  downloadUrl    String?
+  filtersJson    Json?
+  createdAt      DateTime @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([reportType])
+}

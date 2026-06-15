@@ -1,0 +1,12 @@
+# Replace domains and upstream hosts after deployment.
+admin.example.com {
+  reverse_proxy 127.0.0.1:3000
+}
+
+customer.example.com {
+  reverse_proxy 127.0.0.1:3002
+}
+
+api.example.com {
+  reverse_proxy 127.0.0.1:4000
+}

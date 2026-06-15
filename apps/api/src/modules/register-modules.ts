@@ -1,0 +1,40 @@
+import type { FastifyInstance } from "fastify";
+import { registerCoreRoutes } from "./core/register-core";
+import { registerAuthRoutes } from "./auth/register-auth";
+import { registerStoreRoutes } from "./store/register-store";
+import { registerIntegrationsRoutes } from "./integrations/register-integrations";
+import { registerPlatformRoutes } from "./platform/register-platform";
+import { registerCustomersRoutes } from "./customers/register-customers";
+import { registerDevicesRoutes } from "./devices/register-devices";
+import { registerAppleCustodyRoutes } from "./apple-custody/register-apple-custody";
+import { registerContractsRoutes } from "./contracts/register-contracts";
+import { registerPaymentsRoutes } from "./payments/register-payments";
+import { registerPortalRoutes } from "./portal/register-portal";
+import { registerMdmRoutes } from "./mdm/register-mdm";
+import { registerCollectionRoutes } from "./collection/register-collection";
+import { registerDisputesRoutes } from "./disputes/register-disputes";
+import { registerTemplatesRoutes } from "./templates/register-templates";
+import { registerAutomationRoutes } from "./automation/register-automation";
+import { registerReportsRoutes } from "./reports/register-reports";
+import { registerOpsRoutes } from "./ops/register-ops";
+
+export async function registerApiModules(app: FastifyInstance) {
+  await registerCoreRoutes(app);
+  await registerAuthRoutes(app);
+  await registerStoreRoutes(app);
+  await registerIntegrationsRoutes(app);
+  await registerPlatformRoutes(app);
+  await registerCustomersRoutes(app);
+  await registerDevicesRoutes(app);
+  await registerAppleCustodyRoutes(app);
+  await registerContractsRoutes(app);
+  await registerPaymentsRoutes(app);
+  await registerPortalRoutes(app);
+  await registerMdmRoutes(app);
+  await registerCollectionRoutes(app);
+  await registerDisputesRoutes(app);
+  await registerTemplatesRoutes(app);
+  await registerAutomationRoutes(app);
+  await registerReportsRoutes(app);
+  await registerOpsRoutes(app);
+}

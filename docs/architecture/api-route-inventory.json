@@ -1,0 +1,712 @@
+{
+  "generatedAt": "2026-06-14T21:41:17.026Z",
+  "total": 130,
+  "groups": {
+    "apple-custody": [
+      {
+        "method": "GET",
+        "path": "/apple-custody",
+        "file": "apps/api/src/modules/apple-custody/register-apple-custody.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/apple-custody/:id",
+        "file": "apps/api/src/modules/apple-custody/register-apple-custody.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/apple-custody/:id/mark-release-due",
+        "file": "apps/api/src/modules/apple-custody/register-apple-custody.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/apple-custody/:id/mark-released",
+        "file": "apps/api/src/modules/apple-custody/register-apple-custody.ts"
+      }
+    ],
+    "audit-logs": [
+      {
+        "method": "GET",
+        "path": "/audit-logs",
+        "file": "apps/api/src/modules/reports/register-reports.ts"
+      }
+    ],
+    "auth": [
+      {
+        "method": "POST",
+        "path": "/auth/login",
+        "file": "apps/api/src/modules/auth/register-auth.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/auth/me",
+        "file": "apps/api/src/modules/auth/register-auth.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/auth/permissions",
+        "file": "apps/api/src/modules/auth/register-auth.ts"
+      }
+    ],
+    "automation": [
+      {
+        "method": "GET",
+        "path": "/automation/rules",
+        "file": "apps/api/src/modules/automation/register-automation.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/automation/rules",
+        "file": "apps/api/src/modules/automation/register-automation.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/automation/rules/:id",
+        "file": "apps/api/src/modules/automation/register-automation.ts"
+      }
+    ],
+    "collection": [
+      {
+        "method": "GET",
+        "path": "/collection/tasks",
+        "file": "apps/api/src/modules/collection/register-collection.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/collection/tasks",
+        "file": "apps/api/src/modules/collection/register-collection.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/collection/tasks/:id",
+        "file": "apps/api/src/modules/collection/register-collection.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/collection/tasks/generate-overdue",
+        "file": "apps/api/src/modules/collection/register-collection.ts"
+      }
+    ],
+    "consent": [
+      {
+        "method": "GET",
+        "path": "/consent/snapshots",
+        "file": "apps/api/src/modules/templates/register-templates.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/consent/snapshots",
+        "file": "apps/api/src/modules/templates/register-templates.ts"
+      }
+    ],
+    "contracts": [
+      {
+        "method": "GET",
+        "path": "/contracts",
+        "file": "apps/api/src/modules/contracts/register-contracts.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/contracts",
+        "file": "apps/api/src/modules/contracts/register-contracts.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/contracts/:id",
+        "file": "apps/api/src/modules/contracts/register-contracts.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/contracts/:id/cancel",
+        "file": "apps/api/src/modules/contracts/register-contracts.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/contracts/:id/print",
+        "file": "apps/api/src/modules/contracts/register-contracts.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/contracts/:id/sign",
+        "file": "apps/api/src/modules/contracts/register-contracts.ts"
+      }
+    ],
+    "customer-users": [
+      {
+        "method": "GET",
+        "path": "/customer-users",
+        "file": "apps/api/src/modules/customers/register-customers.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/customer-users/:id",
+        "file": "apps/api/src/modules/customers/register-customers.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/customer-users/:id/reset-pin",
+        "file": "apps/api/src/modules/customers/register-customers.ts"
+      }
+    ],
+    "customers": [
+      {
+        "method": "GET",
+        "path": "/customers",
+        "file": "apps/api/src/modules/customers/register-customers.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/customers",
+        "file": "apps/api/src/modules/customers/register-customers.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/customers/:id",
+        "file": "apps/api/src/modules/customers/register-customers.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/customers/:id",
+        "file": "apps/api/src/modules/customers/register-customers.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/customers/:id/contact-logs",
+        "file": "apps/api/src/modules/customers/register-customers.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/customers/:id/contact-logs",
+        "file": "apps/api/src/modules/customers/register-customers.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/customers/:id/portal-user",
+        "file": "apps/api/src/modules/customers/register-customers.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/customers/:id/risk-recalculate",
+        "file": "apps/api/src/modules/customers/register-customers.ts"
+      }
+    ],
+    "device-actions": [
+      {
+        "method": "GET",
+        "path": "/device-actions",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/device-actions",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/device-actions/:id/approve",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/device-actions/:id/reject",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      }
+    ],
+    "devices": [
+      {
+        "method": "GET",
+        "path": "/devices",
+        "file": "apps/api/src/modules/devices/register-devices.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/devices",
+        "file": "apps/api/src/modules/devices/register-devices.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/devices/:id",
+        "file": "apps/api/src/modules/devices/register-devices.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/devices/:id/apple-custody",
+        "file": "apps/api/src/modules/apple-custody/register-apple-custody.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/devices/:id/mdm/bind",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      }
+    ],
+    "disputes": [
+      {
+        "method": "GET",
+        "path": "/disputes",
+        "file": "apps/api/src/modules/disputes/register-disputes.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/disputes",
+        "file": "apps/api/src/modules/disputes/register-disputes.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/disputes/:id",
+        "file": "apps/api/src/modules/disputes/register-disputes.ts"
+      }
+    ],
+    "health": [
+      {
+        "method": "GET",
+        "path": "/health",
+        "file": "apps/api/src/modules/core/register-core.ts"
+      }
+    ],
+    "installments": [
+      {
+        "method": "POST",
+        "path": "/installments/:id/payment-request",
+        "file": "apps/api/src/modules/payments/register-payments.ts"
+      }
+    ],
+    "integrations": [
+      {
+        "method": "GET",
+        "path": "/integrations",
+        "file": "apps/api/src/modules/integrations/register-integrations.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/integrations/:id",
+        "file": "apps/api/src/modules/integrations/register-integrations.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/integrations/:id/setup-plan",
+        "file": "apps/api/src/modules/integrations/register-integrations.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/integrations/:id/test",
+        "file": "apps/api/src/modules/integrations/register-integrations.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/integrations/catalog",
+        "file": "apps/api/src/modules/integrations/register-integrations.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/integrations/readiness",
+        "file": "apps/api/src/modules/integrations/register-integrations.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/integrations/test-all",
+        "file": "apps/api/src/modules/integrations/register-integrations.ts"
+      }
+    ],
+    "jobs": [
+      {
+        "method": "POST",
+        "path": "/jobs/overdue-check",
+        "file": "apps/api/src/modules/ops/register-ops.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/jobs/overdue-check/cron",
+        "file": "apps/api/src/modules/ops/register-ops.ts"
+      }
+    ],
+    "mdm": [
+      {
+        "method": "POST",
+        "path": "/mdm/android/enrollment-token",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/mdm/android/enterprise",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/mdm/android/policies/:policyId/publish",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/mdm/android/signup-callback",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/mdm/android/signup-url",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/mdm/apple/abm/sync",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/mdm/apple/checkin",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "PUT",
+        "path": "/mdm/apple/connect",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/mdm/apple/enroll/:enrollmentId.mobileconfig",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/mdm/apple/enrollment-profile",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/mdm/apple/policies/:policyId/publish",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/mdm/enrollments",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/mdm/providers/status",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/mdm/webhooks/android",
+        "file": "apps/api/src/modules/mdm/register-mdm.ts"
+      }
+    ],
+    "ops": [
+      {
+        "method": "GET",
+        "path": "/ops/go-live-gates",
+        "file": "apps/api/src/modules/ops/register-ops.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/ops/readiness",
+        "file": "apps/api/src/modules/ops/register-ops.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/ops/route-map",
+        "file": "apps/api/src/modules/ops/register-ops.ts"
+      }
+    ],
+    "payment-requests": [
+      {
+        "method": "GET",
+        "path": "/payment-requests",
+        "file": "apps/api/src/modules/payments/register-payments.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/payment-requests/:id/confirm",
+        "file": "apps/api/src/modules/payments/register-payments.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/payment-requests/:id/reject",
+        "file": "apps/api/src/modules/payments/register-payments.ts"
+      }
+    ],
+    "payments": [
+      {
+        "method": "GET",
+        "path": "/payments",
+        "file": "apps/api/src/modules/payments/register-payments.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/payments",
+        "file": "apps/api/src/modules/payments/register-payments.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/payments/:id/confirm",
+        "file": "apps/api/src/modules/payments/register-payments.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/payments/:id/reject",
+        "file": "apps/api/src/modules/payments/register-payments.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/payments/webhook",
+        "file": "apps/api/src/modules/payments/register-payments.ts"
+      }
+    ],
+    "platform": [
+      {
+        "method": "GET",
+        "path": "/platform/apple-custody-risk",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/platform/integrations/readiness",
+        "file": "apps/api/src/modules/integrations/register-integrations.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/platform/invoices",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/platform/invoices/:id",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/platform/mdm/commands",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/platform/mdm/devices",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/platform/mdm/summary",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/platform/reports/stores.csv",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/platform/settlements",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/platform/settlements/:id",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/platform/settlements/generate",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/platform/store-health",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/platform/stores",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/platform/stores/:id",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/platform/stores/:id/invoices",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/platform/summary",
+        "file": "apps/api/src/modules/platform/register-platform.ts"
+      }
+    ],
+    "portal": [
+      {
+        "method": "POST",
+        "path": "/portal/auth/login",
+        "file": "apps/api/src/modules/portal/register-portal.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/portal/contracts",
+        "file": "apps/api/src/modules/portal/register-portal.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/portal/contracts/:contractId/payments",
+        "file": "apps/api/src/modules/portal/register-portal.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/portal/contracts/:contractNo",
+        "file": "apps/api/src/modules/portal/register-portal.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/portal/contracts/:contractNo/print",
+        "file": "apps/api/src/modules/portal/register-portal.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/portal/me",
+        "file": "apps/api/src/modules/portal/register-portal.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/portal/payment-requests",
+        "file": "apps/api/src/modules/portal/register-portal.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/portal/payment-requests/:id",
+        "file": "apps/api/src/modules/portal/register-portal.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/portal/payment-requests/:id/submit-slip",
+        "file": "apps/api/src/modules/portal/register-portal.ts"
+      }
+    ],
+    "public": [
+      {
+        "method": "POST",
+        "path": "/public/store-signup",
+        "file": "apps/api/src/modules/store/register-store.ts"
+      }
+    ],
+    "reports": [
+      {
+        "method": "GET",
+        "path": "/reports/contracts.csv",
+        "file": "apps/api/src/modules/reports/register-reports.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/reports/exports",
+        "file": "apps/api/src/modules/reports/register-reports.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/reports/overdue.csv",
+        "file": "apps/api/src/modules/reports/register-reports.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/reports/payments.csv",
+        "file": "apps/api/src/modules/reports/register-reports.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/reports/summary",
+        "file": "apps/api/src/modules/reports/register-reports.ts"
+      }
+    ],
+    "risk": [
+      {
+        "method": "GET",
+        "path": "/risk/customers",
+        "file": "apps/api/src/modules/customers/register-customers.ts"
+      }
+    ],
+    "store": [
+      {
+        "method": "GET",
+        "path": "/store/ledger",
+        "file": "apps/api/src/modules/store/register-store.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/store/onboarding",
+        "file": "apps/api/src/modules/store/register-store.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/store/onboarding/:stepKey",
+        "file": "apps/api/src/modules/store/register-store.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/store/payment-settings",
+        "file": "apps/api/src/modules/payments/register-payments.ts"
+      },
+      {
+        "method": "PUT",
+        "path": "/store/payment-settings",
+        "file": "apps/api/src/modules/payments/register-payments.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/store/profile",
+        "file": "apps/api/src/modules/store/register-store.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/store/profile",
+        "file": "apps/api/src/modules/store/register-store.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/store/subscription",
+        "file": "apps/api/src/modules/store/register-store.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/store/users",
+        "file": "apps/api/src/modules/store/register-store.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/store/users",
+        "file": "apps/api/src/modules/store/register-store.ts"
+      },
+      {
+        "method": "PATCH",
+        "path": "/store/users/:id",
+        "file": "apps/api/src/modules/store/register-store.ts"
+      }
+    ],
+    "templates": [
+      {
+        "method": "GET",
+        "path": "/templates",
+        "file": "apps/api/src/modules/templates/register-templates.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/templates/documents",
+        "file": "apps/api/src/modules/templates/register-templates.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/templates/notifications",
+        "file": "apps/api/src/modules/templates/register-templates.ts"
+      }
+    ],
+    "uploads": [
+      {
+        "method": "GET",
+        "path": "/uploads/:folder/:filename",
+        "file": "apps/api/src/modules/core/register-core.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/uploads/base64",
+        "file": "apps/api/src/modules/core/register-core.ts"
+      }
+    ]
+  }
+}

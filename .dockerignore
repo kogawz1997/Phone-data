@@ -1,0 +1,14 @@
+node_modules
+.pnpm-store
+.next
+dist
+.git
+.env
+.env.*
+!.env.example
+!.env.production.example
+uploads
+backups
+certs
+*.log
+.DS_Store
