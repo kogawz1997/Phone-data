@@ -1,0 +1,198 @@
+/* Professional motion layer for KOGA Admin Web.
+   Subtle, fast, and respectful of accessibility preferences. */
+
+:root {
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --motion-slow: 420ms;
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --ease-smooth: cubic-bezier(.22, .61, .36, 1);
+}
+
+@keyframes kogaFadeUp {
+  from { opacity: 0; transform: translateY(12px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes kogaFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes kogaSlideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes kogaSoftPulse {
+  0%, 100% { opacity: .72; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.015); }
+}
+
+@keyframes kogaProgressShine {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(220%); }
+}
+
+body {
+  animation: kogaFadeIn var(--motion-slow) var(--ease-out) both;
+}
+
+.topbar {
+  animation: kogaSlideDown var(--motion-slow) var(--ease-out) both;
+}
+
+.login-card,
+.hero,
+.nav,
+.notice,
+.alert {
+  animation: kogaFadeUp var(--motion-slow) var(--ease-out) both;
+}
+
+.nav { animation-delay: 60ms; }
+
+.hero-grid > *,
+.grid > .card,
+.grid > section,
+.metric,
+.table-wrap,
+.layout-rail > *,
+form.card,
+.login-form {
+  animation: kogaFadeUp var(--motion-slow) var(--ease-out) both;
+}
+
+.grid > .card:nth-child(1),
+.grid > section:nth-child(1),
+.metric:nth-child(1) { animation-delay: 40ms; }
+.grid > .card:nth-child(2),
+.grid > section:nth-child(2),
+.metric:nth-child(2) { animation-delay: 70ms; }
+.grid > .card:nth-child(3),
+.grid > section:nth-child(3),
+.metric:nth-child(3) { animation-delay: 100ms; }
+.grid > .card:nth-child(4),
+.metric:nth-child(4) { animation-delay: 130ms; }
+.grid > .card:nth-child(5),
+.metric:nth-child(5) { animation-delay: 160ms; }
+
+.card,
+.btn,
+.tab-btn,
+.input,
+.badge,
+.table tr td,
+.logo {
+  transition:
+    transform var(--motion-base) var(--ease-out),
+    border-color var(--motion-base) var(--ease-out),
+    background var(--motion-base) var(--ease-out),
+    box-shadow var(--motion-base) var(--ease-out),
+    color var(--motion-base) var(--ease-out),
+    opacity var(--motion-base) var(--ease-out);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 55px rgba(0,0,0,.24);
+}
+
+.metric:hover::after {
+  animation: kogaSoftPulse 1.8s var(--ease-smooth) infinite;
+}
+
+.btn:hover,
+.tab-btn:hover {
+  transform: translateY(-1px) scale(1.01);
+}
+
+.btn:active,
+.tab-btn:active {
+  transform: translateY(0) scale(.985);
+}
+
+.tab-btn.active {
+  box-shadow: 0 0 0 1px rgba(56,189,248,.18), 0 14px 34px rgba(56,189,248,.12);
+}
+
+.input:hover {
+  border-color: rgba(148, 163, 184, .42);
+}
+
+.input:focus {
+  transform: translateY(-1px);
+}
+
+.table tr:hover td {
+  transform: translateX(1px);
+}
+
+.badge.good,
+.badge.warn,
+.badge.bad {
+  position: relative;
+  overflow: hidden;
+}
+
+.badge.good::after,
+.badge.warn::after,
+.badge.bad::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.16), transparent);
+  transform: translateX(-120%);
+  animation: kogaProgressShine 3.8s var(--ease-smooth) infinite;
+}
+
+.progress > span {
+  position: relative;
+  overflow: hidden;
+}
+
+.progress > span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+  transform: translateX(-120%);
+  animation: kogaProgressShine 2.4s var(--ease-smooth) infinite;
+}
+
+.login-form {
+  animation-duration: 520ms;
+}
+
+.login-form .input:focus {
+  box-shadow: 0 0 0 4px rgba(56,189,248,.12), 0 12px 30px rgba(0,0,0,.18);
+}
+
+.notice.error,
+.alert.bad {
+  animation: kogaFadeUp 260ms var(--ease-out) both;
+}
+
+@media (max-width: 760px) {
+  .card:hover,
+  .btn:hover,
+  .tab-btn:hover,
+  .input:focus {
+    transform: none;
+  }
+
+  .tab-btn.active {
+    box-shadow: 0 0 0 1px rgba(56,189,248,.18), 0 8px 24px rgba(56,189,248,.10);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .001ms !important;
+  }
+}
