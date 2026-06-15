@@ -17,17 +17,21 @@ import {
   saveBase64Upload,
   signSession,
 } from "../../core/app-context";
+import { unprotectConfigJson } from "../../core/secure-config";
+
+type PortalSettings = {
+  slug?: string;
+  brandColor?: string;
+  welcomeText?: string;
+  contactLine?: string;
+  supportPhone?: string;
+  releasePolicy?: string;
+};
 
 function buildSessionCookie(token: string, isProduction: boolean) {
   const name = process.env.AUTH_COOKIE_NAME || "koga_session";
   const maxAge = 7 * 24 * 60 * 60;
-  const parts = [
-    `${name}=${encodeURIComponent(token)}`,
-    "Path=/",
-    "HttpOnly",
-    "SameSite=Lax",
-    `Max-Age=${maxAge}`,
-  ];
+  const parts = [`${name}=${encodeURIComponent(token)}`, "Path=/", "HttpOnly", "SameSite=Lax", `Max-Age=${maxAge}`];
   if (isProduction) parts.push("Secure");
   return parts.join("; ");
 }
@@ -37,6 +41,35 @@ function buildClearSessionCookie(isProduction: boolean) {
   const parts = [`${name}=`, "Path=/", "HttpOnly", "SameSite=Lax", "Max-Age=0"];
   if (isProduction) parts.push("Secure");
   return parts.join("; ");
+}
+
+function parsePortalSettings(configJson: unknown): PortalSettings {
+  const config = unprotectConfigJson(configJson) as Record<string, unknown>;
+  const raw = config.portalSettings;
+  if (!raw) return {};
+  if (typeof raw === "object" && !Array.isArray(raw)) return raw as PortalSettings;
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+async function getPortalSettings(organizationId: string): Promise<PortalSettings> {
+  const [org, connector] = await Promise.all([
+    prisma.organization.findUnique({ where: { id: organizationId } }),
+    prisma.integrationConnector.findFirst({ where: { organizationId, provider: "WEBHOOK" as any } }),
+  ]);
+  const stored = parsePortalSettings(connector?.configJson);
+  return {
+    ...stored,
+    slug: stored.slug || org?.slug || "",
+    supportPhone: stored.supportPhone || org?.phone || "",
+  };
 }
 
 export async function registerPortalRoutes(app: FastifyInstance) {
@@ -51,11 +84,7 @@ export async function registerPortalRoutes(app: FastifyInstance) {
 
     const loginId = body.phone.trim();
     const portalUser = await prisma.customerPortalUser.findFirst({
-      where: {
-        organizationId: org.id,
-        status: "ACTIVE",
-        OR: [{ phone: loginId }, { email: loginId.toLowerCase() }],
-      },
+      where: { organizationId: org.id, status: "ACTIVE", OR: [{ phone: loginId }, { email: loginId.toLowerCase() }] },
       include: { customer: true },
     });
     if (!portalUser) return fail(reply, 401, "INVALID_LOGIN", "Phone/email or password is incorrect");
@@ -65,23 +94,15 @@ export async function registerPortalRoutes(app: FastifyInstance) {
 
     await prisma.customerPortalUser.update({ where: { id: portalUser.id }, data: { lastLoginAt: new Date() } });
     if (body.inviteToken) {
-      await prisma.customerPortalInvite.updateMany({
-        where: { token: body.inviteToken, organizationId: org.id, portalUserId: portalUser.id, revokedAt: null },
-        data: { acceptedAt: new Date() },
-      });
+      await prisma.customerPortalInvite.updateMany({ where: { token: body.inviteToken, organizationId: org.id, portalUserId: portalUser.id, revokedAt: null }, data: { acceptedAt: new Date() } });
     }
 
-    const sessionUser = {
-      id: portalUser.id,
-      organizationId: org.id,
-      email: portalUser.email ?? `${portalUser.phone}@customer.local`,
-      role: "CUSTOMER",
-      name: portalUser.customer.fullName,
-    };
+    const sessionUser = { id: portalUser.id, organizationId: org.id, email: portalUser.email ?? `${portalUser.phone}@customer.local`, role: "CUSTOMER", name: portalUser.customer.fullName };
     const token = signSession(sessionUser, JWT_SECRET);
     reply.header("Set-Cookie", buildSessionCookie(token, IS_PRODUCTION));
+    const portalSettings = await getPortalSettings(org.id);
 
-    return ok({ token, customer: portalUser.customer, store: { id: org.id, name: org.name, slug: org.slug, phone: org.phone } });
+    return ok({ token, customer: portalUser.customer, store: { id: org.id, name: org.name, slug: org.slug, phone: org.phone }, portalSettings });
   });
 
   app.post("/portal/auth/logout", async (_request, reply) => {
@@ -92,7 +113,8 @@ export async function registerPortalRoutes(app: FastifyInstance) {
   app.get("/portal/me", { preHandler: requireCustomerAuth }, async (request) => {
     const portalUser = (request as CustomerPortalRequest).portalUser;
     const data = await prisma.customerPortalUser.findFirst({ where: { id: portalUser.id }, include: { customer: true, organization: true } });
-    return ok({ customer: data?.customer, store: data?.organization });
+    const portalSettings = await getPortalSettings(portalUser.organizationId);
+    return ok({ customer: data?.customer, store: data?.organization, portalSettings });
   });
 
   app.post("/portal/uploads/base64", { preHandler: requireCustomerAuth }, async (request, reply) => {
@@ -112,6 +134,29 @@ export async function registerPortalRoutes(app: FastifyInstance) {
       include: { customer: true, device: true, installments: { orderBy: { installmentNo: "asc" } }, payments: true },
     });
     return ok(contracts);
+  });
+
+  app.get("/portal/contract-documents/:id", { preHandler: requireCustomerAuth }, async (request, reply) => {
+    const portalUser = (request as CustomerPortalRequest).portalUser;
+    const { id } = request.params as { id: string };
+    const contract = await prisma.contract.findFirst({
+      where: { id, organizationId: portalUser.organizationId, customerId: portalUser.customerId },
+      include: { customer: true, device: true, installments: { orderBy: { installmentNo: "asc" } } },
+    });
+    if (!contract) return fail(reply, 404, "NOT_FOUND", "Contract not found");
+    reply.header("Content-Type", "text/html; charset=utf-8");
+    return reply.send(renderContractHtml(contract));
+  });
+
+  app.get("/portal/payments", { preHandler: requireCustomerAuth }, async (request) => {
+    const portalUser = (request as CustomerPortalRequest).portalUser;
+    const rows = await prisma.payment.findMany({
+      where: { organizationId: portalUser.organizationId, contract: { customerId: portalUser.customerId } },
+      orderBy: { createdAt: "desc" },
+      include: { contract: { include: { device: true } }, installment: true },
+      take: 100,
+    });
+    return ok(rows);
   });
 
   app.get("/portal/payment-requests", { preHandler: requireCustomerAuth }, async (request) => {
@@ -152,12 +197,7 @@ export async function registerPortalRoutes(app: FastifyInstance) {
     const { contractNo } = request.params as { contractNo: string };
     const { phone } = request.query as { phone?: string };
     if (!phone) return fail(reply, 400, "BAD_REQUEST", "phone is required");
-
-    const contract = await prisma.contract.findFirst({
-      where: { contractNo, customer: { phone } },
-      include: { customer: true, device: true, installments: true, payments: true },
-    });
-
+    const contract = await prisma.contract.findFirst({ where: { contractNo, customer: { phone } }, include: { customer: true, device: true, installments: true, payments: true } });
     if (!contract) return fail(reply, 404, "NOT_FOUND", "Contract not found");
     return ok(contract);
   });
@@ -167,23 +207,9 @@ export async function registerPortalRoutes(app: FastifyInstance) {
     const { contractId } = request.params as { contractId: string };
     const parsed = createPaymentSchema.omit({ contractId: true }).safeParse(cleanEmptyStrings(request.body));
     if (!parsed.success) return fail(reply, 400, "BAD_REQUEST", parsed.error.message);
-
     const contract = await prisma.contract.findUnique({ where: { id: contractId } });
     if (!contract) return fail(reply, 404, "NOT_FOUND", "Contract not found");
-
-    const payment = await prisma.payment.create({
-      data: {
-        organizationId: contract.organizationId,
-        contractId,
-        installmentId: parsed.data.installmentId,
-        amount: normalizePaymentAmount(parsed.data.amount),
-        method: parsed.data.method,
-        slipUrl: parsed.data.slipUrl,
-        note: parsed.data.note,
-        status: parsed.data.slipUrl ? "VERIFYING" : "PENDING",
-      },
-    });
-
+    const payment = await prisma.payment.create({ data: { organizationId: contract.organizationId, contractId, installmentId: parsed.data.installmentId, amount: normalizePaymentAmount(parsed.data.amount), method: parsed.data.method, slipUrl: parsed.data.slipUrl, note: parsed.data.note, status: parsed.data.slipUrl ? "VERIFYING" : "PENDING" } });
     await audit({ organizationId: contract.organizationId, action: "PORTAL_CREATE_PAYMENT", targetType: "Payment", targetId: payment.id });
     return ok(payment);
   });
@@ -193,10 +219,7 @@ export async function registerPortalRoutes(app: FastifyInstance) {
     const { contractNo } = request.params as { contractNo: string };
     const { phone } = request.query as { phone?: string };
     if (!phone) return fail(reply, 400, "BAD_REQUEST", "phone is required");
-    const contract = await prisma.contract.findFirst({
-      where: { contractNo, customer: { phone } },
-      include: { customer: true, device: true, installments: { orderBy: { installmentNo: "asc" } } },
-    });
+    const contract = await prisma.contract.findFirst({ where: { contractNo, customer: { phone } }, include: { customer: true, device: true, installments: { orderBy: { installmentNo: "asc" } } } });
     if (!contract) return fail(reply, 404, "NOT_FOUND", "Contract not found");
     reply.header("Content-Type", "text/html; charset=utf-8");
     return reply.send(renderContractHtml(contract));
