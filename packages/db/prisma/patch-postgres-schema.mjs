@@ -13,5 +13,8 @@ schema = schema.replace(
 }`,
 );
 
+// Repair accidental line breaks in the canonical schema before generating the PostgreSQL schema.
+schema = schema.replace(/\n\s*provider\s*\n\s*MdmProviderType\s*\n/g, "\n  provider       MdmProviderType\n");
+
 fs.writeFileSync(postgresSchemaPath, schema);
 console.log("Rebuilt schema.postgres.prisma from schema.prisma with PostgreSQL provider.");
