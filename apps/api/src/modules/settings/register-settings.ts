@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import type { Prisma } from "@repo/db";
 import type { AuthedRequest } from "../../core/app-context";
 import { audit, cleanEmptyStrings, fail, makeSlug, ok, prisma, requireAuth, ensureDefaultIntegrations } from "../../core/app-context";
 import { maskConfigJson, mergeConfigKeepingExistingSecrets, unprotectConfigJson } from "../../core/secure-config";
@@ -62,7 +63,7 @@ export async function registerSettingsRoutes(app: FastifyInstance) {
     if (!connector) return fail(reply, 404, "NOT_FOUND", "WEBHOOK integration connector not found");
 
     const portalSettings = { ...body, slug };
-    const configJson = mergeConfigKeepingExistingSecrets(connector.configJson, { portalSettings: JSON.stringify(portalSettings) });
+    const configJson = mergeConfigKeepingExistingSecrets(connector.configJson, { portalSettings: JSON.stringify(portalSettings) }) as Prisma.InputJsonValue;
     const updated = await prisma.integrationConnector.update({ where: { id: connector.id }, data: { configJson, lastCheckedAt: new Date() } });
     await audit({ organizationId: user.organizationId, actorId: user.id, action: "UPDATE_PORTAL_SETTINGS", targetType: "IntegrationConnector", targetId: connector.id, metadata: { slug, keys: Object.keys(body) } });
     return ok({ connector: { ...updated, configJson: maskConfigJson(updated.configJson) }, settings: portalSettings });
