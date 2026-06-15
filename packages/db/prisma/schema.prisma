@@ -685,8 +685,10 @@ model MdmEnrollment {
   id             String          @id @default(cuid())
   organizationId String
   deviceId       String?
+  contractId     String?
   platform       DevicePlatform
-  provider       MdmProviderType
+  provider
+MdmProviderType
   mode           String
   token          String?
   providerToken  String?
@@ -732,6 +734,7 @@ model MdmPolicy {
 model MdmCommand {
   id          String          @id @default(cuid())
   deviceId    String
+  contractId  String?
   provider    MdmProviderType
   commandType String
   payload     Json?
@@ -743,7 +746,7 @@ model MdmCommand {
   contractId  String?
   contract    Contract?       @relation(fields: [contractId], references: [id])
   device      Device          @relation(fields: [deviceId], references: [id])
-
+  @@index([contractId])
   @@index([deviceId])
   @@index([provider])
   @@index([status])
@@ -775,10 +778,9 @@ model AppleCustodyRecord {
   organization Organization @relation(fields: [organizationId], references: [id])
   device       Device       @relation(fields: [deviceId], references: [id])
   contract     Contract?    @relation(fields: [contractId], references: [id])
-
+  @@index([contractId])
   @@index([organizationId])
   @@index([deviceId])
-  @@index([contractId])
   @@index([status])
   @@index([releaseDueAt])
   @@index([releasedAt])
