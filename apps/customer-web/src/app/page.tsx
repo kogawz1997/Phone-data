@@ -13,7 +13,11 @@ function setPortalToken(token: string) { if (typeof window !== "undefined") loca
 function clearPortalToken() { if (typeof window !== "undefined") localStorage.removeItem("koga_customer_token"); }
 async function portalApi<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getPortalToken();
-  const res = await fetch(`${API_BASE_URL}${path}`, { ...options, headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers ?? {}) } });
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers ?? {}) },
+  });
   const json = await res.json();
   if (!json.ok) throw new Error(json.error?.message ?? "API error");
   return json.data;
@@ -61,7 +65,12 @@ export default function CustomerPortal() {
     setError("");
     setLoading(true);
     try {
-      const result = await fetch(`${API_BASE_URL}/portal/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storeSlug, phone, password, inviteToken }) }).then(async (r) => {
+      const result = await fetch(`${API_BASE_URL}/portal/auth/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storeSlug, phone, password, inviteToken }),
+      }).then(async (r) => {
         const j = await r.json();
         if (!j.ok) throw new Error(j.error?.message ?? "Login failed");
         return j.data as { token: string; customer: { fullName: string }; store: { name: string } };
@@ -87,50 +96,66 @@ export default function CustomerPortal() {
     const all = contracts.flatMap((c) => c.installments);
     const total = all.reduce((s, i) => s + Number(i.amount), 0);
     const paid = all.reduce((s, i) => s + Number(i.paidAmount), 0);
-    return total <= 0 ? 0 : Math.round((paid / total) * 100);
+    return total <= 0 ? 0 : Math.min(100, Math.round((paid / total) * 100));
   }, [contracts]);
   const nextDue = useMemo(() => contracts.flatMap((c) => c.installments.map((i) => ({ ...i, contractNo: c.contractNo }))).filter((i) => remainingOf(i) > 0).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0], [contracts]);
   const loggedIn = Boolean(customerName && getPortalToken());
 
   return (
-    <main className="portal">
-      <section className="hero dashboard-hero">
+    <main className="portal customer-shell">
+      <header className="portal-topbar">
+        <div className="portal-brand"><div className="portal-logo">K</div><div><span>Customer Portal</span><strong>{storeName || "KOGA Portal"}</strong></div></div>
+        {loggedIn && <button className="btn secondary" onClick={() => { clearPortalToken(); location.reload(); }}>ออกจากระบบ</button>}
+      </header>
+
+      <section className={`hero dashboard-hero ${loggedIn ? "portal-hero-compact" : ""}`}>
         <div className="hero-copy">
-          <span className="badge">Customer Portal</span>
-          <h1>จัดการงวด ชำระเงิน และสถานะเครื่องในที่เดียว</h1>
-          <p>
-            Portal ลูกค้ารูปแบบใหม่สำหรับดูสัญญา งวดถัดไป QR ชำระเงิน และสถานะการตรวจสลิป
-            แบบแยกร้านด้วย Store + เบอร์ + PIN เพื่อให้ข้อมูลชัดเจนและปลอดภัยกว่าเดิม
-          </p>
-          <div className="hero-metrics" aria-label="จุดเด่นของพอร์ทัล">
-            <span>Multi-tenant secure</span>
-            <span>PromptPay ready</span>
-            <span>MDM release flow</span>
+          <span className="badge">ชำระงวด · ดูสัญญา · สถานะเครื่อง</span>
+          <h1>{loggedIn ? `สวัสดี ${customerName}` : "จัดการงวดและสัญญาได้ง่ายในหน้าเดียว"}</h1>
+          <p>{loggedIn ? `ร้าน ${storeName || "-"} · เบอร์/บัญชี ${phone || "-"}` : "เข้าสู่ระบบด้วยรหัสร้าน เบอร์โทร และ PIN เพื่อดูยอดค้าง งวดถัดไป QR ชำระเงิน และสถานะการตรวจสลิป"}</p>
+          <div className="hero-metrics" aria-label="ทางลัดสำคัญ">
+            <a href="#pay">ชำระเงิน</a>
+            <a href="#contracts">สัญญา</a>
+            <a href="#help">ช่วยเหลือ</a>
           </div>
         </div>
         <div className="hero-orb" aria-hidden="true">
           <div className="phone-preview">
             <span className="phone-speaker" />
             <div className="phone-screen-card">
-              <small>ยอดคงเหลือถัดไป</small>
-              <strong>{nextDue ? baht(remainingOf(nextDue)) : "พร้อมใช้งาน"}</strong>
-              <span>{nextDue ? `ครบกำหนด ${dateTH(nextDue.dueDate)}` : "ไม่มีงวดค้าง"}</span>
+              <small>งวดถัดไป</small>
+              <strong>{nextDue ? baht(remainingOf(nextDue)) : "ไม่มีงวดค้าง"}</strong>
+              <span>{nextDue ? `ครบกำหนด ${dateTH(nextDue.dueDate)}` : "ระบบพร้อมใช้งาน"}</span>
             </div>
             <div className="mini-progress"><span style={{ width: `${paidPercent}%` }} /></div>
           </div>
         </div>
-        {!loggedIn && <form className="card login-card grid cols-4" onSubmit={login}><label>รหัสร้าน / Store<input className="input" value={storeSlug} onChange={(e) => setStoreSlug(e.target.value)} placeholder="store-slug" required /></label><label>เบอร์โทร / Email<input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} required /></label><label>PIN / Password<input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></label><button className="btn" disabled={loading}>{loading ? "กำลังเข้า..." : "เข้าสู่ระบบ"}</button></form>}
-        {loggedIn && <div className="card topbar signed-in-card"><div><span className="eyebrow">เข้าสู่ระบบแล้ว</span><h2>{customerName}</h2><p className="small">ร้าน: {storeName} / Login: {phone}</p></div><button className="btn secondary" onClick={() => { clearPortalToken(); location.reload(); }}>ออกจากระบบ</button></div>}
+
+        {!loggedIn && (
+          <form className="card login-card portal-login-card" onSubmit={login}>
+            <div className="login-intro"><span className="eyebrow">เข้าสู่ระบบลูกค้า</span><h2>ดูยอดค้างและแจ้งชำระ</h2><p className="small">ใช้ข้อมูลที่ร้านส่งให้ หรือเปิดจากลิงก์ invite ได้เลย</p></div>
+            <label>รหัสร้าน<input className="input" value={storeSlug} onChange={(e) => setStoreSlug(e.target.value)} placeholder="เช่น koga-store" required /></label>
+            <label>เบอร์โทร / Email<input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="เบอร์ที่ใช้ทำสัญญา" required /></label>
+            <label>PIN / Password<input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="รหัสที่ร้านให้" required /></label>
+            <button className="btn" disabled={loading}>{loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}</button>
+          </form>
+        )}
       </section>
 
       {error && <div className="notice error" style={{ marginBottom: 16 }}>{error}</div>}
 
       {loggedIn && <section className="grid portal-content">
-        <div className="grid cols-3"><div className="card stat-card accent"><span className="eyebrow">ภาพรวม</span><h2>ความคืบหน้ารวม</h2><div className="stat-value">{paidPercent}%</div><div className="progress"><span style={{ width: `${paidPercent}%` }} /></div></div><div className="card stat-card"><span className="eyebrow">Next due</span><h2>งวดถัดไป</h2>{nextDue ? <><div className="stat-title">สัญญา {nextDue.contractNo}</div><p>ครบกำหนด {dateTH(nextDue.dueDate)}</p><p>ยอดคงเหลือ <b>{baht(remainingOf(nextDue))}</b></p></> : <><span className="badge good">ไม่มีงวดค้าง</span><p>ถ้าจ่ายครบ ร้านจะดำเนินการปลด MDM / โอนกรรมสิทธิ์ตามสัญญา</p></>}</div><div className="card stat-card"><span className="eyebrow">Payment requests</span><h2>คำขอชำระ</h2><div className="stat-value">{requests.length}</div><p className="small">รายการ QR/สลิปที่รอตรวจหรือเปิดให้จ่าย</p></div></div>
+        <div className="grid cols-3 portal-summary">
+          <div className="card stat-card accent"><span className="eyebrow">จ่ายแล้วโดยรวม</span><h2>{paidPercent}%</h2><div className="progress"><span style={{ width: `${paidPercent}%` }} /></div><p className="small">รวมทุกสัญญาที่อยู่ในบัญชีนี้</p></div>
+          <div className="card stat-card"><span className="eyebrow">งวดถัดไป</span>{nextDue ? <><h2>{baht(remainingOf(nextDue))}</h2><p>สัญญา {nextDue.contractNo}</p><p className="small">ครบกำหนด {dateTH(nextDue.dueDate)}</p></> : <><span className="badge good">ไม่มีงวดค้าง</span><p>เมื่อจ่ายครบ ร้านจะดำเนินการปลด MDM / โอนกรรมสิทธิ์ตามสัญญา</p></>}</div>
+          <div className="card stat-card"><span className="eyebrow">รอตรวจ</span><h2>{requests.length}</h2><p className="small">รายการ QR/สลิปที่เปิดให้ชำระหรือรอตรวจ</p></div>
+        </div>
 
-        <div className="card section-card"><div className="section-heading"><div><span className="eyebrow">PromptPay</span><h2>QR ชำระงวด</h2></div><p className="small">สแกนจ่ายและแนบสลิปให้ร้านตรวจได้จากหน้าเดียว</p></div><div className="grid cols-3">{requests.length === 0 && <p className="small">ยังไม่มีคำขอชำระจากร้าน</p>}{requests.map((r) => <div className="card payment-request-card" key={r.id}><span className={`badge ${statusTone(r.status)}`}>{r.status}</span><h3>{r.contract.contractNo}</h3><p>งวด {r.installment.installmentNo} / {dateTH(r.installment.dueDate)}</p><p className="amount">{baht(r.amount)}</p>{r.qrImageDataUrl ? <img src={r.qrImageDataUrl} alt="PromptPay QR" className="qr-image" /> : <div className="notice">ร้านยังไม่ได้ตั้ง PromptPay</div>}<button className="btn" onClick={() => submitSlip(r)}>แนบสลิป / แจ้งชำระ</button>{r.submittedSlipUrl && <p className="small">ส่งสลิปแล้ว: {r.submittedSlipUrl}</p>}</div>)}</div></div>
+        <div id="pay" className="card section-card"><div className="section-heading"><div><span className="eyebrow">ชำระเงิน</span><h2>QR และแจ้งชำระ</h2></div><p className="small">สแกนจ่าย แล้วกดแนบสลิปให้ร้านตรวจ</p></div><div className="grid cols-3">{requests.length === 0 && <div className="notice">ยังไม่มีคำขอชำระจากร้าน</div>}{requests.map((r) => <div className="card payment-request-card" key={r.id}><div className="payment-card-head"><span className={`badge ${statusTone(r.status)}`}>{r.status}</span><span className="small">งวด {r.installment.installmentNo}</span></div><h3>{r.contract.contractNo}</h3><p className="small">ครบกำหนด {dateTH(r.installment.dueDate)}</p><p className="amount">{baht(r.amount)}</p>{r.qrImageDataUrl ? <img src={r.qrImageDataUrl} alt="PromptPay QR" className="qr-image" /> : <div className="notice">ร้านยังไม่ได้ตั้ง PromptPay</div>}<button className="btn" onClick={() => submitSlip(r)}>แนบสลิป / แจ้งชำระ</button>{r.submittedSlipUrl && <p className="small">ส่งสลิปแล้ว: {r.submittedSlipUrl}</p>}</div>)}</div></div>
 
-        <div className="card section-card"><div className="section-heading"><div><span className="eyebrow">Contract timeline</span><h2>สัญญาและตารางงวด</h2></div></div><div className="table-wrap"><table className="table"><thead><tr><th>สัญญา</th><th>เครื่อง</th><th>งวด</th><th>ครบกำหนด</th><th>ยอด</th><th>จ่ายแล้ว</th><th>คงเหลือ</th><th>Status</th></tr></thead><tbody>{contracts.flatMap((c) => c.installments.map((i) => <tr key={i.id}><td><b>{c.contractNo}</b><div className="small">{c.status} / {c.legalTitleStatus}</div></td><td>{c.device.brand} {c.device.model}<div className="small">{c.device.imei ?? "-"}</div></td><td>#{i.installmentNo}</td><td>{dateTH(i.dueDate)}</td><td>{baht(i.amount)}</td><td>{baht(i.paidAmount)}</td><td>{baht(remainingOf(i))}</td><td><span className={`badge ${statusTone(i.status)}`}>{i.status}</span></td></tr>))}</tbody></table></div></div>
+        <div id="contracts" className="card section-card"><div className="section-heading"><div><span className="eyebrow">สัญญา</span><h2>ตารางงวดทั้งหมด</h2></div><p className="small">ดูยอด จ่ายแล้ว คงเหลือ และสถานะทุกงวด</p></div><div className="table-wrap"><table className="table"><thead><tr><th>สัญญา</th><th>เครื่อง</th><th>งวด</th><th>ครบกำหนด</th><th>ยอด</th><th>จ่ายแล้ว</th><th>คงเหลือ</th><th>Status</th></tr></thead><tbody>{contracts.flatMap((c) => c.installments.map((i) => <tr key={i.id}><td><b>{c.contractNo}</b><div className="small">{c.status} / {c.legalTitleStatus}</div></td><td>{c.device.brand} {c.device.model}<div className="small">{c.device.imei ?? "-"}</div></td><td>#{i.installmentNo}</td><td>{dateTH(i.dueDate)}</td><td>{baht(i.amount)}</td><td>{baht(i.paidAmount)}</td><td>{baht(remainingOf(i))}</td><td><span className={`badge ${statusTone(i.status)}`}>{i.status}</span></td></tr>))}</tbody></table></div></div>
+
+        <div id="help" className="card section-card help-card"><span className="eyebrow">ช่วยเหลือ</span><h2>ต้องการให้ร้านช่วย?</h2><p>ถ้ายอดไม่ตรง สลิปไม่ผ่าน หรือเครื่องติดสถานะผิด ให้ติดต่อร้านพร้อมเลขสัญญาและสลิปชำระเงินล่าสุด</p></div>
       </section>}
     </main>
   );
