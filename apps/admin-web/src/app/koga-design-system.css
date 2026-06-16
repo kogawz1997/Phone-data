@@ -1,0 +1,219 @@
+:root {
+  --koga-bg: #050b16;
+  --koga-bg-2: #07111f;
+  --koga-card: rgba(12, 22, 37, 0.82);
+  --koga-card-strong: rgba(16, 29, 48, 0.94);
+  --koga-line: rgba(148, 163, 184, 0.16);
+  --koga-text: #eef6ff;
+  --koga-muted: #93a4ba;
+  --koga-accent: #22d3ee;
+  --koga-accent-2: #8b5cf6;
+  --koga-good: #22c55e;
+  --koga-warn: #f59e0b;
+  --koga-bad: #ef4444;
+  --koga-radius: 22px;
+  --koga-shadow: 0 28px 90px rgba(0, 0, 0, 0.28);
+}
+
+html,
+body {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(34, 211, 238, 0.16), transparent 34%),
+    radial-gradient(circle at 88% 0%, rgba(139, 92, 246, 0.16), transparent 34%),
+    linear-gradient(135deg, var(--koga-bg), var(--koga-bg-2) 46%, #0f172a) !important;
+  color: var(--koga-text);
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.app-shell,
+.profile-console,
+.profile-pro,
+.customer-shell,
+.portal-shell {
+  color: var(--koga-text);
+}
+
+.card,
+.panel,
+.metric,
+.stat,
+.notice,
+.alert,
+.table-wrap,
+.form-card,
+.hero-card,
+.profile-panel,
+.complete-card,
+.integration-card,
+.template-card,
+.customer-card,
+.portal-card,
+.section-card {
+  border: 1px solid var(--koga-line) !important;
+  background: var(--koga-card) !important;
+  border-radius: var(--koga-radius) !important;
+  box-shadow: var(--koga-shadow);
+  backdrop-filter: blur(18px);
+}
+
+.hero,
+.profile-hero,
+.customer-hero,
+.portal-hero {
+  border: 1px solid var(--koga-line) !important;
+  background:
+    linear-gradient(135deg, rgba(34, 211, 238, 0.14), rgba(139, 92, 246, 0.12)),
+    var(--koga-card) !important;
+  border-radius: 28px !important;
+  box-shadow: var(--koga-shadow);
+}
+
+h1, h2, h3, h4,
+.metric-value,
+.stat b,
+.hero-title,
+.profile-top h1,
+.customer-title {
+  color: var(--koga-text) !important;
+  letter-spacing: -0.035em;
+}
+
+p,
+small,
+.small,
+.metric-label,
+.muted,
+label span,
+.field span,
+.form-help,
+.table td,
+.card p {
+  color: var(--koga-muted) !important;
+}
+
+input,
+select,
+textarea {
+  border: 1px solid var(--koga-line) !important;
+  background: rgba(2, 6, 23, 0.28) !important;
+  color: var(--koga-text) !important;
+  border-radius: 15px !important;
+  outline: none !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgba(34, 211, 238, 0.58) !important;
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.11) !important;
+}
+
+button,
+.button,
+a.button,
+.ghost,
+.save,
+.primary,
+.secondary {
+  border-radius: 15px !important;
+}
+
+button:not(.tab-btn):not(.koga-side-item):not(.koga-side-brand):not(.side-brand),
+.button,
+a.button {
+  border: 1px solid var(--koga-line);
+  background: var(--koga-card-strong);
+  color: var(--koga-text);
+}
+
+button[type="submit"],
+.save,
+.primary,
+.cta,
+.hero-cta {
+  border: 0 !important;
+  background: linear-gradient(135deg, var(--koga-accent), var(--koga-accent-2)) !important;
+  color: white !important;
+  font-weight: 900;
+}
+
+.badge,
+.status,
+.pill,
+.chip,
+.channel,
+.days button,
+.tab-btn {
+  border: 1px solid var(--koga-line) !important;
+  background: rgba(148, 163, 184, 0.10) !important;
+  color: var(--koga-muted) !important;
+  border-radius: 999px !important;
+}
+
+.tab-btn.active,
+.badge.good,
+.status.good,
+.pill.good,
+.chip.active,
+.channel.active,
+.channel.on,
+.days button.active,
+.days button.on {
+  border-color: rgba(34, 211, 238, 0.34) !important;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(139, 92, 246, 0.16)) !important;
+  color: var(--koga-text) !important;
+}
+
+.table,
+table {
+  color: var(--koga-text);
+}
+
+.table th,
+table th {
+  color: var(--koga-muted) !important;
+  border-bottom: 1px solid var(--koga-line) !important;
+}
+
+.table td,
+table td {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.10) !important;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.22);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (max-width: 900px) {
+  .card,
+  .panel,
+  .metric,
+  .stat,
+  .notice,
+  .alert,
+  .table-wrap,
+  .form-card,
+  .hero-card,
+  .customer-card,
+  .portal-card,
+  .section-card {
+    border-radius: 18px !important;
+  }
+}
