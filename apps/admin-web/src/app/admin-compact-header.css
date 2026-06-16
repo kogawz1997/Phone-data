@@ -21,9 +21,7 @@
     backdrop-filter: blur(18px) !important;
   }
 
-  .topbar .brand {
-    display: contents !important;
-  }
+  .topbar .brand { display: contents !important; }
 
   .topbar .brand .logo {
     width: 42px !important;
@@ -32,13 +30,8 @@
     font-size: 18px !important;
   }
 
-  .topbar .brand > div:last-child {
-    min-width: 0 !important;
-  }
-
-  .topbar .brand .kicker {
-    display: none !important;
-  }
+  .topbar .brand > div:last-child { min-width: 0 !important; }
+  .topbar .brand .kicker { display: none !important; }
 
   .topbar .brand h2 {
     max-width: 42vw !important;
@@ -91,17 +84,9 @@
     border-color: rgba(248, 113, 113, .38) !important;
   }
 
-  .hero.hero-grid {
-    margin-top: 12px !important;
-  }
-
-  .ux-smart-search {
-    display: none !important;
-  }
-
-  .ux-fab {
-    display: none !important;
-  }
+  .hero.hero-grid { margin-top: 12px !important; }
+  .ux-smart-search { display: none !important; }
+  .ux-fab { display: none !important; }
 
   .ux-bottom-nav {
     left: 12px !important;
@@ -148,8 +133,7 @@
   }
 }
 
-/* Settings page has its own side rail and save controls, so do not stack the global mobile chrome on top of it. */
-body:has(.settingsSafe) .ux-bottom-nav,
+/* Settings owns its navigation. Keep the global chrome out of the content area. */
 body:has(.settingsSafe) .ux-sheet,
 body:has(.settingsSafe) .ux-sheet-backdrop,
 body:has(.settingsSafe) .ux-smart-search,
@@ -157,9 +141,127 @@ body:has(.settingsSafe) .ux-fab {
   display: none !important;
 }
 
+body:has(.settingsSafe) .settingsSafe.light {
+  color: #0f172a !important;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(14, 165, 233, .16), transparent 31%),
+    radial-gradient(circle at 86% 0%, rgba(124, 58, 237, .12), transparent 34%),
+    linear-gradient(135deg, #f8fafc, #eaf6ff 52%, #f5f3ff) !important;
+}
+
+body:has(.settingsSafe) .settingsSafe.light .safeSide,
+body:has(.settingsSafe) .settingsSafe.light .safeTop,
+body:has(.settingsSafe) .settingsSafe.light .safeHero,
+body:has(.settingsSafe) .settingsSafe.light .safePanel,
+body:has(.settingsSafe) .settingsSafe.light .safePreviewCard,
+body:has(.settingsSafe) .settingsSafe.light .safeSavebar,
+body:has(.settingsSafe) .settingsSafe.light .safeStat {
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, .11) !important;
+  background: rgba(255, 255, 255, .82) !important;
+  box-shadow: 0 18px 54px rgba(15, 23, 42, .08) !important;
+}
+
+body:has(.settingsSafe) .settingsSafe.light h1,
+body:has(.settingsSafe) .settingsSafe.light h2,
+body:has(.settingsSafe) .settingsSafe.light h3,
+body:has(.settingsSafe) .settingsSafe.light b {
+  color: #0f172a !important;
+}
+
+body:has(.settingsSafe) .settingsSafe.light p,
+body:has(.settingsSafe) .settingsSafe.light span,
+body:has(.settingsSafe) .settingsSafe.light small,
+body:has(.settingsSafe) .settingsSafe.light .safeField span {
+  color: #64748b !important;
+}
+
+body:has(.settingsSafe) .settingsSafe.light input,
+body:has(.settingsSafe) .settingsSafe.light textarea,
+body:has(.settingsSafe) .settingsSafe.light select {
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, .14) !important;
+  background: rgba(255, 255, 255, .9) !important;
+}
+
+body:has(.settingsSafe) .settingsSafe.light .safeSide nav button,
+body:has(.settingsSafe) .settingsSafe.light .safeSideTools button,
+body:has(.settingsSafe) .settingsSafe.light .safeSideTools a,
+body:has(.settingsSafe) .settingsSafe.light .safeActions button,
+body:has(.settingsSafe) .settingsSafe.light .safeSavebar button:not(.primary) {
+  color: #334155 !important;
+  border-color: rgba(15, 23, 42, .12) !important;
+  background: rgba(248, 250, 252, .86) !important;
+}
+
+body:has(.settingsSafe) .settingsSafe.light .safeSide nav button.active {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #0284c7, #7c3aed) !important;
+}
+
 @media (max-width: 980px) {
-  body:has(.settingsSafe) .app-shell {
-    padding-bottom: 0 !important;
+  body:has(.settingsSafe) .app-shell { padding-bottom: 0 !important; }
+
+  body:has(.settingsSafe) .settingsSafe,
+  body:has(.settingsSafe) .settingsSafe.collapsed,
+  body:has(.settingsSafe) .settingsSafe.expanded {
+    grid-template-columns: 68px minmax(0, 1fr) !important;
+  }
+
+  body:has(.settingsSafe) .settingsSafe .safeSide {
+    width: 56px !important;
+    margin-left: 6px !important;
+    padding: 6px !important;
+    border-radius: 20px !important;
+    cursor: pointer !important;
+  }
+
+  body:has(.settingsSafe) .settingsSafe.expanded .safeSide,
+  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:focus-within,
+  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:hover {
+    width: min(250px, 82vw) !important;
+  }
+
+  body:has(.settingsSafe) .settingsSafe.collapsed:has(.safeSide:focus-within)::after,
+  body:has(.settingsSafe) .settingsSafe.collapsed:has(.safeSide:hover)::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 18;
+    background: rgba(2, 6, 23, .46);
+    backdrop-filter: blur(3px);
+  }
+
+  body:has(.settingsSafe) .settingsSafe .safeSide nav button,
+  body:has(.settingsSafe) .settingsSafe .safeSideTools button,
+  body:has(.settingsSafe) .settingsSafe .safeSideTools a {
+    min-height: 42px !important;
+    border-radius: 14px !important;
+  }
+
+  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:focus-within nav button,
+  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:hover nav button,
+  body:has(.settingsSafe) .settingsSafe.expanded .safeSide nav button {
+    justify-content: flex-start !important;
+    padding: 0 12px !important;
+  }
+
+  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:focus-within nav button b,
+  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:hover nav button b,
+  body:has(.settingsSafe) .settingsSafe.expanded .safeSide nav button b,
+  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:focus-within .safeSideTools b,
+  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:hover .safeSideTools b,
+  body:has(.settingsSafe) .settingsSafe.expanded .safeSideTools b {
+    display: block !important;
+    margin-left: 10px !important;
+  }
+
+  body:has(.settingsSafe) .settingsSafe .safeTop .safeActions {
+    display: none !important;
+  }
+
+  body:has(.settingsSafe) .settingsSafe .safePreview {
+    display: none !important;
   }
 
   body:has(.settingsSafe) .settingsSafe .safeSavebar {
@@ -176,5 +278,60 @@ body:has(.settingsSafe) .ux-fab {
   body:has(.settingsSafe) .settingsSafe .safeField input,
   body:has(.settingsSafe) .settingsSafe .safeField textarea {
     font-size: 16px !important;
+  }
+
+  body:has(.settingsSafe) .ux-bottom-nav {
+    display: grid !important;
+    position: fixed !important;
+    left: 10px !important;
+    right: auto !important;
+    bottom: max(10px, env(safe-area-inset-bottom)) !important;
+    z-index: 34 !important;
+    width: 52px !important;
+    min-height: 0 !important;
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+    padding: 6px !important;
+    border-radius: 18px !important;
+    background: rgba(3, 10, 22, .88) !important;
+  }
+
+  body:has(.settingsSafe) .ux-bottom-nav button {
+    min-height: 40px !important;
+    padding: 0 !important;
+    border-radius: 13px !important;
+    font-size: 0 !important;
+  }
+
+  body:has(.settingsSafe) .ux-bottom-nav button::before {
+    font-size: 16px !important;
+    color: #67e8f9 !important;
+  }
+
+  body:has(.settingsSafe) .ux-bottom-nav button:nth-child(1)::before { content: "⌂"; }
+  body:has(.settingsSafe) .ux-bottom-nav button:nth-child(2)::before { content: "♙"; }
+  body:has(.settingsSafe) .ux-bottom-nav button:nth-child(3)::before { content: "▤"; }
+  body:has(.settingsSafe) .ux-bottom-nav button:nth-child(4)::before { content: "＋"; }
+
+  body:has(.settingsSafe.expanded) .ux-bottom-nav,
+  body:has(.settingsSafe.collapsed .safeSide:hover) .ux-bottom-nav,
+  body:has(.settingsSafe.collapsed .safeSide:focus-within) .ux-bottom-nav {
+    width: min(238px, calc(82vw - 18px)) !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  body:has(.settingsSafe.expanded) .ux-bottom-nav button,
+  body:has(.settingsSafe.collapsed .safeSide:hover) .ux-bottom-nav button,
+  body:has(.settingsSafe.collapsed .safeSide:focus-within) .ux-bottom-nav button {
+    justify-content: flex-start !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    text-align: left !important;
+  }
+
+  body:has(.settingsSafe.expanded) .ux-bottom-nav button::before,
+  body:has(.settingsSafe.collapsed .safeSide:hover) .ux-bottom-nav button::before,
+  body:has(.settingsSafe.collapsed .safeSide:focus-within) .ux-bottom-nav button::before {
+    margin-right: 10px !important;
   }
 }
