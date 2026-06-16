@@ -1,5 +1,4 @@
 import "./globals.css";
-import "./koga-design-system.css";
 import "./customer-experience.css";
 import type { ReactNode } from "react";
 
