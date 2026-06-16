@@ -97,27 +97,32 @@ export default function UXEnhancements() {
   const [surface, setSurface] = useState<Surface>("admin");
   const [ready, setReady] = useState(false);
   const [open, setOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [path, setPath] = useState("");
 
   useEffect(() => {
     const sync = () => {
+      const mobile = window.innerWidth <= 980;
+      setIsMobile(mobile);
       setSurface(getSurface());
       setPath(window.location.pathname);
       setReady(!isAuthScreen());
       runPendingActions();
       hideDuplicateChrome();
-      if (window.innerWidth > 980) setOpen(true);
+      if (!mobile) setOpen(true);
     };
     sync();
     const observer = new MutationObserver(sync);
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
     const timer = window.setInterval(sync, 700);
     const onRoute = () => window.setTimeout(sync, 60);
+    window.addEventListener("resize", sync);
     window.addEventListener("popstate", onRoute);
     window.addEventListener("hashchange", onRoute);
     return () => {
       observer.disconnect();
       window.clearInterval(timer);
+      window.removeEventListener("resize", sync);
       window.removeEventListener("popstate", onRoute);
       window.removeEventListener("hashchange", onRoute);
     };
@@ -178,19 +183,19 @@ export default function UXEnhancements() {
   }, [surface, path]);
 
   const runItem = (item: MenuItem) => {
-    if (!open && window.innerWidth <= 980) {
+    if (!open && isMobile) {
       setOpen(true);
       return;
     }
     item.run();
-    if (window.innerWidth <= 980 && !item.danger) setOpen(false);
+    if (isMobile && !item.danger) setOpen(false);
   };
 
   if (!ready) return null;
 
   return <>
     <StockFormEnhancer />
-    {open && window.innerWidth <= 980 && <button className="kogaMenuBackdrop" type="button" aria-label="ปิดเมนู" onClick={() => setOpen(false)} />}
+    {open && isMobile && <button className="kogaMenuBackdrop" type="button" aria-label="ปิดเมนู" onClick={() => setOpen(false)} />}
     <aside className={`kogaUnifiedMenu ${open ? "open" : "closed"}`} aria-label="เมนูหลัก">
       <button className="kogaUnifiedBrand" type="button" onClick={() => setOpen((value) => !value)} aria-label="เปิดปิดเมนู"><span>K</span><b>{surface === "owner" ? "Owner Console" : "Store Console"}</b></button>
       <nav>{items.map((item) => <button key={item.id} type="button" className={`${item.active ? "active" : ""} ${item.danger ? "danger" : ""}`} onClick={() => runItem(item)} title={item.label}><i>{item.icon}</i><b>{item.label}</b></button>)}</nav>
