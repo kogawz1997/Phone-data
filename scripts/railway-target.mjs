@@ -8,6 +8,11 @@ const aliases = new Map([
   ["kogaadmin-web", "admin-web"],
   ["koga-admin-web", "admin-web"],
   ["@koga/admin-web", "admin-web"],
+  ["owner", "owner-web"],
+  ["owner-web", "owner-web"],
+  ["platform", "owner-web"],
+  ["platform-owner", "owner-web"],
+  ["koga-owner-web", "owner-web"],
   ["customer", "customer-web"],
   ["customer-web", "customer-web"],
   ["kogacustomer-web", "customer-web"],
@@ -23,7 +28,8 @@ function inferFromText(value = "") {
   const text = normalize(value);
   if (!text) return "";
   if (aliases.has(text)) return aliases.get(text);
-  if (text.includes("admin")) return "admin-web";
+  if (text.includes("owner") || text.includes("platform")) return "owner-web";
+  if (text.includes("admin") || text.includes("store")) return "admin-web";
   if (text.includes("customer") || text.includes("portal")) return "customer-web";
   if (text.includes("api")) return "api";
   return "";
@@ -57,7 +63,7 @@ export function resolveRailwayTarget() {
   }
 
   const fallback = process.env.KOGA_RAILWAY_TARGET_FALLBACK || "api";
-  console.warn(`[railway-target] Cannot infer target from Railway env. Falling back to ${fallback}. Set KOGA_RAILWAY_TARGET explicitly to api, admin-web, or customer-web.`);
+  console.warn(`[railway-target] Cannot infer target from Railway env. Falling back to ${fallback}. Set KOGA_RAILWAY_TARGET explicitly to api, admin-web, owner-web, or customer-web.`);
   return inferFromText(fallback) || "api";
 }
 
@@ -68,6 +74,10 @@ export function commandForTarget(target, phase) {
       start: "corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm --filter @koga/api start",
     },
     "admin-web": {
+      build: "corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm --filter @koga/admin-web build",
+      start: "corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm --filter @koga/admin-web start",
+    },
+    "owner-web": {
       build: "corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm --filter @koga/admin-web build",
       start: "corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm --filter @koga/admin-web start",
     },
