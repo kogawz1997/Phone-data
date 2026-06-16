@@ -2,6 +2,12 @@ import type { FastifyInstance } from "fastify";
 import type { AuthedRequest } from "../../core/app-context";
 import * as ctx from "../../core/app-context";
 
+function validateLogoDataUrl(value: string) {
+  if (!/^data:image\/(png|jpeg|jpg|webp);base64,/i.test(value)) throw new Error("Only PNG, JPG or WEBP logo images are allowed");
+  if (value.length > 1_600_000) throw new Error("Logo is too large. Please use an image below about 1MB");
+  return value;
+}
+
 export async function registerStoreSettingsRoutes(app: FastifyInstance) {
   const { prisma, ok, fail, cleanEmptyStrings, audit, requireAuth, makeSlug } = ctx as any;
 
@@ -70,6 +76,13 @@ export async function registerStoreSettingsRoutes(app: FastifyInstance) {
     for (const key of allowedKeys) {
       if (body[key] !== undefined) configJson[key] = body[key];
     }
+    if (typeof configJson.logoDataUrl === "string" && configJson.logoDataUrl.startsWith("data:image/")) {
+      try {
+        configJson.logoDataUrl = validateLogoDataUrl(configJson.logoDataUrl);
+      } catch (error) {
+        return fail(reply, 400, "BAD_IMAGE", error instanceof Error ? error.message : "Invalid logo image");
+      }
+    }
     configJson.slug = slug ?? body.slug ?? previousConfig.slug ?? "";
     configJson.brandColor = body.brandColor ?? previousConfig.brandColor ?? "#38bdf8";
 
@@ -95,5 +108,28 @@ export async function registerStoreSettingsRoutes(app: FastifyInstance) {
 
     await audit({ organizationId: user.organizationId, actorId: user.id, action: "UPDATE_STORE_PROFILE_SETTINGS", targetType: "IntegrationConnector", targetId: connector.id });
     return ok(configJson);
+  });
+
+  app.post("/store/profile-logo", { preHandler: requireAuth }, async (request, reply) => {
+    const user = (request as AuthedRequest).user;
+    const body = cleanEmptyStrings(request.body) as { logoDataUrl?: string };
+    if (!body.logoDataUrl) return fail(reply, 400, "BAD_REQUEST", "logoDataUrl is required");
+
+    let logoDataUrl = "";
+    try {
+      logoDataUrl = validateLogoDataUrl(body.logoDataUrl);
+    } catch (error) {
+      return fail(reply, 400, "BAD_IMAGE", error instanceof Error ? error.message : "Invalid logo image");
+    }
+
+    const existing = await prisma.integrationConnector.findUnique({ where: { organizationId_provider: { organizationId: user.organizationId, provider: "WEBHOOK" } } });
+    const configJson = { ...((existing?.configJson ?? {}) as Record<string, unknown>), logoDataUrl };
+    const connector = await prisma.integrationConnector.upsert({
+      where: { organizationId_provider: { organizationId: user.organizationId, provider: "WEBHOOK" } },
+      create: { organizationId: user.organizationId, provider: "WEBHOOK", category: "AUTOMATION", displayName: "Customer Portal & Store Profile Settings", status: "ACTIVE", configJson, lastCheckedAt: new Date() },
+      update: { configJson, lastCheckedAt: new Date(), lastError: null },
+    });
+    await audit({ organizationId: user.organizationId, actorId: user.id, action: "UPDATE_STORE_LOGO", targetType: "IntegrationConnector", targetId: connector.id });
+    return ok({ logoDataUrl });
   });
 }
