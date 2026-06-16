@@ -99,8 +99,6 @@ export default function PlatformOwnerPage() {
 
   useEffect(() => { void load(); }, []);
 
-  if (needsLogin) return <OwnerLogin error={error} onLoggedIn={load} />;
-
   const filtered = useMemo(() => stores.filter((s) => {
     const q = search.trim().toLowerCase();
     const matchText = !q || [s.name, s.ownerName, s.email, s.phone, s.storeCode].filter(Boolean).some((v) => String(v).toLowerCase().includes(q));
@@ -109,50 +107,19 @@ export default function PlatformOwnerPage() {
     return matchText && matchStatus && matchPlan;
   }), [stores, search, statusFilter, planFilter]);
 
-  async function updateStore(id: string, body: Record<string, unknown>) {
-    await api(`/platform/stores/${id}`, { method: "PATCH", body: JSON.stringify(body) });
-    await load();
-  }
+  if (needsLogin) return <OwnerLogin error={error} onLoggedIn={load} />;
 
-  async function createInvoice(store: Store) {
-    await api(`/platform/stores/${store.id}/invoices`, { method: "POST", body: JSON.stringify({ amount: Number(store.monthlyFee), periodLabel: new Date().toISOString().slice(0, 7), status: "ISSUED" }) });
-    await load();
-  }
-
-  async function markPaid(invoice: Invoice) {
-    await api(`/platform/invoices/${invoice.id}`, { method: "PATCH", body: JSON.stringify({ status: "PAID", paymentRef: `manual-${Date.now()}` }) });
-    await load();
-  }
+  async function updateStore(id: string, body: Record<string, unknown>) { await api(`/platform/stores/${id}`, { method: "PATCH", body: JSON.stringify(body) }); await load(); }
+  async function createInvoice(store: Store) { await api(`/platform/stores/${store.id}/invoices`, { method: "POST", body: JSON.stringify({ amount: Number(store.monthlyFee), periodLabel: new Date().toISOString().slice(0, 7), status: "ISSUED" }) }); await load(); }
+  async function markPaid(invoice: Invoice) { await api(`/platform/invoices/${invoice.id}`, { method: "PATCH", body: JSON.stringify({ status: "PAID", paymentRef: `manual-${Date.now()}` }) }); await load(); }
 
   return <main className="app-shell">
-    <header className="topbar">
-      <div className="brand"><div className="logo">K</div><div><div className="kicker">Platform Owner</div><h2 style={{ margin: 0 }}>KOGA Owner Console</h2></div></div>
-      <div className="pill-list"><a className="btn secondary" href="/signup">หน้าสมัครร้าน</a><a className="btn secondary" href="/platform/apple-custody-risk">iCloud Risk</a><button className="btn secondary" onClick={load}>{loading ? "กำลังโหลด..." : "รีเฟรช"}</button><button className="btn danger" onClick={() => { clearToken(); location.href = "/platform"; }}>ออกจากระบบ</button></div>
-    </header>
-
-    <section className="hero hero-grid">
-      <div><div className="kicker">Owner Dashboard</div><h1>ดูแลร้านที่มาใช้ระบบ ค่าบริการ และการเชื่อมต่อทั้งหมดในจอเดียว</h1><p className="muted">หน้า Owner แยกจาก Store Console แล้ว เพื่อไม่ให้ token และงานร้านปนกับงานเจ้าของแพลตฟอร์ม เพราะชีวิตจริงก็วุ่นพอแล้ว ไม่ต้องให้ session มาช่วยเพิ่มความวุ่น</p><div className="hero-actions"><button className="btn" onClick={() => downloadCsv("/platform/reports/stores.csv", "stores.csv")}>Export Stores CSV</button><a className="btn secondary" href="/signup">เปิดหน้าสมัครร้าน</a><a className="btn secondary" href="/platform/apple-custody-risk">ดู iCloud Custody Risk</a></div></div>
-      <div className="card strong"><h2>งานที่ควรไล่วันนี้</h2><div className="timeline"><div className="timeline-item"><span className="dot"/><div><b>{summary?.openInvoices ?? 0} ใบแจ้งหนี้ยังไม่ปิด</b><div className="small">ค่าบริการระบบของเรา ไม่ใช่ charity SaaS แบบมี server ฟรีในจินตนาการ</div></div></div><div className="timeline-item"><span className="dot"/><div><b>{summary?.suspendedStores ?? 0} ร้านถูกระงับ</b><div className="small">ตรวจว่าเป็นค้างจ่ายหรือ setup ไม่ครบ</div></div></div><div className="timeline-item"><span className="dot"/><div><b>{summary?.pendingPayments ?? 0} payment ร้านลูกค้ารอตรวจ</b><div className="small">ช่วยดู health ของร้านที่ใช้ระบบเรา</div></div></div></div></div>
-    </section>
-
+    <header className="topbar"><div className="brand"><div className="logo">K</div><div><div className="kicker">Platform Owner</div><h2 style={{ margin: 0 }}>KOGA Owner Console</h2></div></div><div className="pill-list"><a className="btn secondary" href="/signup">หน้าสมัครร้าน</a><a className="btn secondary" href="/platform/apple-custody-risk">iCloud Risk</a><button className="btn secondary" onClick={load}>{loading ? "กำลังโหลด..." : "รีเฟรช"}</button><button className="btn danger" onClick={() => { clearToken(); location.href = "/platform"; }}>ออกจากระบบ</button></div></header>
+    <section className="hero hero-grid"><div><div className="kicker">Owner Dashboard</div><h1>ดูแลร้านที่มาใช้ระบบ ค่าบริการ และการเชื่อมต่อทั้งหมดในจอเดียว</h1><p className="muted">หน้า Owner แยกจาก Store Console แล้ว เพื่อไม่ให้ token และงานร้านปนกับงานเจ้าของแพลตฟอร์ม เพราะชีวิตจริงก็วุ่นพอแล้ว ไม่ต้องให้ session มาช่วยเพิ่มความวุ่น</p><div className="hero-actions"><button className="btn" onClick={() => downloadCsv("/platform/reports/stores.csv", "stores.csv")}>Export Stores CSV</button><a className="btn secondary" href="/signup">เปิดหน้าสมัครร้าน</a><a className="btn secondary" href="/platform/apple-custody-risk">ดู iCloud Custody Risk</a></div></div><div className="card strong"><h2>งานที่ควรไล่วันนี้</h2><div className="timeline"><div className="timeline-item"><span className="dot"/><div><b>{summary?.openInvoices ?? 0} ใบแจ้งหนี้ยังไม่ปิด</b><div className="small">ค่าบริการระบบของเรา ไม่ใช่ charity SaaS แบบมี server ฟรีในจินตนาการ</div></div></div><div className="timeline-item"><span className="dot"/><div><b>{summary?.suspendedStores ?? 0} ร้านถูกระงับ</b><div className="small">ตรวจว่าเป็นค้างจ่ายหรือ setup ไม่ครบ</div></div></div><div className="timeline-item"><span className="dot"/><div><b>{summary?.pendingPayments ?? 0} payment ร้านลูกค้ารอตรวจ</b><div className="small">ช่วยดู health ของร้านที่ใช้ระบบเรา</div></div></div></div></div></section>
     {error && <div className="notice error" style={{ marginBottom: 16 }}>{error}</div>}
-
-    <section className="grid cols-4" style={{ marginBottom: 16 }}>
-      <Metric label="ร้านทั้งหมด" value={summary?.stores ?? 0} note={`${summary?.activeStores ?? 0} active / ${summary?.trialStores ?? 0} trial`} />
-      <Metric label="MRR โดยประมาณ" value={baht(summary?.monthlyRecurringRevenue ?? 0)} note="คิดจากร้าน active+trial" toneClass="good" />
-      <Metric label="รายรับค่าระบบ" value={baht(summary?.paidInvoiceRevenue ?? 0)} note="ใบแจ้งหนี้ที่ paid" toneClass="good" />
-      <Metric label="อุปกรณ์ในระบบ" value={summary?.devices ?? 0} note={`${summary?.contracts ?? 0} contracts`} />
-    </section>
-
-    <section className="card" style={{ marginBottom: 16 }}>
-      <div className="topbar" style={{ marginBottom: 12 }}><div><h2>ร้านที่ใช้ระบบ</h2><p className="small">กรองตามสถานะ แพ็กเกจ หรือชื่อร้าน แล้วจัดการค่าบริการได้ทันที</p></div><div className="pill-list"><input className="input" style={{ width: 260 }} placeholder="ค้นหาร้าน/เจ้าของ/เบอร์" value={search} onChange={(e) => setSearch(e.target.value)} /><select className="input" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}><option>ALL</option><option>TRIAL</option><option>ACTIVE</option><option>SUSPENDED</option><option>TRIALING</option><option>CURRENT</option><option>OVERDUE</option></select><select className="input" value={planFilter} onChange={(e) => setPlanFilter(e.target.value)}><option>ALL</option><option>STARTER</option><option>STANDARD</option><option>PRO</option><option>ENTERPRISE</option></select></div></div>
-      <div className="table-wrap"><table className="table"><thead><tr><th>ร้าน</th><th>สถานะ</th><th>แพ็กเกจ</th><th>การใช้งาน</th><th>ระบบนอก</th><th>ค่าบริการ</th><th>จัดการ</th></tr></thead><tbody>{filtered.map((s) => <tr key={s.id}><td><b>{s.name}</b><div className="small">{s.storeCode} · {s.ownerName ?? "-"}</div><div className="small">{s.email ?? "-"} · {s.phone ?? "-"}</div></td><td><Badge value={s.status}/><br/><Badge value={s.billingStatus}/></td><td><Badge value={s.plan}/><div className="small">{baht(Number(s.monthlyFee))}/เดือน</div></td><td><div className="pill-list"><span className="badge neutral">ลูกค้า {s._count.customers}</span><span className="badge neutral">เครื่อง {s._count.devices}</span><span className="badge neutral">สัญญา {s._count.contracts}</span></div></td><td><div className="pill-list">{s.integrationConnectors.slice(0,5).map((i) => <span key={i.id} className={`badge ${tone(i.status)}`}>{i.provider.replaceAll("_", " ")}</span>)}</div></td><td>{s.nextBillingAt ? dateTH(s.nextBillingAt) : "-"}<div className="small">next billing</div></td><td><div className="pill-list"><button className="btn secondary" onClick={() => createInvoice(s)}>ออกบิล</button><button className="btn secondary" onClick={() => updateStore(s.id, { status: "ACTIVE", billingStatus: "CURRENT" })}>เปิดใช้</button><button className="btn danger" onClick={() => updateStore(s.id, { status: "SUSPENDED", billingStatus: "SUSPENDED" })}>ระงับ</button></div></td></tr>)}</tbody></table></div>
-    </section>
-
-    <section className="card">
-      <h2>ใบแจ้งหนี้ค่าระบบล่าสุด</h2>
-      <div className="table-wrap"><table className="table"><thead><tr><th>เลขบิล</th><th>ร้าน</th><th>รอบ</th><th>ยอด</th><th>สถานะ</th><th>ครบกำหนด</th><th></th></tr></thead><tbody>{invoices.map((i) => <tr key={i.id}><td>{i.invoiceNo}</td><td>{i.organization.name}<div className="small">{i.organization.storeCode}</div></td><td>{i.periodLabel}</td><td>{baht(Number(i.amount))}</td><td><Badge value={i.status}/></td><td>{dateTH(i.dueDate)}</td><td>{i.status !== "PAID" && <button className="btn secondary" onClick={() => markPaid(i)}>mark paid</button>}</td></tr>)}</tbody></table></div>
-    </section>
+    <section className="grid cols-4" style={{ marginBottom: 16 }}><Metric label="ร้านทั้งหมด" value={summary?.stores ?? 0} note={`${summary?.activeStores ?? 0} active / ${summary?.trialStores ?? 0} trial`} /><Metric label="MRR โดยประมาณ" value={baht(summary?.monthlyRecurringRevenue ?? 0)} note="คิดจากร้าน active+trial" toneClass="good" /><Metric label="รายรับค่าระบบ" value={baht(summary?.paidInvoiceRevenue ?? 0)} note="ใบแจ้งหนี้ที่ paid" toneClass="good" /><Metric label="อุปกรณ์ในระบบ" value={summary?.devices ?? 0} note={`${summary?.contracts ?? 0} contracts`} /></section>
+    <section className="card" style={{ marginBottom: 16 }}><div className="topbar" style={{ marginBottom: 12 }}><div><h2>ร้านที่ใช้ระบบ</h2><p className="small">กรองตามสถานะ แพ็กเกจ หรือชื่อร้าน แล้วจัดการค่าบริการได้ทันที</p></div><div className="pill-list"><input className="input" style={{ width: 260 }} placeholder="ค้นหาร้าน/เจ้าของ/เบอร์" value={search} onChange={(e) => setSearch(e.target.value)} /><select className="input" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}><option>ALL</option><option>TRIAL</option><option>ACTIVE</option><option>SUSPENDED</option><option>TRIALING</option><option>CURRENT</option><option>OVERDUE</option></select><select className="input" value={planFilter} onChange={(e) => setPlanFilter(e.target.value)}><option>ALL</option><option>STARTER</option><option>STANDARD</option><option>PRO</option><option>ENTERPRISE</option></select></div></div><div className="table-wrap"><table className="table"><thead><tr><th>ร้าน</th><th>สถานะ</th><th>แพ็กเกจ</th><th>การใช้งาน</th><th>ระบบนอก</th><th>ค่าบริการ</th><th>จัดการ</th></tr></thead><tbody>{filtered.map((s) => <tr key={s.id}><td><b>{s.name}</b><div className="small">{s.storeCode} · {s.ownerName ?? "-"}</div><div className="small">{s.email ?? "-"} · {s.phone ?? "-"}</div></td><td><Badge value={s.status}/><br/><Badge value={s.billingStatus}/></td><td><Badge value={s.plan}/><div className="small">{baht(Number(s.monthlyFee))}/เดือน</div></td><td><div className="pill-list"><span className="badge neutral">ลูกค้า {s._count.customers}</span><span className="badge neutral">เครื่อง {s._count.devices}</span><span className="badge neutral">สัญญา {s._count.contracts}</span></div></td><td><div className="pill-list">{s.integrationConnectors.slice(0,5).map((i) => <span key={i.id} className={`badge ${tone(i.status)}`}>{i.provider.replaceAll("_", " ")}</span>)}</div></td><td>{s.nextBillingAt ? dateTH(s.nextBillingAt) : "-"}<div className="small">next billing</div></td><td><div className="pill-list"><button className="btn secondary" onClick={() => createInvoice(s)}>ออกบิล</button><button className="btn secondary" onClick={() => updateStore(s.id, { status: "ACTIVE", billingStatus: "CURRENT" })}>เปิดใช้</button><button className="btn danger" onClick={() => updateStore(s.id, { status: "SUSPENDED", billingStatus: "SUSPENDED" })}>ระงับ</button></div></td></tr>)}</tbody></table></div></section>
+    <section className="card"><h2>ใบแจ้งหนี้ค่าระบบล่าสุด</h2><div className="table-wrap"><table className="table"><thead><tr><th>เลขบิล</th><th>ร้าน</th><th>รอบ</th><th>ยอด</th><th>สถานะ</th><th>ครบกำหนด</th><th></th></tr></thead><tbody>{invoices.map((i) => <tr key={i.id}><td>{i.invoiceNo}</td><td>{i.organization.name}<div className="small">{i.organization.storeCode}</div></td><td>{i.periodLabel}</td><td>{baht(Number(i.amount))}</td><td><Badge value={i.status}/></td><td>{dateTH(i.dueDate)}</td><td>{i.status !== "PAID" && <button className="btn secondary" onClick={() => markPaid(i)}>mark paid</button>}</td></tr>)}</tbody></table></div></section>
   </main>;
 }
 
@@ -161,29 +128,13 @@ function OwnerLogin({ error, onLoggedIn }: { error?: string; onLoggedIn: () => P
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState(error ?? "");
   const [busy, setBusy] = useState(false);
-
   async function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setBusy(true);
-    setLocalError("");
+    e.preventDefault(); setBusy(true); setLocalError("");
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.error?.message ?? "Login failed");
-      setToken(json.data.token);
-      await onLoggedIn();
-    } catch (err) {
-      setLocalError(err instanceof Error ? err.message : "เข้าสู่ระบบไม่ได้");
-    } finally {
-      setBusy(false);
-    }
+      const res = await fetch(`${API_BASE_URL}/auth/login`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
+      const json = await res.json(); if (!json.ok) throw new Error(json.error?.message ?? "Login failed"); setToken(json.data.token); await onLoggedIn();
+    } catch (err) { setLocalError(err instanceof Error ? err.message : "เข้าสู่ระบบไม่ได้"); } finally { setBusy(false); }
   }
-
   return <main className="login-page"><div className="login-card"><section className="login-poster"><div className="brand" style={{ marginBottom: 28 }}><div className="logo">K</div><div><div className="kicker">Platform Owner</div><h2 style={{ margin: 0 }}>Owner Console</h2></div></div><h1>แผงเจ้าของแพลตฟอร์ม แยกจากหน้าร้าน</h1><p className="muted">ใช้บัญชี Platform Owner เท่านั้น ร้านค้าทั่วไปควรเข้า Store Console แยก domain ไม่ต้องเอา token มาปนกันเหมือนกองสายชาร์จในลิ้นชัก</p></section><form className="card login-form form-grid" onSubmit={submit}><div><div className="kicker">Owner Login</div><h2>เข้าสู่ระบบ Owner</h2><p className="small">ใช้บัญชีที่มีสิทธิ์ platform:*</p></div>{localError && <div className="notice error">{localError}</div>}<label>Email<input className="input" value={email} onChange={(e) => setEmail(e.target.value)} /></label><label>Password<input className="input" value={password} onChange={(e) => setPassword(e.target.value)} type="password" /></label><button className="btn" disabled={busy}>{busy ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ Owner Console"}</button><a className="btn secondary" href="/">กลับ Store Console</a></form></div></main>;
 }
 
