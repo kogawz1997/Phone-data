@@ -1,4 +1,4 @@
-/* Unified compact navigation for the authenticated admin console. */
+/* Compact header plus settings readability rules. Main navigation now lives in UXEnhancements. */
 @media (max-width: 760px) {
   .app-shell {
     padding-top: 10px !important;
@@ -63,21 +63,22 @@
   }
 
   .topbar .pill-list .badge.neutral,
+  .topbar .pill-list .badge.good,
+  .topbar .pill-list .badge.warn,
   .topbar .pill-list .btn.secondary,
+  .topbar .pill-list .btn.danger,
   .topbar .pill-list .btn:not(.danger) {
     display: none !important;
   }
 
-  .topbar .pill-list .btn.danger {
-    max-width: 72px !important;
-    color: #fecaca !important;
-    background: rgba(127, 29, 29, .32) !important;
-    border-color: rgba(248, 113, 113, .38) !important;
-  }
-
   .hero.hero-grid { margin-top: 12px !important; }
-  .ux-smart-search { display: none !important; }
-  .ux-fab { display: none !important; }
+  .ux-smart-search,
+  .ux-fab,
+  .ux-bottom-nav,
+  .ux-sheet,
+  .ux-sheet-backdrop {
+    display: none !important;
+  }
 }
 
 /* Do not show admin chrome on auth/login screens. */
@@ -85,117 +86,14 @@ body:has(input[type="password"]) .ux-bottom-nav,
 body:has(input[type="password"]) .ux-sheet,
 body:has(input[type="password"]) .ux-sheet-backdrop,
 body:has(input[type="password"]) .ux-smart-search,
-body:has(input[type="password"]) .ux-fab {
+body:has(input[type="password"]) .ux-fab,
+body:has(input[type="password"]) .kogaUnifiedMenu,
+body:has(input[type="password"]) .kogaMenuBackdrop {
   display: none !important;
 }
 
-/* Store/Owner pages: use the old mobile bottom nav as the single main side menu. */
-@media (max-width: 980px) {
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .app-shell {
-    margin-left: 68px !important;
-    width: calc(100% - 68px) !important;
-    padding-left: 0 !important;
-    padding-right: 8px !important;
-    padding-bottom: 24px !important;
-  }
-
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav {
-    display: grid !important;
-    position: fixed !important;
-    left: 6px !important;
-    top: 8px !important;
-    bottom: 8px !important;
-    right: auto !important;
-    z-index: 1200 !important;
-    width: 56px !important;
-    min-height: 0 !important;
-    grid-template-columns: 1fr !important;
-    align-content: start !important;
-    gap: 8px !important;
-    padding: 7px !important;
-    border-radius: 20px !important;
-    border: 1px solid rgba(148, 163, 184, .16) !important;
-    background: rgba(3, 10, 22, .88) !important;
-    backdrop-filter: blur(22px) !important;
-    box-shadow: 0 22px 70px rgba(0, 0, 0, .30) !important;
-    overflow-y: auto !important;
-    scrollbar-width: none !important;
-  }
-
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav::-webkit-scrollbar {
-    display: none !important;
-  }
-
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav button {
-    min-height: 42px !important;
-    min-width: 0 !important;
-    width: 100% !important;
-    padding: 0 !important;
-    border-radius: 14px !important;
-    font-size: 0 !important;
-    border: 1px solid rgba(148, 163, 184, .12) !important;
-    background: rgba(148, 163, 184, .08) !important;
-    color: #e5f4ff !important;
-    display: grid !important;
-    place-items: center !important;
-    white-space: nowrap !important;
-  }
-
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav button::before {
-    font-size: 16px !important;
-    color: #67e8f9 !important;
-  }
-
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav button:nth-child(1)::before { content: "⌂"; }
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav button:nth-child(2)::before { content: "♙"; }
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav button:nth-child(3)::before { content: "▤"; }
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav button:nth-child(4)::before { content: "＋"; }
-
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav:focus-within,
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav:hover {
-    width: min(248px, 82vw) !important;
-    z-index: 1300 !important;
-  }
-
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav:focus-within button,
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav:hover button {
-    display: flex !important;
-    justify-content: flex-start !important;
-    gap: 10px !important;
-    padding: 0 12px !important;
-    font-size: 13px !important;
-    text-align: left !important;
-  }
-
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav:focus-within button::before,
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav:hover button::before {
-    min-width: 20px !important;
-  }
-
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-sheet {
-    position: fixed !important;
-    left: 72px !important;
-    top: 8px !important;
-    bottom: 8px !important;
-    right: auto !important;
-    width: min(292px, calc(100vw - 88px)) !important;
-    max-width: none !important;
-    max-height: none !important;
-    transform: none !important;
-    animation: none !important;
-    overflow-y: auto !important;
-    border-radius: 22px !important;
-    z-index: 1280 !important;
-  }
-
-  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-sheet-backdrop {
-    background: rgba(2, 6, 23, .42) !important;
-    backdrop-filter: blur(3px) !important;
-    z-index: 1260 !important;
-  }
-}
-
-/* Settings keeps its own section sidebar, while global mobile chrome is removed to avoid duplicate menus. */
+/* Settings uses the unified menu now; hide local section rail to avoid duplicate menus. */
+body:has(.settingsSafe) .settingsSafe .safeSide,
 body:has(.settingsSafe) .ux-bottom-nav,
 body:has(.settingsSafe) .ux-sheet,
 body:has(.settingsSafe) .ux-sheet-backdrop,
@@ -212,7 +110,6 @@ body:has(.settingsSafe) .settingsSafe.light {
     linear-gradient(135deg, #f8fafc, #eaf6ff 52%, #f5f3ff) !important;
 }
 
-body:has(.settingsSafe) .settingsSafe.light .safeSide,
 body:has(.settingsSafe) .settingsSafe.light .safeTop,
 body:has(.settingsSafe) .settingsSafe.light .safeHero,
 body:has(.settingsSafe) .settingsSafe.light .safePanel,
@@ -247,43 +144,8 @@ body:has(.settingsSafe) .settingsSafe.light select {
   background: rgba(255, 255, 255, .9) !important;
 }
 
-body:has(.settingsSafe) .settingsSafe.light .safeSide nav button,
-body:has(.settingsSafe) .settingsSafe.light .safeSideTools button,
-body:has(.settingsSafe) .settingsSafe.light .safeSideTools a,
-body:has(.settingsSafe) .settingsSafe.light .safeActions button,
-body:has(.settingsSafe) .settingsSafe.light .safeSavebar button:not(.primary) {
-  color: #334155 !important;
-  border-color: rgba(15, 23, 42, .12) !important;
-  background: rgba(248, 250, 252, .86) !important;
-}
-
-body:has(.settingsSafe) .settingsSafe.light .safeSide nav button.active {
-  color: #ffffff !important;
-  background: linear-gradient(135deg, #0284c7, #7c3aed) !important;
-}
-
 @media (max-width: 980px) {
   body:has(.settingsSafe) .app-shell { padding-bottom: 0 !important; }
-
-  body:has(.settingsSafe) .settingsSafe,
-  body:has(.settingsSafe) .settingsSafe.collapsed,
-  body:has(.settingsSafe) .settingsSafe.expanded {
-    grid-template-columns: 68px minmax(0, 1fr) !important;
-  }
-
-  body:has(.settingsSafe) .settingsSafe .safeSide {
-    width: 56px !important;
-    margin-left: 6px !important;
-    padding: 6px !important;
-    border-radius: 20px !important;
-    cursor: pointer !important;
-  }
-
-  body:has(.settingsSafe) .settingsSafe.expanded .safeSide,
-  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:focus-within,
-  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:hover {
-    width: min(250px, 82vw) !important;
-  }
 
   body:has(.settingsSafe) .settingsSafe .safeTop .safeActions,
   body:has(.settingsSafe) .settingsSafe .safePreview {
