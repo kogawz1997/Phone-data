@@ -1,8 +1,8 @@
-/* Compact mobile header and simplified navigation for the authenticated admin console. */
+/* Unified compact navigation for the authenticated admin console. */
 @media (max-width: 760px) {
   .app-shell {
     padding-top: 10px !important;
-    padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important;
+    padding-bottom: 24px !important;
   }
 
   .topbar {
@@ -62,15 +62,6 @@
     line-height: 1 !important;
   }
 
-  .topbar .pill-list .badge.good,
-  .topbar .pill-list .badge.warn {
-    display: inline-flex !important;
-    max-width: 90px !important;
-    overflow: hidden !important;
-    white-space: nowrap !important;
-    text-overflow: ellipsis !important;
-  }
-
   .topbar .pill-list .badge.neutral,
   .topbar .pill-list .btn.secondary,
   .topbar .pill-list .btn:not(.danger) {
@@ -87,53 +78,125 @@
   .hero.hero-grid { margin-top: 12px !important; }
   .ux-smart-search { display: none !important; }
   .ux-fab { display: none !important; }
+}
 
-  .ux-bottom-nav {
-    left: 12px !important;
-    right: 12px !important;
-    bottom: max(10px, env(safe-area-inset-bottom)) !important;
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 4px !important;
-    min-height: 62px !important;
-    padding: 8px !important;
-    border-radius: 22px !important;
+/* Do not show admin chrome on auth/login screens. */
+body:has(input[type="password"]) .ux-bottom-nav,
+body:has(input[type="password"]) .ux-sheet,
+body:has(input[type="password"]) .ux-sheet-backdrop,
+body:has(input[type="password"]) .ux-smart-search,
+body:has(input[type="password"]) .ux-fab {
+  display: none !important;
+}
+
+/* Store/Owner pages: use the old mobile bottom nav as the single main side menu. */
+@media (max-width: 980px) {
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .app-shell {
+    margin-left: 68px !important;
+    width: calc(100% - 68px) !important;
+    padding-left: 0 !important;
+    padding-right: 8px !important;
+    padding-bottom: 24px !important;
   }
 
-  .ux-bottom-nav button {
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav {
+    display: grid !important;
+    position: fixed !important;
+    left: 6px !important;
+    top: 8px !important;
+    bottom: 8px !important;
+    right: auto !important;
+    z-index: 1200 !important;
+    width: 56px !important;
+    min-height: 0 !important;
+    grid-template-columns: 1fr !important;
+    align-content: start !important;
+    gap: 8px !important;
+    padding: 7px !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(148, 163, 184, .16) !important;
+    background: rgba(3, 10, 22, .88) !important;
+    backdrop-filter: blur(22px) !important;
+    box-shadow: 0 22px 70px rgba(0, 0, 0, .30) !important;
+    overflow-y: auto !important;
+    scrollbar-width: none !important;
+  }
+
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav button {
+    min-height: 42px !important;
     min-width: 0 !important;
-    padding: 10px 4px !important;
-    border-radius: 16px !important;
-    font-size: 13px !important;
+    width: 100% !important;
+    padding: 0 !important;
+    border-radius: 14px !important;
+    font-size: 0 !important;
+    border: 1px solid rgba(148, 163, 184, .12) !important;
+    background: rgba(148, 163, 184, .08) !important;
+    color: #e5f4ff !important;
+    display: grid !important;
+    place-items: center !important;
     white-space: nowrap !important;
   }
 
-  .ux-sheet {
-    left: 12px !important;
-    right: 12px !important;
-    bottom: calc(82px + env(safe-area-inset-bottom)) !important;
-    width: auto !important;
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav button::before {
+    font-size: 16px !important;
+    color: #67e8f9 !important;
+  }
+
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav button:nth-child(1)::before { content: "⌂"; }
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav button:nth-child(2)::before { content: "♙"; }
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav button:nth-child(3)::before { content: "▤"; }
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav button:nth-child(4)::before { content: "＋"; }
+
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav:focus-within,
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav:hover {
+    width: min(248px, 82vw) !important;
+    z-index: 1300 !important;
+  }
+
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav:focus-within button,
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav:hover button {
+    display: flex !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    text-align: left !important;
+  }
+
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav:focus-within button::before,
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-bottom-nav:hover button::before {
+    min-width: 20px !important;
+  }
+
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-sheet {
+    position: fixed !important;
+    left: 72px !important;
+    top: 8px !important;
+    bottom: 8px !important;
+    right: auto !important;
+    width: min(292px, calc(100vw - 88px)) !important;
     max-width: none !important;
-    max-height: min(62vh, 520px) !important;
+    max-height: none !important;
     transform: none !important;
     animation: none !important;
     overflow-y: auto !important;
-    border-radius: 24px !important;
+    border-radius: 22px !important;
+    z-index: 1280 !important;
   }
 
-  .ux-sheet-backdrop {
-    backdrop-filter: blur(5px) !important;
-    background: rgba(2, 6, 23, .38) !important;
-  }
-
-  .ux-command {
-    width: calc(100vw - 24px) !important;
-    max-height: 76vh !important;
-    margin: 12vh auto 0 !important;
+  body:not(:has(.settingsSafe)):not(:has(input[type="password"])) .ux-sheet-backdrop {
+    background: rgba(2, 6, 23, .42) !important;
+    backdrop-filter: blur(3px) !important;
+    z-index: 1260 !important;
   }
 }
 
-/* Settings owns its navigation. Keep the global chrome out of the content area. */
+/* Settings keeps its own section sidebar, while global mobile chrome is removed to avoid duplicate menus. */
+body:has(.settingsSafe) .ux-bottom-nav,
 body:has(.settingsSafe) .ux-sheet,
 body:has(.settingsSafe) .ux-sheet-backdrop,
 body:has(.settingsSafe) .ux-smart-search,
@@ -222,44 +285,7 @@ body:has(.settingsSafe) .settingsSafe.light .safeSide nav button.active {
     width: min(250px, 82vw) !important;
   }
 
-  body:has(.settingsSafe) .settingsSafe.collapsed:has(.safeSide:focus-within)::after,
-  body:has(.settingsSafe) .settingsSafe.collapsed:has(.safeSide:hover)::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 18;
-    background: rgba(2, 6, 23, .46);
-    backdrop-filter: blur(3px);
-  }
-
-  body:has(.settingsSafe) .settingsSafe .safeSide nav button,
-  body:has(.settingsSafe) .settingsSafe .safeSideTools button,
-  body:has(.settingsSafe) .settingsSafe .safeSideTools a {
-    min-height: 42px !important;
-    border-radius: 14px !important;
-  }
-
-  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:focus-within nav button,
-  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:hover nav button,
-  body:has(.settingsSafe) .settingsSafe.expanded .safeSide nav button {
-    justify-content: flex-start !important;
-    padding: 0 12px !important;
-  }
-
-  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:focus-within nav button b,
-  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:hover nav button b,
-  body:has(.settingsSafe) .settingsSafe.expanded .safeSide nav button b,
-  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:focus-within .safeSideTools b,
-  body:has(.settingsSafe) .settingsSafe.collapsed .safeSide:hover .safeSideTools b,
-  body:has(.settingsSafe) .settingsSafe.expanded .safeSideTools b {
-    display: block !important;
-    margin-left: 10px !important;
-  }
-
-  body:has(.settingsSafe) .settingsSafe .safeTop .safeActions {
-    display: none !important;
-  }
-
+  body:has(.settingsSafe) .settingsSafe .safeTop .safeActions,
   body:has(.settingsSafe) .settingsSafe .safePreview {
     display: none !important;
   }
@@ -278,60 +304,5 @@ body:has(.settingsSafe) .settingsSafe.light .safeSide nav button.active {
   body:has(.settingsSafe) .settingsSafe .safeField input,
   body:has(.settingsSafe) .settingsSafe .safeField textarea {
     font-size: 16px !important;
-  }
-
-  body:has(.settingsSafe) .ux-bottom-nav {
-    display: grid !important;
-    position: fixed !important;
-    left: 10px !important;
-    right: auto !important;
-    bottom: max(10px, env(safe-area-inset-bottom)) !important;
-    z-index: 34 !important;
-    width: 52px !important;
-    min-height: 0 !important;
-    grid-template-columns: 1fr !important;
-    gap: 6px !important;
-    padding: 6px !important;
-    border-radius: 18px !important;
-    background: rgba(3, 10, 22, .88) !important;
-  }
-
-  body:has(.settingsSafe) .ux-bottom-nav button {
-    min-height: 40px !important;
-    padding: 0 !important;
-    border-radius: 13px !important;
-    font-size: 0 !important;
-  }
-
-  body:has(.settingsSafe) .ux-bottom-nav button::before {
-    font-size: 16px !important;
-    color: #67e8f9 !important;
-  }
-
-  body:has(.settingsSafe) .ux-bottom-nav button:nth-child(1)::before { content: "⌂"; }
-  body:has(.settingsSafe) .ux-bottom-nav button:nth-child(2)::before { content: "♙"; }
-  body:has(.settingsSafe) .ux-bottom-nav button:nth-child(3)::before { content: "▤"; }
-  body:has(.settingsSafe) .ux-bottom-nav button:nth-child(4)::before { content: "＋"; }
-
-  body:has(.settingsSafe.expanded) .ux-bottom-nav,
-  body:has(.settingsSafe.collapsed .safeSide:hover) .ux-bottom-nav,
-  body:has(.settingsSafe.collapsed .safeSide:focus-within) .ux-bottom-nav {
-    width: min(238px, calc(82vw - 18px)) !important;
-    grid-template-columns: 1fr !important;
-  }
-
-  body:has(.settingsSafe.expanded) .ux-bottom-nav button,
-  body:has(.settingsSafe.collapsed .safeSide:hover) .ux-bottom-nav button,
-  body:has(.settingsSafe.collapsed .safeSide:focus-within) .ux-bottom-nav button {
-    justify-content: flex-start !important;
-    padding: 0 12px !important;
-    font-size: 13px !important;
-    text-align: left !important;
-  }
-
-  body:has(.settingsSafe.expanded) .ux-bottom-nav button::before,
-  body:has(.settingsSafe.collapsed .safeSide:hover) .ux-bottom-nav button::before,
-  body:has(.settingsSafe.collapsed .safeSide:focus-within) .ux-bottom-nav button::before {
-    margin-right: 10px !important;
   }
 }
