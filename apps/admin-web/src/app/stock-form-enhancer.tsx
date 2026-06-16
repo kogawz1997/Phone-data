@@ -31,6 +31,26 @@ function cleanupInjectedUi() {
   }
 }
 
+function guardSettingsRouteChrome() {
+  const onSettings = window.location.pathname.startsWith("/settings");
+  const selectors = [".ux-bottom-nav", ".ux-sheet", ".ux-sheet-backdrop", ".ux-smart-search"];
+  selectors.forEach((selector) => {
+    document.querySelectorAll<HTMLElement>(selector).forEach((node) => {
+      if (!node.dataset.settingsGuardOriginalDisplay) {
+        node.dataset.settingsGuardOriginalDisplay = node.style.display || "__empty__";
+      }
+      if (onSettings) {
+        node.style.display = "none";
+        node.setAttribute("aria-hidden", "true");
+      } else {
+        const original = node.dataset.settingsGuardOriginalDisplay;
+        node.style.display = original && original !== "__empty__" ? original : "";
+        node.removeAttribute("aria-hidden");
+      }
+    });
+  });
+}
+
 function simplifyMdmSetup() {
   const isMdmPage = Array.from(document.querySelectorAll<HTMLElement>("h1,h2,h3,.tab-btn,.notice")).some((node) => {
     const text = textOf(node);
@@ -87,6 +107,7 @@ export default function StockFormEnhancer() {
   useEffect(() => {
     const rewrite = () => {
       cleanupInjectedUi();
+      guardSettingsRouteChrome();
       if (ownerWebUrl) {
         document.querySelectorAll<HTMLAnchorElement>('a[href="/platform"]').forEach((link) => {
           link.href = ownerWebUrl.replace(/\/$/, "") + "/platform";
