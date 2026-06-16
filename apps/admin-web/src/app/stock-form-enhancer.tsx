@@ -5,6 +5,8 @@ import DeviceStockEnhancer from "./device-stock-enhancer";
 
 const ownerWebUrl = process.env.NEXT_PUBLIC_OWNER_WEB_URL || "";
 
+type KogaWindow = Window & { __kogaSideOutsideBound?: boolean };
+
 function textOf(node: Element) {
   return (node.textContent || "").toLowerCase();
 }
@@ -37,6 +39,25 @@ function runPendingTab() {
   if (clickTab(pending)) window.sessionStorage.removeItem("koga_pending_tab");
 }
 
+function bindCloseSideMenuOnOutsideClick() {
+  const kogaWindow = window as KogaWindow;
+  if (kogaWindow.__kogaSideOutsideBound) return;
+  kogaWindow.__kogaSideOutsideBound = true;
+
+  document.addEventListener("pointerdown", (event) => {
+    const menu = document.querySelector<HTMLElement>(".koga-side-menu.open");
+    if (!menu) return;
+    const target = event.target as Node | null;
+    if (target && menu.contains(target)) return;
+    menu.classList.remove("open");
+  }, true);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    document.querySelector<HTMLElement>(".koga-side-menu.open")?.classList.remove("open");
+  });
+}
+
 function ensureGlobalSideMenu() {
   const pathname = window.location.pathname;
   const isSettings = pathname.startsWith("/settings");
@@ -49,6 +70,7 @@ function ensureGlobalSideMenu() {
   }
 
   document.documentElement.dataset.kogaSide = "on";
+  bindCloseSideMenuOnOutsideClick();
 
   if (!document.getElementById("koga-side-menu-style")) {
     const style = document.createElement("style");
