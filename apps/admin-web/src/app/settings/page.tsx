@@ -1,162 +1,113 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { api } from "@/lib/api";
 
-type StoreProfile = {
-  organization: {
-    id: string;
-    name: string;
-    slug?: string;
-    ownerName?: string;
-    email?: string;
-    billingEmail?: string;
-    taxId?: string;
-    phone?: string;
-    address?: string;
-    status: string;
-    plan: string;
-  };
-  counts: { customers: number; devices: number; contracts: number; pendingPayments: number };
-  onboarding: Array<{ stepKey: string; title: string; status: string }>;
-};
-
-type PaymentSetting = {
-  id?: string;
-  provider: string;
-  displayName: string;
-  promptPayId?: string;
-  bankName?: string;
-  accountNo?: string;
-  accountName?: string;
-  instructions?: string;
-  isActive: boolean;
-};
-
-type PortalSettings = {
-  slug?: string;
-  brandColor?: string;
-  welcomeText?: string;
-  contactLine?: string;
-  supportPhone?: string;
-  releasePolicy?: string;
-};
-
-type Integration = { id: string; provider: string; category: string; displayName: string; status: string; configJson?: Record<string, string> };
-type NotificationTemplate = { key: string; channel: string; title: string; body: string };
-type Section = "store" | "payment" | "portal" | "notifications" | "documents" | "integrations";
+type StoreProfile = { organization: { id: string; name: string; ownerName?: string; email?: string; billingEmail?: string; taxId?: string; phone?: string; address?: string; status: string; plan: string }; counts: { customers: number; devices: number; contracts: number; pendingPayments: number } };
+type PaymentSetting = { id?: string; provider: string; displayName: string; promptPayId?: string; bankName?: string; accountNo?: string; accountName?: string; instructions?: string; isActive: boolean };
+type StoreSettings = Record<string, string> & { slug?: string; brandColor?: string; logoDataUrl?: string; website?: string; businessHours?: string; openDays?: string; welcomeText?: string; contactLine?: string; supportPhone?: string; releasePolicy?: string; invoiceFooter?: string; qrPaymentEnabled?: string; notifyLine?: string; notifySms?: string; notifyEmail?: string; twoFactorEnabled?: string; loginAlerts?: string; sessionControl?: string; rolePreset?: string; systemProfileName?: string; systemAccent?: string };
+type Integration = { id: string; provider: string; category: string; displayName: string; status: string };
+type Template = { key: string; channel: string; title: string; body: string };
+type Section = "store" | "payment" | "portal" | "notify" | "docs" | "integrations" | "security" | "system";
 type Theme = "dark" | "light";
 
-const sections: Array<{ id: Section; label: string; icon: string }> = [
-  { id: "store", label: "โปรไฟล์ร้าน", icon: "◆" },
-  { id: "payment", label: "รับเงิน", icon: "฿" },
-  { id: "portal", label: "Portal", icon: "◉" },
-  { id: "notifications", label: "แจ้งเตือน", icon: "✦" },
-  { id: "documents", label: "เอกสาร", icon: "▣" },
-  { id: "integrations", label: "ระบบนอก", icon: "⌁" },
+const nav: Array<{ id: Section; label: string; icon: string }> = [
+  { id: "store", label: "ข้อมูลร้าน", icon: "▣" }, { id: "payment", label: "รับเงิน", icon: "฿" }, { id: "portal", label: "Portal", icon: "◎" }, { id: "notify", label: "แจ้งเตือน", icon: "◌" },
+  { id: "docs", label: "เอกสาร", icon: "▤" }, { id: "integrations", label: "ระบบนอก", icon: "⌁" }, { id: "security", label: "ความปลอดภัย", icon: "◇" }, { id: "system", label: "ระบบ", icon: "⚙" },
 ];
-
-function text(value: unknown) { return value === undefined || value === null ? "" : String(value); }
-function tone(status?: string) {
-  const s = String(status || "").toUpperCase();
-  if (["ACTIVE", "CURRENT", "CONNECTED", "READY", "DONE"].includes(s)) return "good";
-  if (["FAILED", "ERROR", "SUSPENDED", "BLOCKED"].includes(s)) return "bad";
-  return "warn";
-}
+const days = ["จันทร์", "อังคาร", "พุธ", "พฤหัส", "ศุกร์", "เสาร์", "อาทิตย์"];
+function isOn(value?: string) { return value === "true" || value === "1" || value === "on"; }
+function readImage(file: File) { return new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || "")); reader.onerror = () => reject(reader.error); reader.readAsDataURL(file); }); }
+function setBool(settings: StoreSettings, key: keyof StoreSettings, value: boolean) { return { ...settings, [key]: value ? "true" : "false" }; }
+function tone(status?: string) { const s = String(status || "").toUpperCase(); if (["ACTIVE", "READY", "CONNECTED", "CURRENT"].includes(s)) return "good"; if (["FAILED", "ERROR", "SUSPENDED", "CANCELLED"].includes(s)) return "bad"; return "warn"; }
 
 export default function StoreSettingsPage() {
-  const [activeSection, setActiveSection] = useState<Section>("store");
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [section, setSection] = useState<Section>("store");
   const [theme, setTheme] = useState<Theme>("dark");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
   const [profile, setProfile] = useState<StoreProfile | null>(null);
   const [payment, setPayment] = useState<PaymentSetting>({ provider: "PROMPTPAY_MANUAL", displayName: "PromptPay / Bank Transfer", isActive: true });
-  const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
+  const [settings, setSettings] = useState<StoreSettings>({});
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
-  const [storeForm, setStoreForm] = useState<Record<string, string>>({});
-  const [portalForm, setPortalForm] = useState<Record<string, string>>({});
-  const [documentForm, setDocumentForm] = useState<Record<string, string>>({ version: "1.0" });
-  const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
 
-  useEffect(() => {
-    const savedTheme = typeof window !== "undefined" ? window.localStorage.getItem("koga_profile_theme") : "";
-    const savedSidebar = typeof window !== "undefined" ? window.localStorage.getItem("koga_profile_sidebar") : "";
-    if (savedTheme === "light" || savedTheme === "dark") setTheme(savedTheme);
-    if (savedSidebar === "closed") setSidebarOpen(false);
-  }, []);
-
-  useEffect(() => { if (typeof window !== "undefined") { window.localStorage.setItem("koga_profile_theme", theme); document.documentElement.dataset.settingsTheme = theme; } }, [theme]);
-  useEffect(() => { if (typeof window !== "undefined") window.localStorage.setItem("koga_profile_sidebar", sidebarOpen ? "open" : "closed"); }, [sidebarOpen]);
+  useEffect(() => { const t = localStorage.getItem("koga_profile_theme"); const m = localStorage.getItem("koga_profile_menu"); if (t === "light" || t === "dark") setTheme(t); if (m === "collapsed") setCollapsed(true); void load(); }, []);
+  useEffect(() => { localStorage.setItem("koga_profile_theme", theme); }, [theme]);
+  useEffect(() => { localStorage.setItem("koga_profile_menu", collapsed ? "collapsed" : "open"); }, [collapsed]);
 
   async function load() {
     setBusy("load"); setError("");
     try {
-      const [profileRes, payments, templatesRes, integrationRows, portalSettings] = await Promise.all([
-        api<StoreProfile>("/store/profile"), api<PaymentSetting[]>("/store/payment-settings"), api<{ notifications: NotificationTemplate[] }>("/templates"), api<Integration[]>("/integrations"), api<PortalSettings>("/store/portal-settings"),
+      const [profileRes, paymentRows, settingsRes, templateRes, integrationRows] = await Promise.all([
+        api<StoreProfile>("/store/profile"), api<PaymentSetting[]>("/store/payment-settings"), api<StoreSettings>("/store/portal-settings"), api<{ notifications: Template[] }>("/templates"), api<Integration[]>("/integrations"),
       ]);
-      setProfile(profileRes);
-      setStoreForm({ name: text(profileRes.organization.name), ownerName: text(profileRes.organization.ownerName), phone: text(profileRes.organization.phone), billingEmail: text(profileRes.organization.billingEmail || profileRes.organization.email), taxId: text(profileRes.organization.taxId), address: text(profileRes.organization.address) });
-      setPortalForm({ slug: text(portalSettings.slug || profileRes.organization.slug), brandColor: text(portalSettings.brandColor || "#38bdf8"), welcomeText: text(portalSettings.welcomeText || "ตรวจสอบยอด ชำระงวด และดูสัญญาได้จากหน้านี้"), contactLine: text(portalSettings.contactLine), supportPhone: text(portalSettings.supportPhone || profileRes.organization.phone), releasePolicy: text(portalSettings.releasePolicy || "เมื่อชำระครบ ร้านจะตรวจสอบยอดและดำเนินการปลดเครื่องตามขั้นตอน") });
-      const activePayment = payments.find((item) => item.isActive) ?? payments[0];
-      if (activePayment) setPayment(activePayment);
-      setTemplates(templatesRes.notifications ?? []);
-      setIntegrations(integrationRows.filter((row) => row.category !== "MDM"));
-    } catch (e) { setError(e instanceof Error ? e.message : "โหลดตั้งค่าไม่สำเร็จ"); }
-    finally { setBusy(""); }
+      setProfile(profileRes); setSettings(settingsRes);
+      setPayment(paymentRows.find((row) => row.isActive) ?? paymentRows[0] ?? { provider: "PROMPTPAY_MANUAL", displayName: "PromptPay / Bank Transfer", isActive: true });
+      setTemplates(templateRes.notifications ?? []); setIntegrations(integrationRows.filter((row) => row.category !== "MDM"));
+    } catch (e) { setError(e instanceof Error ? e.message : "โหลดข้อมูลไม่สำเร็จ"); } finally { setBusy(""); }
   }
 
-  useEffect(() => { void load(); }, []);
-
-  const setupScore = useMemo(() => {
-    const checks = [Boolean(storeForm.name && storeForm.phone), Boolean(payment.promptPayId || payment.accountNo), Boolean(portalForm.slug), templates.length > 0, integrations.some((x) => x.status === "ACTIVE" || x.status === "CONNECTING")];
-    return Math.round((checks.filter(Boolean).length / checks.length) * 100);
-  }, [storeForm, payment, portalForm, templates, integrations]);
-
-  async function saveStoreProfile(e?: FormEvent) { e?.preventDefault(); setBusy("store"); setError(""); setNotice(""); try { const org = await api<StoreProfile["organization"]>("/store/profile", { method: "PATCH", body: JSON.stringify(storeForm) }); setProfile((current) => current ? { ...current, organization: org } : current); setNotice("บันทึกโปรไฟล์ร้านแล้ว"); } catch (e) { setError(e instanceof Error ? e.message : "บันทึกข้อมูลร้านไม่สำเร็จ"); } finally { setBusy(""); } }
-  async function savePayment(e?: FormEvent) { e?.preventDefault(); setBusy("payment"); setError(""); setNotice(""); try { const saved = await api<PaymentSetting>("/store/payment-settings", { method: "PUT", body: JSON.stringify(payment) }); setPayment(saved); setNotice("บันทึกช่องทางรับเงินแล้ว"); } catch (e) { setError(e instanceof Error ? e.message : "บันทึกช่องทางรับเงินไม่สำเร็จ"); } finally { setBusy(""); } }
-  async function savePortal(e?: FormEvent) { e?.preventDefault(); setBusy("portal"); setError(""); setNotice(""); try { await api("/store/portal-settings", { method: "PUT", body: JSON.stringify(portalForm) }); setNotice("บันทึก Portal แล้ว"); await load(); } catch (e) { setError(e instanceof Error ? e.message : "บันทึก Portal ไม่สำเร็จ"); } finally { setBusy(""); } }
-  async function saveTemplate(template: NotificationTemplate) { setBusy(`template:${template.key}`); setError(""); setNotice(""); try { await api("/templates/notifications", { method: "POST", body: JSON.stringify(template) }); setNotice("บันทึก Template แล้ว"); await load(); } catch (e) { setError(e instanceof Error ? e.message : "บันทึก template ไม่สำเร็จ"); } finally { setBusy(""); } }
-  async function saveDocumentTemplate(e?: FormEvent) { e?.preventDefault(); setBusy("document"); setError(""); setNotice(""); try { await api("/templates/documents", { method: "POST", body: JSON.stringify({ type: "CONTRACT", title: documentForm.title || "ข้อความท้ายสัญญา", version: documentForm.version || "1.0", body: documentForm.body || "" }) }); setNotice("บันทึกเอกสารแล้ว"); } catch (e) { setError(e instanceof Error ? e.message : "บันทึกเอกสารไม่สำเร็จ"); } finally { setBusy(""); } }
-  const setTemplate = (index: number, patch: Partial<NotificationTemplate>) => setTemplates((items) => items.map((item, i) => i === index ? { ...item, ...patch } : item));
-
   const org = profile?.organization;
-  const active = sections.find((section) => section.id === activeSection);
+  const logo = settings.logoDataUrl || "";
+  const openDays = (settings.openDays || "จันทร์,อังคาร,พุธ,พฤหัส,ศุกร์,เสาร์").split(",").map((x) => x.trim()).filter(Boolean);
+  const setupScore = useMemo(() => {
+    const checks = [Boolean(org?.name && org.phone), Boolean(payment.promptPayId || payment.accountNo), Boolean(settings.slug), Boolean(settings.logoDataUrl), Boolean(settings.contactLine || settings.supportPhone), integrations.length > 0];
+    return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+  }, [org, payment, settings, integrations]);
 
-  return (
-    <main className={`profile-pro ${theme} ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
-      <ProfileStyles />
-      <aside className="profile-sidebar">
-        <div className="side-head"><div className="side-logo">K</div>{sidebarOpen && <div><b>{org?.name || "KOGA Store"}</b><span>{org?.plan || "Store"}</span></div>}</div>
-        <nav className="side-nav">{sections.map((section) => <button key={section.id} className={activeSection === section.id ? "active" : ""} onClick={() => setActiveSection(section.id)} title={section.label}><span>{section.icon}</span>{sidebarOpen && <b>{section.label}</b>}</button>)}</nav>
-        <div className="side-bottom"><button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="Theme"><span>{theme === "dark" ? "☾" : "☀"}</span>{sidebarOpen && <b>{theme === "dark" ? "Dark" : "Light"}</b>}</button><button onClick={() => setSidebarOpen(!sidebarOpen)} title="Toggle menu"><span>{sidebarOpen ? "←" : "→"}</span>{sidebarOpen && <b>ย่อเมนู</b>}</button></div>
-      </aside>
+  function patchOrg(key: keyof StoreProfile["organization"], value: string) { setProfile((current) => current ? { ...current, organization: { ...current.organization, [key]: value } } : current); }
+  function toggleDay(day: string) { const next = openDays.includes(day) ? openDays.filter((d) => d !== day) : [...openDays, day]; setSettings({ ...settings, openDays: next.join(",") }); }
 
-      <section className="profile-main">
-        <header className="profile-top"><div><span className={`status ${tone(org?.status)}`}>{org?.status || "checking"}</span><h1>{active?.label || "โปรไฟล์ร้าน"}</h1></div><div className="top-actions"><button className="ghost" onClick={load}>{busy === "load" ? "Loading" : "Refresh"}</button><a className="ghost" href="/">Store</a></div></header>
-        <section className="profile-hero"><div className="hero-card primary"><div><span>Setup</span><strong>{setupScore}%</strong></div><div className="bar"><i style={{ width: `${setupScore}%` }} /></div></div><MiniStat label="ลูกค้า" value={profile?.counts.customers ?? 0} /><MiniStat label="เครื่อง" value={profile?.counts.devices ?? 0} /><MiniStat label="สัญญา" value={profile?.counts.contracts ?? 0} /></section>
-        {error && <div className="profile-alert bad">{error}</div>}{notice && <div className="profile-alert good">{notice}</div>}
-        <section className="profile-panel">
-          {activeSection === "store" && <form className="profile-form" onSubmit={saveStoreProfile}><SectionTitle title="ข้อมูลร้าน" action={busy === "store" ? "Saving..." : "Save"} /><div className="field-grid two"><Field label="ชื่อร้าน" value={storeForm.name} onChange={(v) => setStoreForm({ ...storeForm, name: v })} /><Field label="เจ้าของร้าน" value={storeForm.ownerName} onChange={(v) => setStoreForm({ ...storeForm, ownerName: v })} /><Field label="เบอร์ร้าน" value={storeForm.phone} onChange={(v) => setStoreForm({ ...storeForm, phone: v })} /><Field label="อีเมลรับบิล" value={storeForm.billingEmail} onChange={(v) => setStoreForm({ ...storeForm, billingEmail: v })} /><Field label="เลขภาษี" value={storeForm.taxId} onChange={(v) => setStoreForm({ ...storeForm, taxId: v })} /><Field label="แพ็กเกจ" value={`${org?.plan || ""} / ${org?.status || ""}`} disabled onChange={() => null} /></div><TextArea label="ที่อยู่" value={storeForm.address} onChange={(v) => setStoreForm({ ...storeForm, address: v })} /><button className="save" disabled={busy === "store"}>บันทึก</button></form>}
-          {activeSection === "payment" && <form className="profile-form" onSubmit={savePayment}><SectionTitle title="รับเงิน" action={busy === "payment" ? "Saving..." : "Save"} /><div className="field-grid two"><Field label="ชื่อที่แสดง" value={payment.displayName} onChange={(v) => setPayment({ ...payment, displayName: v })} /><Field label="PromptPay ID" value={payment.promptPayId} onChange={(v) => setPayment({ ...payment, promptPayId: v })} /><Field label="ธนาคาร" value={payment.bankName} onChange={(v) => setPayment({ ...payment, bankName: v })} /><Field label="เลขบัญชี" value={payment.accountNo} onChange={(v) => setPayment({ ...payment, accountNo: v })} /><Field label="ชื่อบัญชี" value={payment.accountName} onChange={(v) => setPayment({ ...payment, accountName: v })} /></div><TextArea label="ข้อความชำระเงิน" value={payment.instructions} onChange={(v) => setPayment({ ...payment, instructions: v })} /><button className="save" disabled={busy === "payment"}>บันทึก</button></form>}
-          {activeSection === "portal" && <form className="profile-form" onSubmit={savePortal}><SectionTitle title="Customer Portal" action={busy === "portal" ? "Saving..." : "Save"} /><div className="field-grid two"><Field label="Slug" value={portalForm.slug} onChange={(v) => setPortalForm({ ...portalForm, slug: v })} /><Field label="สีหลัก" value={portalForm.brandColor} onChange={(v) => setPortalForm({ ...portalForm, brandColor: v })} /><Field label="LINE" value={portalForm.contactLine} onChange={(v) => setPortalForm({ ...portalForm, contactLine: v })} /><Field label="เบอร์ช่วยเหลือ" value={portalForm.supportPhone} onChange={(v) => setPortalForm({ ...portalForm, supportPhone: v })} /></div><TextArea label="ข้อความต้อนรับ" value={portalForm.welcomeText} onChange={(v) => setPortalForm({ ...portalForm, welcomeText: v })} /><TextArea label="นโยบายปลดเครื่อง" value={portalForm.releasePolicy} onChange={(v) => setPortalForm({ ...portalForm, releasePolicy: v })} /><button className="save" disabled={busy === "portal"}>บันทึก</button></form>}
-          {activeSection === "notifications" && <section className="profile-form"><SectionTitle title="แจ้งเตือน" /><div className="template-grid">{templates.map((template, index) => <article className="template-card" key={`${template.key}-${template.channel}`}><div><span className="status warn">{template.channel}</span><input value={template.title} onChange={(e) => setTemplate(index, { title: e.target.value })} /></div><textarea value={template.body} onChange={(e) => setTemplate(index, { body: e.target.value })} /><button onClick={() => saveTemplate(template)} disabled={busy === `template:${template.key}`}>{busy === `template:${template.key}` ? "Saving" : "Save"}</button></article>)}</div></section>}
-          {activeSection === "documents" && <form className="profile-form" onSubmit={saveDocumentTemplate}><SectionTitle title="เอกสาร" action={busy === "document" ? "Saving..." : "Save"} /><div className="field-grid two"><Field label="ชื่อเอกสาร" value={documentForm.title} onChange={(v) => setDocumentForm({ ...documentForm, title: v })} /><Field label="เวอร์ชัน" value={documentForm.version || "1.0"} onChange={(v) => setDocumentForm({ ...documentForm, version: v })} /></div><TextArea label="ข้อความ" value={documentForm.body} onChange={(v) => setDocumentForm({ ...documentForm, body: v })} /><button className="save" disabled={busy === "document"}>บันทึก</button></form>}
-          {activeSection === "integrations" && <section className="profile-form"><SectionTitle title="ระบบนอก" /><div className="integration-grid">{integrations.map((row) => <a className="integration-card" key={row.id} href="/integrations"><span className={`status ${tone(row.status)}`}>{row.status}</span><b>{row.displayName}</b><small>{row.provider} · {row.category}</small></a>)}</div></section>}
-        </section>
-      </section>
-    </main>
-  );
+  async function uploadLogo(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]; if (!file) return;
+    setBusy("logo"); setError("");
+    try { const logoDataUrl = await readImage(file); const saved = await api<{ logoDataUrl: string }>("/store/profile-logo", { method: "POST", body: JSON.stringify({ logoDataUrl }) }); setSettings((current) => ({ ...current, logoDataUrl: saved.logoDataUrl })); setNotice("อัปเดตรูปโปรไฟล์ร้านแล้ว"); }
+    catch (e) { setError(e instanceof Error ? e.message : "อัปโหลดรูปไม่สำเร็จ"); }
+    finally { setBusy(""); if (fileRef.current) fileRef.current.value = ""; }
+  }
+
+  async function saveAll(e?: FormEvent) {
+    e?.preventDefault(); setBusy("save"); setNotice(""); setError("");
+    try {
+      if (org) await api("/store/profile", { method: "PATCH", body: JSON.stringify({ name: org.name, ownerName: org.ownerName, phone: org.phone, taxId: org.taxId, address: org.address, billingEmail: org.billingEmail }) });
+      await api("/store/payment-settings", { method: "PUT", body: JSON.stringify(payment) });
+      await api("/store/portal-settings", { method: "PUT", body: JSON.stringify(settings) });
+      setNotice("บันทึกโปรไฟล์และระบบตั้งค่าแล้ว"); await load();
+    } catch (e) { setError(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ"); } finally { setBusy(""); }
+  }
+
+  function channel(key: "notifyLine" | "notifySms" | "notifyEmail", label: string) { const active = isOn(settings[key]); return <button type="button" className={`channel ${active ? "active" : ""}`} onClick={() => setSettings(setBool(settings, key, !active))}>{label}<span>{active ? "✓" : "+"}</span></button>; }
+
+  return <main className={`profile-console ${theme} ${collapsed ? "collapsed" : "open"}`}>
+    <Css />
+    <aside className="profile-side"><button className="side-brand" type="button" onClick={() => setCollapsed(!collapsed)}><span>K</span><b>Store</b></button><nav>{nav.map((item) => <button key={item.id} type="button" className={section === item.id ? "active" : ""} onClick={() => setSection(item.id)}><i>{item.icon}</i><b>{item.label}</b></button>)}</nav><div className="side-footer"><button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}><i>{theme === "dark" ? "☾" : "☀"}</i><b>{theme === "dark" ? "Dark" : "Light"}</b></button><a href="/"><i>⌂</i><b>กลับ Store</b></a></div></aside>
+    <section className="profile-main">
+      <header className="topbar"><div className="top-title"><span className="k-mini">K</span><h1>Store Profile</h1><span className="api-dot">API ready</span></div><div className="top-actions"><button type="button" onClick={load}>{busy === "load" ? "Loading" : "Refresh"}</button><a href="/">ออก</a></div></header>
+      <section className="hero-card"><button type="button" className="avatar" onClick={() => fileRef.current?.click()}>{logo ? <img src={logo} alt="Store logo" /> : <span>K</span>}<i>📷</i></button><input ref={fileRef} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={uploadLogo} /><div className="hero-info"><h2>{org?.name || "Koga Mobile Store"}</h2><p>{org?.ownerName || "Owner"}</p><div className="badges"><span className="badge pro">{org?.plan || "PRO"}</span><span className={`badge ${tone(org?.status)}`}>{org?.status || "ACTIVE"}</span></div></div><div className="hero-stats"><Stat label="ลูกค้า" value={profile?.counts.customers ?? 0} /><Stat label="อุปกรณ์" value={profile?.counts.devices ?? 0} /><Stat label="สัญญา" value={profile?.counts.contracts ?? 0} /><div className="stat progress"><b>{setupScore}%</b><span>ตั้งค่าสำเร็จ</span><em style={{ background: `conic-gradient(#7c3aed ${setupScore * 3.6}deg, rgba(148,163,184,.18) 0)` }} /></div></div></section>
+      <section className="theme-switch"><button type="button" className={theme === "dark" ? "active" : ""} onClick={() => setTheme("dark")}>☾ Dark</button><button type="button" className={theme === "light" ? "active" : ""} onClick={() => setTheme("light")}>☀ Light</button></section>
+      {notice && <div className="alert good">{notice}</div>}{error && <div className="alert bad">{error}</div>}
+      <form className="profile-grid" onSubmit={saveAll}>
+        <section className={`panel span-2 ${section !== "store" ? "ghosted" : ""}`}><PanelTitle icon="▣" title="ข้อมูลร้าน" /><div className="fields two"><Field label="ชื่อร้าน" value={org?.name} onChange={(v) => patchOrg("name", v)} /><Field label="เจ้าของร้าน" value={org?.ownerName} onChange={(v) => patchOrg("ownerName", v)} /><Field label="เบอร์โทร" value={org?.phone} onChange={(v) => patchOrg("phone", v)} /><Field label="อีเมลรับบิล" value={org?.billingEmail || org?.email} onChange={(v) => patchOrg("billingEmail", v)} /><Field label="เลขภาษี" value={org?.taxId} onChange={(v) => patchOrg("taxId", v)} /><Field label="เว็บไซต์" value={settings.website} onChange={(v) => setSettings({ ...settings, website: v })} /></div><Field textarea label="ที่อยู่" value={org?.address} onChange={(v) => patchOrg("address", v)} /><div className="logo-row"><div className="logo-preview">{logo ? <img src={logo} alt="logo" /> : <span>K</span>}</div><div><b>โลโก้ร้าน</b><p>PNG, JPG, WEBP ไม่เกิน 1MB</p><button type="button" onClick={() => fileRef.current?.click()}>{busy === "logo" ? "Uploading..." : "เปลี่ยนโลโก้"}</button></div></div><Field label="เวลาทำการ" value={settings.businessHours} onChange={(v) => setSettings({ ...settings, businessHours: v })} /><div className="days">{days.map((day) => <button type="button" key={day} className={openDays.includes(day) ? "active" : ""} onClick={() => toggleDay(day)}>{day}</button>)}</div></section>
+        <section className={`panel ${section !== "payment" ? "ghosted" : ""}`}><PanelTitle icon="฿" title="รับเงิน" /><Field label="ชื่อที่แสดง" value={payment.displayName} onChange={(v) => setPayment({ ...payment, displayName: v })} /><Field label="PromptPay" value={payment.promptPayId} onChange={(v) => setPayment({ ...payment, promptPayId: v })} /><Field label="ธนาคาร" value={payment.bankName} onChange={(v) => setPayment({ ...payment, bankName: v })} /><Field label="เลขบัญชี" value={payment.accountNo} onChange={(v) => setPayment({ ...payment, accountNo: v })} /><Field label="ชื่อบัญชี" value={payment.accountName} onChange={(v) => setPayment({ ...payment, accountName: v })} /><Toggle label="เปิดใช้งาน QR Payment" checked={isOn(settings.qrPaymentEnabled)} onChange={(v) => setSettings(setBool(settings, "qrPaymentEnabled", v))} /><Field textarea label="ข้อความท้ายบิล" value={settings.invoiceFooter || payment.instructions} onChange={(v) => { setSettings({ ...settings, invoiceFooter: v }); setPayment({ ...payment, instructions: v }); }} /></section>
+        <section className={`panel ${section !== "portal" ? "ghosted" : ""}`}><PanelTitle icon="◎" title="Portal" /><Field label="Slug" value={settings.slug} onChange={(v) => setSettings({ ...settings, slug: v })} /><Field label="สีหลัก" value={settings.brandColor} onChange={(v) => setSettings({ ...settings, brandColor: v })} /><Field label="LINE Support" value={settings.contactLine} onChange={(v) => setSettings({ ...settings, contactLine: v })} /><Field label="เบอร์ช่วยเหลือ" value={settings.supportPhone} onChange={(v) => setSettings({ ...settings, supportPhone: v })} /><Field textarea label="ข้อความต้อนรับ" value={settings.welcomeText} onChange={(v) => setSettings({ ...settings, welcomeText: v })} /><Field textarea label="นโยบายปลดเครื่อง" value={settings.releasePolicy} onChange={(v) => setSettings({ ...settings, releasePolicy: v })} /></section>
+        <section className={`panel ${section !== "notify" ? "ghosted" : ""}`}><PanelTitle icon="◌" title="แจ้งเตือน" /><div className="channels">{channel("notifyLine", "LINE")}{channel("notifySms", "SMS")}{channel("notifyEmail", "Email")}</div><div className="template-list">{templates.slice(0, 4).map((t) => <div key={`${t.key}-${t.channel}`}><b>{t.title}</b><span>{t.channel}</span></div>)}</div></section>
+        <section className={`panel ${section !== "integrations" ? "ghosted" : ""}`}><PanelTitle icon="⌁" title="ระบบนอก" /><div className="integration-list">{integrations.slice(0, 6).map((i) => <a href="/integrations" key={i.id}><span>{i.displayName}</span><b>{i.status}</b></a>)}</div></section>
+        <section className={`panel wide ${section !== "security" ? "ghosted" : ""}`}><PanelTitle icon="◇" title="ความปลอดภัย" /><div className="security-grid"><Toggle label="ยืนยันตัวตน 2 ขั้นตอน (2FA)" checked={isOn(settings.twoFactorEnabled)} onChange={(v) => setSettings(setBool(settings, "twoFactorEnabled", v))} /><Toggle label="แจ้งเตือนการเข้าสู่ระบบ" checked={isOn(settings.loginAlerts)} onChange={(v) => setSettings(setBool(settings, "loginAlerts", v))} /><Toggle label="ควบคุมเซสชัน" checked={isOn(settings.sessionControl)} onChange={(v) => setSettings(setBool(settings, "sessionControl", v))} /><Field label="Roles Preset" value={settings.rolePreset} onChange={(v) => setSettings({ ...settings, rolePreset: v })} /></div></section>
+        <section className={`panel wide ${section !== "system" ? "ghosted" : ""}`}><PanelTitle icon="⚙" title="ระบบโปรไฟล์" /><div className="fields two"><Field label="ชื่อระบบโปรไฟล์" value={settings.systemProfileName || org?.name} onChange={(v) => setSettings({ ...settings, systemProfileName: v })} /><Field label="Accent" value={settings.systemAccent || "cyan-violet"} onChange={(v) => setSettings({ ...settings, systemAccent: v })} /></div></section>
+        <footer className="savebar"><button type="button" onClick={load}>ยกเลิก</button><button type="submit" className="save" disabled={busy === "save"}>{busy === "save" ? "กำลังบันทึก..." : "บันทึก"}</button><a href="/" className="preview">ดูตัวอย่าง</a></footer>
+      </form>
+    </section>
+  </main>;
 }
 
-function MiniStat({ label, value }: { label: string; value: string | number }) { return <div className="hero-card"><span>{label}</span><strong>{value}</strong></div>; }
-function SectionTitle({ title, action }: { title: string; action?: string }) { return <div className="section-title"><h2>{title}</h2>{action && <span>{action}</span>}</div>; }
-function Field({ label, value, onChange, disabled }: { label: string; value?: string; disabled?: boolean; onChange: (value: string) => void }) { return <label className="field"><span>{label}</span><input value={value || ""} disabled={disabled} onChange={(e) => onChange(e.target.value)} /></label>; }
-function TextArea({ label, value, onChange }: { label: string; value?: string; onChange: (value: string) => void }) { return <label className="field full"><span>{label}</span><textarea value={value || ""} onChange={(e) => onChange(e.target.value)} /></label>; }
-
-function ProfileStyles() {
-  return <style>{`
-    .profile-pro{--bg:#071019;--panel:rgba(13,24,38,.82);--panel2:rgba(18,31,47,.78);--line:rgba(148,163,184,.16);--text:#e5edf7;--muted:#8da2b8;--accent:#38bdf8;--accent2:#a78bfa;--good:#22c55e;--warn:#f59e0b;--bad:#ef4444;min-height:100vh;background:radial-gradient(circle at 20% 0%,rgba(56,189,248,.20),transparent 34%),radial-gradient(circle at 90% 10%,rgba(167,139,250,.18),transparent 30%),linear-gradient(135deg,#020617,#071019 45%,#0f172a);color:var(--text);display:grid;grid-template-columns:280px 1fr;gap:0}.profile-pro.light{--bg:#f6f8fb;--panel:rgba(255,255,255,.86);--panel2:rgba(255,255,255,.92);--line:rgba(15,23,42,.12);--text:#0f172a;--muted:#64748b;--accent:#0ea5e9;--accent2:#7c3aed;background:linear-gradient(135deg,#f8fafc,#e0f2fe 48%,#eef2ff)}.profile-pro.sidebar-closed{grid-template-columns:92px 1fr}.profile-sidebar{position:sticky;top:0;height:100vh;padding:18px;display:flex;flex-direction:column;border-right:1px solid var(--line);background:rgba(2,6,23,.38);backdrop-filter:blur(20px);z-index:80}.light .profile-sidebar{background:rgba(255,255,255,.45)}.side-head{display:flex;align-items:center;gap:12px;min-height:54px}.side-logo{width:46px;height:46px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent2));font-weight:900;color:white;box-shadow:0 16px 38px rgba(56,189,248,.22)}.side-head b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}.side-head span{display:block;color:var(--muted);font-size:12px;margin-top:3px}.side-nav{display:grid;gap:8px;margin-top:24px}.side-nav button,.side-bottom button{border:1px solid transparent;background:transparent;color:var(--muted);border-radius:16px;min-height:48px;display:flex;align-items:center;gap:12px;padding:0 14px;cursor:pointer;text-align:left}.side-nav button:hover,.side-bottom button:hover{background:rgba(148,163,184,.10);color:var(--text)}.side-nav button.active{background:linear-gradient(135deg,rgba(56,189,248,.20),rgba(167,139,250,.18));border-color:rgba(56,189,248,.28);color:var(--text)}.side-nav span,.side-bottom span{width:24px;text-align:center}.side-bottom{margin-top:auto;display:grid;gap:8px}.profile-main{padding:22px;min-width:0}.profile-top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px}.profile-top h1{font-size:34px;line-height:1;margin:10px 0 0;letter-spacing:-.04em}.top-actions{display:flex;gap:8px;flex-wrap:wrap}.ghost,.save,.template-card button{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:14px;padding:11px 14px;text-decoration:none;cursor:pointer}.save{background:linear-gradient(135deg,var(--accent),var(--accent2));border:0;color:white;font-weight:800;min-width:120px}.profile-hero{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:14px;margin-bottom:16px}.hero-card{border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(18px);border-radius:24px;padding:18px;min-height:96px;box-shadow:0 22px 60px rgba(2,6,23,.18)}.hero-card span{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.12em}.hero-card strong{display:block;margin-top:8px;font-size:32px;letter-spacing:-.04em}.hero-card.primary{display:grid;align-content:space-between}.bar{height:8px;background:rgba(148,163,184,.18);border-radius:999px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:inherit}.profile-alert{border-radius:18px;padding:13px 16px;margin-bottom:14px;border:1px solid var(--line);background:var(--panel)}.profile-alert.good{border-color:rgba(34,197,94,.32)}.profile-alert.bad{border-color:rgba(239,68,68,.32)}.status{display:inline-flex;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;border:1px solid var(--line);background:rgba(148,163,184,.10)}.status.good{color:var(--good);border-color:rgba(34,197,94,.28)}.status.warn{color:var(--warn);border-color:rgba(245,158,11,.28)}.status.bad{color:var(--bad);border-color:rgba(239,68,68,.28)}.profile-panel{border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(18px);border-radius:28px;padding:22px;box-shadow:0 26px 70px rgba(2,6,23,.22)}.profile-form{display:grid;gap:16px}.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:14px}.section-title h2{margin:0;font-size:22px;letter-spacing:-.03em}.section-title span{color:var(--muted);font-size:13px}.field-grid{display:grid;gap:14px}.field-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.field{display:grid;gap:7px}.field span{color:var(--muted);font-size:13px}.field input,.field textarea,.template-card input,.template-card textarea{width:100%;border:1px solid var(--line);background:rgba(2,6,23,.22);color:var(--text);border-radius:16px;padding:13px 14px;outline:none}.light .field input,.light .field textarea,.light .template-card input,.light .template-card textarea{background:rgba(255,255,255,.76)}.field textarea,.template-card textarea{min-height:120px;resize:vertical}.field input:focus,.field textarea:focus,.template-card input:focus,.template-card textarea:focus{border-color:rgba(56,189,248,.62);box-shadow:0 0 0 4px rgba(56,189,248,.10)}.full{grid-column:1/-1}.template-grid,.integration-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.template-card,.integration-card{border:1px solid var(--line);background:var(--panel2);border-radius:22px;padding:16px;display:grid;gap:12px;text-decoration:none;color:var(--text)}.template-card div{display:flex;gap:10px;align-items:center}.template-card input{font-weight:800}.integration-card b{font-size:17px}.integration-card small{color:var(--muted)}
-    @media(max-width:900px){html:has(.profile-pro) .ux-bottom-nav,html:has(.profile-pro) .ux-smart-search{display:none!important}.profile-pro,.profile-pro.sidebar-closed,.profile-pro.sidebar-open{display:block;min-height:100vh}.profile-sidebar{position:fixed;left:0;top:0;bottom:0;height:100dvh;width:76px;padding:12px 10px;border-right:1px solid var(--line);border-bottom:0;background:rgba(2,6,23,.72);box-shadow:18px 0 42px rgba(2,6,23,.26);transition:width .22s ease}.profile-pro.light .profile-sidebar{background:rgba(255,255,255,.82)}.profile-pro.sidebar-open .profile-sidebar{width:min(278px,86vw)}.profile-pro.sidebar-closed .profile-sidebar{width:76px}.side-head{gap:10px}.side-logo{width:48px;height:48px;border-radius:18px}.profile-pro.sidebar-closed .side-head>div:not(.side-logo),.profile-pro.sidebar-closed .side-nav b,.profile-pro.sidebar-closed .side-bottom b{display:none}.side-nav{display:grid;grid-auto-flow:row;overflow:visible;margin-top:18px;gap:7px}.side-nav button,.side-bottom button{width:100%;min-width:0;min-height:46px;padding:0 12px;justify-content:flex-start}.profile-pro.sidebar-closed .side-nav button,.profile-pro.sidebar-closed .side-bottom button{justify-content:center;padding:0}.side-bottom{margin-top:auto}.profile-main{margin-left:76px;padding:14px 12px 110px}.profile-top{align-items:flex-start;flex-direction:column;gap:10px}.profile-top h1{font-size:28px}.profile-hero{grid-template-columns:1fr 1fr;gap:10px}.hero-card{border-radius:20px;min-height:82px;padding:14px}.hero-card.primary{grid-column:1/-1}.hero-card strong{font-size:26px}.profile-panel{border-radius:22px;padding:16px}.field-grid.two,.template-grid,.integration-grid{grid-template-columns:1fr}.section-title{align-items:flex-start}.top-actions{width:100%}.top-actions .ghost{flex:1;text-align:center}.profile-pro.sidebar-open:after{content:"";position:fixed;inset:0;background:rgba(2,6,23,.28);z-index:70;pointer-events:none}.profile-sidebar{z-index:90}}
-  `}</style>;
-}
+function Stat({ label, value }: { label: string; value: number | string }) { return <div className="stat"><b>{value}</b><span>{label}</span></div>; }
+function PanelTitle({ icon, title }: { icon: string; title: string }) { return <h3 className="panel-title"><i>{icon}</i>{title}</h3>; }
+function Field({ label, value, onChange, textarea }: { label: string; value?: string; textarea?: boolean; onChange: (value: string) => void }) { return <label className="field"><span>{label}</span>{textarea ? <textarea value={value || ""} onChange={(e) => onChange(e.target.value)} /> : <input value={value || ""} onChange={(e) => onChange(e.target.value)} />}</label>; }
+function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (value: boolean) => void }) { return <label className="toggle"><span>{label}</span><button type="button" className={checked ? "on" : ""} onClick={() => onChange(!checked)}><i /></button></label>; }
+function Css() { return <style>{`
+.profile-console{--panel:rgba(12,22,37,.82);--panel2:rgba(15,27,45,.94);--line:rgba(148,163,184,.16);--text:#eef6ff;--muted:#93a4ba;--accent:#22d3ee;--accent2:#8b5cf6;--good:#22c55e;--bad:#ef4444;min-height:100vh;background:radial-gradient(circle at 20% 0,rgba(34,211,238,.18),transparent 34%),radial-gradient(circle at 86% 0,rgba(139,92,246,.20),transparent 34%),linear-gradient(135deg,#020617,#07111f 45%,#0f172a);color:var(--text);display:grid;grid-template-columns:278px 1fr;font-family:Inter,ui-sans-serif,system-ui}.profile-console.light{--panel:rgba(255,255,255,.86);--panel2:rgba(255,255,255,.94);--line:rgba(15,23,42,.12);--text:#0f172a;--muted:#64748b;--accent:#0284c7;--accent2:#7c3aed;background:linear-gradient(135deg,#f8fafc,#e0f2fe 46%,#eef2ff)}.profile-console.collapsed{grid-template-columns:92px 1fr}.profile-side{position:sticky;top:0;height:100vh;padding:14px;border-right:1px solid var(--line);background:rgba(2,6,23,.42);backdrop-filter:blur(24px);display:flex;flex-direction:column;gap:14px}.light .profile-side{background:rgba(255,255,255,.58)}.side-brand{border:0;border-radius:22px;min-height:60px;background:linear-gradient(135deg,rgba(34,211,238,.24),rgba(139,92,246,.22));color:var(--text);display:flex;align-items:center;gap:12px;padding:0 10px;cursor:pointer}.side-brand span,.k-mini{width:46px;height:46px;min-width:46px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent2));font-size:24px;font-weight:900;color:white}.profile-side nav{display:grid;gap:8px;overflow:auto}.profile-side nav button,.side-footer button,.side-footer a{border:0;border-radius:17px;min-height:48px;background:transparent;color:var(--muted);display:flex;align-items:center;gap:12px;padding:0 12px;text-decoration:none;cursor:pointer}.profile-side nav button:hover,.side-footer button:hover,.side-footer a:hover,.profile-side nav button.active{background:linear-gradient(135deg,rgba(34,211,238,.16),rgba(139,92,246,.15));color:var(--text)}.profile-side i,.side-footer i{font-style:normal;width:24px;text-align:center;color:var(--accent)}.side-footer{margin-top:auto;display:grid;gap:8px}.collapsed .profile-side b{display:none}.collapsed .profile-side nav button,.collapsed .side-footer button,.collapsed .side-footer a,.collapsed .side-brand{justify-content:center;padding:0}.profile-main{padding:18px;min-width:0}.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}.top-title{display:flex;align-items:center;gap:12px}.topbar h1{font-size:24px;margin:0}.api-dot{border:1px solid rgba(34,197,94,.3);color:#86efac;background:rgba(34,197,94,.13);border-radius:999px;padding:8px 13px;font-weight:800}.top-actions{display:flex;gap:8px}.top-actions button,.top-actions a{border:1px solid var(--line);border-radius:14px;background:var(--panel2);color:var(--text);padding:10px 14px;text-decoration:none}.hero-card{border:1px solid var(--line);border-radius:28px;background:var(--panel);box-shadow:0 28px 90px rgba(0,0,0,.22);padding:20px;display:grid;grid-template-columns:auto minmax(180px,1fr) 2.4fr;gap:22px;align-items:center}.avatar{position:relative;border:1px solid rgba(34,211,238,.5);width:126px;height:126px;border-radius:50%;background:#020617;display:grid;place-items:center;color:white;cursor:pointer;overflow:hidden}.avatar img{width:100%;height:100%;object-fit:cover}.avatar span{font-size:64px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;color:transparent}.avatar i{position:absolute;right:8px;bottom:8px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--panel2);font-style:normal}.hero-info h2{font-size:30px;margin:0 0 6px}.hero-info p{margin:0 0 12px;color:var(--muted)}.badges{display:flex;gap:8px}.badge{border-radius:999px;padding:8px 13px;background:rgba(148,163,184,.14);font-weight:900}.badge.pro{background:linear-gradient(135deg,rgba(139,92,246,.8),rgba(59,130,246,.6))}.badge.good{color:#86efac;border:1px solid rgba(34,197,94,.28)}.badge.warn{color:#facc15}.badge.bad{color:#fca5a5}.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{border:1px solid var(--line);border-radius:18px;background:rgba(15,23,42,.35);padding:15px;min-height:94px}.light .stat{background:rgba(255,255,255,.55)}.stat b{display:block;font-size:24px}.stat span{color:var(--muted);font-size:13px}.stat.progress{position:relative}.stat.progress em{position:absolute;right:16px;bottom:16px;width:48px;height:48px;border-radius:50%}.theme-switch{margin:16px auto;display:flex;width:max-content;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:5px}.theme-switch button{border:0;border-radius:999px;background:transparent;color:var(--muted);padding:10px 22px;cursor:pointer}.theme-switch button.active{background:linear-gradient(135deg,rgba(34,211,238,.22),rgba(139,92,246,.22));color:var(--text)}.alert{border:1px solid var(--line);border-radius:18px;padding:13px 16px;margin-bottom:14px}.alert.good{border-color:rgba(34,197,94,.35);color:#86efac}.alert.bad{border-color:rgba(239,68,68,.35);color:#fca5a5}.profile-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}.panel{border:1px solid var(--line);border-radius:24px;background:var(--panel);padding:18px;display:grid;gap:14px}.span-2{grid-row:span 2}.wide{grid-column:1/-1}.ghosted{opacity:.72}.panel-title{margin:0;display:flex;align-items:center;gap:10px;font-size:20px}.panel-title i{font-style:normal;color:var(--accent)}.fields{display:grid;gap:12px}.fields.two{grid-template-columns:1fr 1fr}.field{display:grid;gap:7px}.field span{color:var(--muted);font-size:13px}.field input,.field textarea{border:1px solid var(--line);border-radius:14px;background:rgba(2,6,23,.25);color:var(--text);padding:12px 13px;outline:none}.light .field input,.light .field textarea{background:rgba(255,255,255,.75)}.field textarea{min-height:92px;resize:vertical}.logo-row{border:1px solid var(--line);border-radius:18px;padding:12px;display:flex;gap:14px;align-items:center}.logo-preview{width:86px;height:86px;border-radius:18px;background:#020617;display:grid;place-items:center;overflow:hidden}.logo-preview img{width:100%;height:100%;object-fit:cover}.logo-preview span{font-size:38px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;color:transparent}.logo-row p{margin:4px 0 10px;color:var(--muted);font-size:13px}.logo-row button,.savebar button,.savebar a{border:1px solid var(--line);border-radius:14px;background:var(--panel2);color:var(--text);padding:10px 14px;text-decoration:none}.days,.channels{display:flex;flex-wrap:wrap;gap:8px}.days button,.channel{border:1px solid var(--line);border-radius:13px;background:rgba(148,163,184,.1);color:var(--muted);padding:8px 12px;cursor:pointer}.days button.active,.channel.active{background:linear-gradient(135deg,rgba(34,211,238,.22),rgba(139,92,246,.20));color:var(--text);border-color:rgba(34,211,238,.35)}.channel span{margin-left:8px}.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:16px;padding:12px}.toggle button{width:50px;height:28px;border:0;border-radius:999px;background:rgba(148,163,184,.25);padding:3px;cursor:pointer}.toggle button i{display:block;width:22px;height:22px;border-radius:50%;background:white;transition:transform .18s}.toggle button.on{background:linear-gradient(135deg,#2563eb,#8b5cf6)}.toggle button.on i{transform:translateX(22px)}.template-list,.integration-list{display:grid;gap:9px}.template-list div,.integration-list a{border:1px solid var(--line);border-radius:14px;padding:11px 12px;display:flex;justify-content:space-between;gap:12px;color:var(--text);text-decoration:none}.template-list span,.integration-list b{color:#86efac;font-size:13px}.security-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.savebar{position:sticky;bottom:12px;grid-column:1/-1;display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:12px;border:1px solid var(--line);background:rgba(2,8,23,.82);backdrop-filter:blur(24px);border-radius:22px;padding:12px}.light .savebar{background:rgba(255,255,255,.84)}.savebar .save{border:0;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-weight:900}.preview{display:grid;place-items:center;border-color:rgba(139,92,246,.5)!important;color:#c4b5fd!important}@media(max-width:980px){.profile-console,.profile-console.collapsed{grid-template-columns:78px 1fr}.profile-side{padding:8px}.profile-side b{display:none}.profile-side nav button,.side-footer button,.side-footer a,.side-brand{justify-content:center;padding:0}.profile-main{padding:10px}.hero-card{grid-template-columns:1fr;text-align:left}.hero-stats{grid-template-columns:1fr 1fr}.profile-grid{grid-template-columns:1fr}.span-2{grid-row:auto}.fields.two,.security-grid{grid-template-columns:1fr}.savebar{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}.theme-switch{margin-left:0}.avatar{width:110px;height:110px}.profile-side{position:fixed;left:0;top:0;bottom:0;z-index:100}.profile-main{margin-left:78px}.hero-info h2{font-size:24px}}
+  `}</style>; }
