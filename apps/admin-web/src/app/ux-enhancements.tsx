@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import StockFormEnhancer from "./stock-form-enhancer";
 
 type Surface = "admin" | "owner";
 type MenuItem = { id: string; label: string; icon: string; run: () => void; active?: boolean; danger?: boolean; group?: string };
@@ -12,16 +11,17 @@ function normalize(input: string) {
 
 function getSurface(): Surface {
   if (typeof window === "undefined") return "admin";
-  return window.location.pathname.startsWith("/platform") ? "owner" : "admin";
+  const path = window.location.pathname;
+  return path.startsWith("/platform") || path.startsWith("/signup") ? "owner" : "admin";
 }
 
 function isAuthScreen() {
   if (typeof window === "undefined") return true;
   const path = window.location.pathname;
-  if (path.startsWith("/login") || path.startsWith("/signup") || path.startsWith("/auth") || path.startsWith("/forgot")) return true;
+  if (path.startsWith("/login") || path.startsWith("/auth") || path.startsWith("/forgot")) return true;
   const hasPassword = Boolean(document.querySelector('input[type="password"]'));
   const text = normalize(document.body.innerText || "");
-  const hasAppContent = Boolean(document.querySelector(".app-shell .hero, .settingsSafe, .table-wrap, .tab-btn"));
+  const hasAppContent = Boolean(document.querySelector(".app-shell .hero, .settingsSafe, .table-wrap, .tab-btn, form"));
   return hasPassword && (text.includes("เข้าสู่ระบบ") || text.includes("login") || text.includes("sign in")) && !hasAppContent;
 }
 
@@ -61,7 +61,7 @@ function goSettingsSection(label: string) {
     goPath("/settings");
     return;
   }
-  clickByText(".settingsSafe .safeSide nav button, .settingsSafe button", [label]);
+  clickByText(".settingsSafe button", [label]);
 }
 
 function runPendingActions() {
@@ -69,7 +69,7 @@ function runPendingActions() {
   if (pendingTab && clickByText(".tab-btn, button", [pendingTab])) window.sessionStorage.removeItem("koga_pending_tab");
 
   const pendingSettings = window.sessionStorage.getItem("koga_pending_settings_section");
-  if (pendingSettings && window.location.pathname.startsWith("/settings") && clickByText(".settingsSafe .safeSide nav button, .settingsSafe button", [pendingSettings])) {
+  if (pendingSettings && window.location.pathname.startsWith("/settings") && clickByText(".settingsSafe button", [pendingSettings])) {
     window.sessionStorage.removeItem("koga_pending_settings_section");
   }
 }
@@ -79,7 +79,7 @@ function logout() {
     Object.keys(window.localStorage).filter((key) => key.startsWith("koga_")).forEach((key) => window.localStorage.removeItem(key));
     Object.keys(window.sessionStorage).filter((key) => key.startsWith("koga_")).forEach((key) => window.sessionStorage.removeItem(key));
   } catch {
-    // ignored, browser storage is a dramatic little creature sometimes.
+    // ignored, browser storage is still a tiny bureaucrat with feelings.
   }
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "";
   if (apiBase) void fetch(`${apiBase}/auth/logout`, { method: "POST", credentials: "include" }).catch(() => null);
@@ -143,11 +143,11 @@ export default function UXEnhancements() {
   const items = useMemo<MenuItem[]>(() => {
     if (surface === "owner") {
       return [
-        { id: "owner-home", label: "Owner", icon: "✦", run: () => window.scrollTo({ top: 0, behavior: "smooth" }), active: path === "/platform" },
+        { id: "owner-home", label: "Owner", icon: "✦", run: () => goPath("/platform"), active: path === "/platform" },
         { id: "owner-stores", label: "ร้านค้า", icon: "▦", run: () => scrollToText(["ร้านที่ใช้ระบบ", "ร้าน"]) },
         { id: "owner-billing", label: "บิล", icon: "฿", run: () => scrollToText(["ใบแจ้งหนี้", "invoice"]) },
         { id: "owner-risk", label: "iCloud Risk", icon: "◎", run: () => goPath("/platform/apple-custody-risk"), active: path.includes("apple-custody-risk") },
-        { id: "owner-signup", label: "สมัครร้าน", icon: "+", run: () => goPath("/signup") },
+        { id: "owner-signup", label: "สมัครร้าน", icon: "+", run: () => goPath("/signup"), active: path.startsWith("/signup") },
         { id: "store", label: "Store", icon: "⌂", run: () => goPath("/") },
         { id: "logout", label: "ออกจากระบบ", icon: "⇱", run: logout, danger: true },
       ];
@@ -194,7 +194,6 @@ export default function UXEnhancements() {
   if (!ready) return null;
 
   return <>
-    <StockFormEnhancer />
     {open && isMobile && <button className="kogaMenuBackdrop" type="button" aria-label="ปิดเมนู" onClick={() => setOpen(false)} />}
     <aside className={`kogaUnifiedMenu ${open ? "open" : "closed"}`} aria-label="เมนูหลัก">
       <button className="kogaUnifiedBrand" type="button" onClick={() => setOpen((value) => !value)} aria-label="เปิดปิดเมนู"><span>K</span><b>{surface === "owner" ? "Owner Console" : "Store Console"}</b></button>
