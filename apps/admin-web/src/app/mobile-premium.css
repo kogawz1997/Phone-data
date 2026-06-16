@@ -213,11 +213,19 @@ textarea {
   }
 
   .nav {
-    top: 128px;
-    margin-left: -12px;
-    margin-right: -12px;
-    padding-left: 12px;
-    padding-right: 12px;
+    position: relative;
+    top: auto;
+    z-index: 2;
+    margin: 0 -12px 14px;
+    padding: 8px 12px 12px;
+    background: rgba(7, 10, 18, .18);
+    border-bottom: 1px solid rgba(148, 163, 184, .10);
+    box-shadow: inset -18px 0 18px -24px rgba(56,189,248,.45);
+  }
+
+  .nav::after {
+    content: "";
+    flex: 0 0 max(10px, env(safe-area-inset-right));
   }
 
   .tab-btn {
@@ -351,7 +359,8 @@ textarea {
   }
 
   .nav {
-    top: 138px;
+    top: auto;
+    margin-bottom: 12px;
   }
 
   .hero h1 {
