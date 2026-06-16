@@ -74,32 +74,4 @@ export async function registerStoreSettingsRoutes(app: FastifyInstance) {
     await audit({ organizationId: user.organizationId, actorId: user.id, action: "UPDATE_PORTAL_SETTINGS", targetType: "IntegrationConnector", targetId: connector.id });
     return ok({ ...configJson, slug: slug ?? body.slug ?? "" });
   });
-
-  app.post("/jobs/overdue-check", { preHandler: requireAuth }, async (request) => {
-    const user = (request as AuthedRequest).user;
-    const contracts = await prisma.contract.findMany({
-      where: { organizationId: user.organizationId, status: { in: ["OVERDUE", "GRACE_PERIOD", "REVIEW_REQUIRED", "RECOVERY", "RESTRICTED"] } },
-      include: { customer: true },
-    });
-
-    const created = [];
-    for (const contract of contracts) {
-      const exists = await prisma.collectionTask.findFirst({ where: { organizationId: user.organizationId, contractId: contract.id, status: { in: ["OPEN", "IN_PROGRESS"] } } });
-      if (exists) continue;
-      created.push(await prisma.collectionTask.create({
-        data: {
-          organizationId: user.organizationId,
-          customerId: contract.customerId,
-          contractId: contract.id,
-          title: `ติดตามสัญญาค้าง ${contract.contractNo}`,
-          dueAt: new Date(),
-          priority: "HIGH",
-          channel: "PHONE",
-          note: "สร้างจากปุ่ม Overdue Check บน Dashboard",
-        },
-      }));
-    }
-
-    return ok({ createdCount: created.length, created });
-  });
 }
