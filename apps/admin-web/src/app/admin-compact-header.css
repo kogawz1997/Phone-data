@@ -1,89 +1,19 @@
-/* Compact header plus settings readability rules. Main navigation now lives in UXEnhancements. */
-@media (max-width: 760px) {
-  .app-shell {
-    padding-top: 10px !important;
-    padding-bottom: 24px !important;
-  }
+@import "./admin-layout-cleanup.css";
 
-  .topbar {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    display: grid !important;
-    grid-template-columns: auto 1fr auto !important;
-    align-items: center !important;
-    gap: 10px !important;
-    margin: -12px -12px 10px !important;
-    padding: max(10px, env(safe-area-inset-top)) 12px 10px !important;
-    border-radius: 0 0 18px 18px !important;
-    background: rgba(7, 10, 18, .88) !important;
-    border-bottom: 1px solid rgba(148, 163, 184, .12) !important;
-    backdrop-filter: blur(18px) !important;
-  }
+/* Minimal legacy cleanup. Main navigation and theme are controlled by UXEnhancements + polish layers. */
 
-  .topbar .brand { display: contents !important; }
-
-  .topbar .brand .logo {
-    width: 42px !important;
-    height: 42px !important;
-    border-radius: 14px !important;
-    font-size: 18px !important;
-  }
-
-  .topbar .brand > div:last-child { min-width: 0 !important; }
-  .topbar .brand .kicker { display: none !important; }
-
-  .topbar .brand h2 {
-    max-width: 42vw !important;
-    margin: 0 !important;
-    font-size: 20px !important;
-    line-height: 1.05 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-  }
-
-  .topbar .pill-list {
-    display: flex !important;
-    grid-column: 3 !important;
-    justify-content: flex-end !important;
-    align-items: center !important;
-    gap: 7px !important;
-    min-width: 0 !important;
-  }
-
-  .topbar .pill-list .badge,
-  .topbar .pill-list .btn {
-    width: auto !important;
-    min-height: 34px !important;
-    padding: 8px 10px !important;
-    border-radius: 999px !important;
-    font-size: 12px !important;
-    line-height: 1 !important;
-  }
-
-  .topbar .pill-list .badge.neutral,
-  .topbar .pill-list .badge.good,
-  .topbar .pill-list .badge.warn,
-  .topbar .pill-list .btn.secondary,
-  .topbar .pill-list .btn.danger,
-  .topbar .pill-list .btn:not(.danger) {
-    display: none !important;
-  }
-
-  .hero.hero-grid { margin-top: 12px !important; }
-  .ux-smart-search,
-  .ux-fab,
-  .ux-bottom-nav,
-  .ux-sheet,
-  .ux-sheet-backdrop {
-    display: none !important;
-  }
+body:has(.kogaUnifiedMenu) .topbar,
+body:has(.kogaUnifiedMenu) .ux-bottom-nav,
+body:has(.kogaUnifiedMenu) .ux-sheet,
+body:has(.kogaUnifiedMenu) .ux-sheet-backdrop,
+body:has(.kogaUnifiedMenu) .ux-smart-search,
+body:has(.kogaUnifiedMenu) .ux-fab,
+body:has(.kogaUnifiedMenu) .ux-command-backdrop {
+  display: none !important;
 }
 
-/* The unified menu owns navigation. Remove old topbar/brand chrome so it cannot overlap the side rail. */
-body:has(.kogaUnifiedMenu) .topbar {
-  display: none !important;
+body:has(.kogaUnifiedMenu) {
+  overflow-x: hidden !important;
 }
 
 body:has(.kogaUnifiedMenu) .app-shell {
@@ -95,40 +25,26 @@ body:has(.kogaUnifiedMenu) .app-shell {
 body:has(.kogaUnifiedMenu) main,
 body:has(.kogaUnifiedMenu) .page,
 body:has(.kogaUnifiedMenu) .content,
-body:has(.kogaUnifiedMenu) .hero,
-body:has(.kogaUnifiedMenu) .hero-grid,
+body:has(.kogaUnifiedMenu) .grid,
+body:has(.kogaUnifiedMenu) .cards,
+body:has(.kogaUnifiedMenu) .content-grid,
+body:has(.kogaUnifiedMenu) .form-grid,
 body:has(.kogaUnifiedMenu) .card,
 body:has(.kogaUnifiedMenu) .panel,
-body:has(.kogaUnifiedMenu) .table-wrap {
+body:has(.kogaUnifiedMenu) .table-wrap,
+body:has(.kogaUnifiedMenu) form {
   max-width: 100% !important;
+  min-width: 0 !important;
   box-sizing: border-box !important;
 }
 
-body:has(.kogaUnifiedMenu) .grid,
-body:has(.kogaUnifiedMenu) .hero-grid,
-body:has(.kogaUnifiedMenu) .cards,
-body:has(.kogaUnifiedMenu) .content-grid {
-  min-width: 0 !important;
-}
-
-/* Hide admin chrome only on the actual login page, not on signup/store-registration pages that also have password fields. */
-body:has(.login-page) .ux-bottom-nav,
-body:has(.login-page) .ux-sheet,
-body:has(.login-page) .ux-sheet-backdrop,
-body:has(.login-page) .ux-smart-search,
-body:has(.login-page) .ux-fab,
 body:has(.login-page) .kogaUnifiedMenu,
 body:has(.login-page) .kogaMenuBackdrop {
   display: none !important;
 }
 
-/* Settings uses the unified menu now; hide local section rail to avoid duplicate menus. */
-body:has(.settingsSafe) .settingsSafe .safeSide,
-body:has(.settingsSafe) .ux-bottom-nav,
-body:has(.settingsSafe) .ux-sheet,
-body:has(.settingsSafe) .ux-sheet-backdrop,
-body:has(.settingsSafe) .ux-smart-search,
-body:has(.settingsSafe) .ux-fab {
+/* Settings uses the unified menu; do not show the old local settings rail. */
+body:has(.settingsSafe) .settingsSafe .safeSide {
   display: none !important;
 }
 
@@ -179,8 +95,6 @@ body:has(.settingsSafe) .settingsSafe.light select {
     padding-top: 8px !important;
     padding-right: 8px !important;
   }
-
-  body:has(.settingsSafe) .app-shell { padding-bottom: 0 !important; }
 
   body:has(.settingsSafe) .settingsSafe .safeTop .safeActions,
   body:has(.settingsSafe) .settingsSafe .safePreview {
