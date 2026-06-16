@@ -7,6 +7,30 @@ const ownerWebUrl = process.env.NEXT_PUBLIC_OWNER_WEB_URL || "";
 
 type KogaWindow = Window & { __kogaSideOutsideBound?: boolean };
 
+function ensureKogaTheme() {
+  if (!document.getElementById("koga-design-system-link")) {
+    const link = document.createElement("link");
+    link.id = "koga-design-system-link";
+    link.rel = "stylesheet";
+    link.href = "/koga-design-system.css";
+    document.head.appendChild(link);
+  }
+  if (document.getElementById("koga-design-system-fallback")) return;
+  const style = document.createElement("style");
+  style.id = "koga-design-system-fallback";
+  style.textContent = `
+    :root{--koga-bg:#050b16;--koga-bg-2:#07111f;--koga-card:rgba(12,22,37,.82);--koga-card-strong:rgba(16,29,48,.94);--koga-line:rgba(148,163,184,.16);--koga-text:#eef6ff;--koga-muted:#93a4ba;--koga-accent:#22d3ee;--koga-accent-2:#8b5cf6;--koga-shadow:0 28px 90px rgba(0,0,0,.28)}
+    html,body{background:radial-gradient(circle at 18% 0%,rgba(34,211,238,.16),transparent 34%),radial-gradient(circle at 88% 0%,rgba(139,92,246,.16),transparent 34%),linear-gradient(135deg,var(--koga-bg),var(--koga-bg-2) 46%,#0f172a)!important;color:var(--koga-text)}
+    .card,.panel,.metric,.stat,.notice,.alert,.table-wrap,.form-card,.hero-card,.profile-panel,.complete-card,.integration-card,.template-card,.section-card{border:1px solid var(--koga-line)!important;background:var(--koga-card)!important;border-radius:22px!important;box-shadow:var(--koga-shadow);backdrop-filter:blur(18px)}
+    .hero,.profile-hero{border:1px solid var(--koga-line)!important;background:linear-gradient(135deg,rgba(34,211,238,.14),rgba(139,92,246,.12)),var(--koga-card)!important;border-radius:28px!important;box-shadow:var(--koga-shadow)}
+    h1,h2,h3,h4,.metric-value,.stat b{color:var(--koga-text)!important;letter-spacing:-.035em}p,small,.small,.metric-label,.muted,label span,.field span,.form-help,.table td,.card p{color:var(--koga-muted)!important}
+    input,select,textarea{border:1px solid var(--koga-line)!important;background:rgba(2,6,23,.28)!important;color:var(--koga-text)!important;border-radius:15px!important;outline:none!important}input:focus,select:focus,textarea:focus{border-color:rgba(34,211,238,.58)!important;box-shadow:0 0 0 4px rgba(34,211,238,.11)!important}
+    button,.button,a.button,.ghost,.save,.primary,.secondary{border-radius:15px!important}button[type="submit"],.save,.primary,.cta,.hero-cta{border:0!important;background:linear-gradient(135deg,var(--koga-accent),var(--koga-accent-2))!important;color:white!important;font-weight:900}
+    .badge,.status,.pill,.chip,.channel,.days button,.tab-btn{border:1px solid var(--koga-line)!important;background:rgba(148,163,184,.10)!important;color:var(--koga-muted)!important;border-radius:999px!important}.tab-btn.active,.badge.good,.status.good,.pill.good,.chip.active,.channel.active,.channel.on,.days button.active,.days button.on{border-color:rgba(34,211,238,.34)!important;background:linear-gradient(135deg,rgba(34,211,238,.18),rgba(139,92,246,.16))!important;color:var(--koga-text)!important}
+  `;
+  document.head.appendChild(style);
+}
+
 function textOf(node: Element) {
   return (node.textContent || "").toLowerCase();
 }
@@ -241,6 +265,7 @@ function simplifyMdmSetup() {
 export default function StockFormEnhancer() {
   useEffect(() => {
     const rewrite = () => {
+      ensureKogaTheme();
       if (ownerWebUrl) {
         document.querySelectorAll<HTMLAnchorElement>('a[href="/platform"]').forEach((link) => {
           link.href = ownerWebUrl.replace(/\/$/, "") + "/platform";
