@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import DeviceStockEnhancer from "./device-stock-enhancer";
 
 const ownerWebUrl = process.env.NEXT_PUBLIC_OWNER_WEB_URL || "";
+type KogaWindow = Window & { __kogaSettingsSideDrawerBound?: boolean };
 
 function textOf(node: Element) {
   return (node.textContent || "").toLowerCase();
@@ -49,6 +50,42 @@ function guardSettingsRouteChrome() {
   });
 }
 
+function closeSettingsDrawer() {
+  const root = document.querySelector<HTMLElement>(".settingsSafe.expanded");
+  const brand = root?.querySelector<HTMLElement>(".safeBrand");
+  if (root && brand && window.innerWidth <= 980) brand.click();
+}
+
+function bindSettingsSideDrawer() {
+  const kogaWindow = window as KogaWindow;
+  if (kogaWindow.__kogaSettingsSideDrawerBound) return;
+  kogaWindow.__kogaSettingsSideDrawerBound = true;
+
+  document.addEventListener("pointerdown", (event) => {
+    if (!window.location.pathname.startsWith("/settings") || window.innerWidth > 980) return;
+    const root = document.querySelector<HTMLElement>(".settingsSafe.expanded");
+    if (!root) return;
+    const side = root.querySelector<HTMLElement>(".safeSide");
+    const target = event.target as Node | null;
+    if (target && side?.contains(target)) return;
+    closeSettingsDrawer();
+  }, true);
+
+  document.addEventListener("click", (event) => {
+    if (!window.location.pathname.startsWith("/settings") || window.innerWidth > 980) return;
+    const root = document.querySelector<HTMLElement>(".settingsSafe.expanded");
+    if (!root) return;
+    const target = event.target as Element | null;
+    if (target?.closest(".safeSide nav button, .safeSideTools a, .safeSideTools button")) {
+      window.setTimeout(closeSettingsDrawer, 80);
+    }
+  }, true);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeSettingsDrawer();
+  });
+}
+
 function ensureSettingsProfileStyle() {
   const onSettings = window.location.pathname.startsWith("/settings");
   const existing = document.getElementById("settings-profile-console-style");
@@ -87,7 +124,7 @@ function ensureSettingsProfileStyle() {
     .settingsSafe .safePreview{top:14px;gap:18px;}
     .settingsSafe .safeSavebar{max-width:930px;margin:0 auto;z-index:4;border-radius:20px;background:rgba(4,12,26,.86);box-shadow:0 20px 54px rgba(0,0,0,.32);}
     @media(max-width:1200px){.settingsSafe .safeHero{grid-template-columns:128px minmax(180px,1fr)}.settingsSafe .safeStats{grid-column:1/-1}.settingsSafe .safeWorkspace{grid-template-columns:1fr}.settingsSafe .safePreview{position:static;grid-template-columns:1fr 1fr;display:grid}}
-    @media(max-width:980px){.settingsSafe,.settingsSafe.collapsed{display:grid!important;grid-template-columns:78px minmax(0,1fr)!important;min-height:100vh;padding:0!important}.settingsSafe .safeSide{position:sticky!important;top:8px!important;align-self:start!important;z-index:20!important;height:calc(100vh - 16px)!important;width:66px!important;margin:8px 0 8px 8px!important;padding:8px!important;border-radius:22px!important;overflow:hidden!important}.settingsSafe .safeBrand{min-height:52px!important;justify-content:center!important;padding:0!important;margin:0 0 10px!important;border-radius:17px!important}.settingsSafe .safeBrand b,.settingsSafe.collapsed .safeBrand b{display:none!important}.settingsSafe .safeBrand span,.settingsSafe .safeBrand img{width:44px!important;height:44px!important;min-width:44px!important;border-radius:16px!important}.settingsSafe .safeSide nav{display:grid!important;grid-auto-flow:row!important;gap:8px!important;overflow-y:auto!important;overflow-x:hidden!important;max-height:calc(100vh - 160px)!important;padding:0!important;scrollbar-width:none!important}.settingsSafe .safeSide nav::-webkit-scrollbar{display:none!important}.settingsSafe .safeSide nav button,.settingsSafe.collapsed .safeSide nav button{min-width:0!important;width:100%!important;min-height:46px!important;justify-content:center!important;padding:0!important;border:1px solid rgba(148,163,184,.12)!important;border-radius:15px!important;background:rgba(148,163,184,.08)!important}.settingsSafe .safeSide nav button b,.settingsSafe.collapsed .safeSide nav button b{display:none!important}.settingsSafe .safeSide nav button i{width:auto!important;font-size:17px!important}.settingsSafe .safeSideTools{display:grid!important;gap:8px!important;margin-top:10px!important;padding-top:10px!important;border-top:1px solid rgba(148,163,184,.12)!important}.settingsSafe .safeSideTools button,.settingsSafe .safeSideTools a,.settingsSafe.collapsed .safeSideTools button,.settingsSafe.collapsed .safeSideTools a{min-height:42px!important;justify-content:center!important;padding:0!important;border:1px solid rgba(148,163,184,.12)!important;border-radius:15px!important}.settingsSafe .safeSideTools b,.settingsSafe.collapsed .safeSideTools b{display:none!important}.settingsSafe .safeMain{grid-column:2!important;margin-left:0!important;padding:8px 8px 20px 0!important;width:auto!important;min-width:0!important}.settingsSafe .safeTop{align-items:stretch!important;flex-direction:column!important;gap:12px!important;margin-bottom:12px!important}.settingsSafe .safeTop h1{font-size:24px!important}.settingsSafe .safeActions{display:grid!important;grid-template-columns:1fr 1fr!important;width:100%!important}.settingsSafe .safeActions button{min-height:46px!important;width:100%!important}.settingsSafe .safeHero{grid-template-columns:1fr!important;gap:14px!important;padding:16px!important;border-radius:22px!important}.settingsSafe .safeAvatar{width:104px!important;height:104px!important}.settingsSafe .safeHero h2{font-size:24px!important}.settingsSafe .safeStats{grid-template-columns:1fr 1fr!important}.settingsSafe .safeWorkspace{display:grid!important;grid-template-columns:1fr!important;gap:12px!important;margin-top:12px!important}.settingsSafe .safePanel,.settingsSafe .safePreviewCard{border-radius:20px!important;padding:14px!important}.settingsSafe .safeGrid{grid-template-columns:1fr!important}.settingsSafe .safePreview{position:static!important;display:grid!important;grid-template-columns:1fr!important;gap:12px!important}.settingsSafe .safeSavebar{position:sticky!important;bottom:8px!important;grid-template-columns:1fr!important;padding:10px!important;border-radius:18px!important}.settingsSafe .safeSavebar button{min-height:46px!important}}
+    @media(max-width:980px){.settingsSafe,.settingsSafe.collapsed,.settingsSafe.expanded{display:grid!important;grid-template-columns:78px minmax(0,1fr)!important;min-height:100vh;padding:0!important}.settingsSafe.expanded:after{content:"";position:fixed;inset:0;z-index:18;background:rgba(2,6,23,.56);backdrop-filter:blur(4px)}.settingsSafe .safeSide{position:sticky!important;top:8px!important;align-self:start!important;z-index:20!important;height:calc(100vh - 16px)!important;width:66px!important;margin:8px 0 8px 8px!important;padding:8px!important;border-radius:22px!important;overflow:hidden!important;transition:width .22s ease,box-shadow .22s ease!important}.settingsSafe.expanded .safeSide{position:fixed!important;left:0!important;top:8px!important;bottom:8px!important;z-index:30!important;width:min(260px,82vw)!important;height:auto!important;overflow:hidden auto!important}.settingsSafe .safeBrand{min-height:52px!important;justify-content:center!important;padding:0!important;margin:0 0 10px!important;border-radius:17px!important}.settingsSafe.expanded .safeBrand{justify-content:flex-start!important;padding:0 10px!important}.settingsSafe .safeBrand b,.settingsSafe.collapsed .safeBrand b{display:none!important}.settingsSafe.expanded .safeBrand b{display:block!important;max-width:170px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.settingsSafe .safeBrand span,.settingsSafe .safeBrand img{width:44px!important;height:44px!important;min-width:44px!important;border-radius:16px!important}.settingsSafe .safeSide nav{display:grid!important;grid-auto-flow:row!important;gap:8px!important;overflow-y:auto!important;overflow-x:hidden!important;max-height:calc(100vh - 160px)!important;padding:0!important;scrollbar-width:none!important}.settingsSafe .safeSide nav::-webkit-scrollbar{display:none!important}.settingsSafe .safeSide nav button,.settingsSafe.collapsed .safeSide nav button{min-width:0!important;width:100%!important;min-height:46px!important;justify-content:center!important;padding:0!important;border:1px solid rgba(148,163,184,.12)!important;border-radius:15px!important;background:rgba(148,163,184,.08)!important}.settingsSafe.expanded .safeSide nav button{justify-content:flex-start!important;padding:0 12px!important}.settingsSafe .safeSide nav button b,.settingsSafe.collapsed .safeSide nav button b{display:none!important}.settingsSafe.expanded .safeSide nav button b{display:block!important;margin-left:10px!important;font-size:14px!important}.settingsSafe .safeSide nav button i{width:auto!important;font-size:17px!important}.settingsSafe .safeSideTools{display:grid!important;gap:8px!important;margin-top:10px!important;padding-top:10px!important;border-top:1px solid rgba(148,163,184,.12)!important}.settingsSafe .safeSideTools button,.settingsSafe .safeSideTools a,.settingsSafe.collapsed .safeSideTools button,.settingsSafe.collapsed .safeSideTools a{min-height:42px!important;justify-content:center!important;padding:0!important;border:1px solid rgba(148,163,184,.12)!important;border-radius:15px!important}.settingsSafe.expanded .safeSideTools button,.settingsSafe.expanded .safeSideTools a{justify-content:flex-start!important;padding:0 12px!important}.settingsSafe .safeSideTools b,.settingsSafe.collapsed .safeSideTools b{display:none!important}.settingsSafe.expanded .safeSideTools b{display:block!important;margin-left:10px!important}.settingsSafe .safeMain{grid-column:2!important;margin-left:0!important;padding:8px 8px 20px 0!important;width:auto!important;min-width:0!important}.settingsSafe .safeTop{align-items:stretch!important;flex-direction:column!important;gap:12px!important;margin-bottom:12px!important}.settingsSafe .safeTop h1{font-size:24px!important}.settingsSafe .safeActions{display:grid!important;grid-template-columns:1fr 1fr!important;width:100%!important}.settingsSafe .safeActions button{min-height:46px!important;width:100%!important}.settingsSafe .safeHero{grid-template-columns:1fr!important;gap:14px!important;padding:16px!important;border-radius:22px!important}.settingsSafe .safeAvatar{width:104px!important;height:104px!important}.settingsSafe .safeHero h2{font-size:24px!important}.settingsSafe .safeStats{grid-template-columns:1fr 1fr!important}.settingsSafe .safeWorkspace{display:grid!important;grid-template-columns:1fr!important;gap:12px!important;margin-top:12px!important}.settingsSafe .safePanel,.settingsSafe .safePreviewCard{border-radius:20px!important;padding:14px!important}.settingsSafe .safeGrid{grid-template-columns:1fr!important}.settingsSafe .safePreview{position:static!important;display:grid!important;grid-template-columns:1fr!important;gap:12px!important}.settingsSafe .safeSavebar{position:sticky!important;bottom:8px!important;grid-template-columns:1fr!important;padding:10px!important;border-radius:18px!important}.settingsSafe .safeSavebar button{min-height:46px!important}}
   `;
   document.head.appendChild(style);
 }
@@ -146,6 +183,7 @@ function simplifyMdmSetup() {
 
 export default function StockFormEnhancer() {
   useEffect(() => {
+    bindSettingsSideDrawer();
     const rewrite = () => {
       cleanupInjectedUi();
       guardSettingsRouteChrome();
