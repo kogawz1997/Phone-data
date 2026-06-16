@@ -46,17 +46,23 @@ function buildClearSessionCookie(isProduction: boolean) {
 function parsePortalSettings(configJson: unknown): PortalSettings {
   const config = unprotectConfigJson(configJson) as Record<string, unknown>;
   const raw = config.portalSettings;
-  if (!raw) return {};
-  if (typeof raw === "object" && !Array.isArray(raw)) return raw as PortalSettings;
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) return raw as PortalSettings;
   if (typeof raw === "string") {
     try {
       const parsed = JSON.parse(raw);
-      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed as PortalSettings;
     } catch {
-      return {};
+      // Fall through to the flat config shape used by store-settings routes.
     }
   }
-  return {};
+  return {
+    slug: typeof config.slug === "string" ? config.slug : undefined,
+    brandColor: typeof config.brandColor === "string" ? config.brandColor : undefined,
+    welcomeText: typeof config.welcomeText === "string" ? config.welcomeText : undefined,
+    contactLine: typeof config.contactLine === "string" ? config.contactLine : undefined,
+    supportPhone: typeof config.supportPhone === "string" ? config.supportPhone : undefined,
+    releasePolicy: typeof config.releasePolicy === "string" ? config.releasePolicy : undefined,
+  };
 }
 
 async function getPortalSettings(organizationId: string): Promise<PortalSettings> {
