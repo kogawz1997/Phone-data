@@ -83,6 +83,29 @@ function fill(select: HTMLSelectElement, options: string[], selected?: string) {
   else if (options[0]) select.value = options[0];
 }
 
+function isAuthScreen() {
+  const path = window.location.pathname;
+  if (path.startsWith("/settings")) return false;
+  if (path.startsWith("/signup") || path.startsWith("/login") || path.startsWith("/auth") || path.startsWith("/forgot")) return true;
+  const hasPassword = Boolean(document.querySelector('input[type="password"]'));
+  const bodyText = (document.body.innerText || "").toLowerCase();
+  const saysLogin = bodyText.includes("login") || bodyText.includes("เข้าสู่ระบบ") || bodyText.includes("sign in");
+  const hasAppTabs = Boolean(document.querySelector(".tab-btn, .table-wrap, [data-device-enhanced='true']"));
+  return hasPassword && saysLogin && !hasAppTabs;
+}
+
+function hideInjectedSideMenuOnAuth() {
+  if (!isAuthScreen()) return;
+  document.documentElement.dataset.kogaSide = "off";
+  document.querySelector(".koga-side-menu")?.remove();
+  document.querySelector(".koga-side-backdrop")?.remove();
+  const shell = document.querySelector<HTMLElement>(".app-shell");
+  if (shell) {
+    shell.style.marginLeft = "0";
+    shell.style.width = "100%";
+  }
+}
+
 function enhanceDeviceForm() {
   const form = document.querySelector<HTMLFormElement>('form input[name="imei"]')?.closest("form");
   if (!form || form.dataset.deviceCascadeReady === "true") return;
@@ -111,7 +134,8 @@ function enhanceDeviceForm() {
   function syncFromPlatform() {
     const platform = platformSelect.value as DeviceModel["platform"];
     const rows = deviceCatalog.filter((item) => item.platform === platform);
-    fill(brandSelect, unique(rows.map((item) => item.brand)), brandSelect.value);
+    const brands = unique(rows.map((item) => item.brand));
+    fill(brandSelect, brands, brandSelect.value);
     syncFromBrand();
   }
 
@@ -143,10 +167,14 @@ function enhanceDeviceForm() {
 
 export default function DeviceStockEnhancer() {
   useEffect(() => {
-    enhanceDeviceForm();
-    const timer = window.setInterval(enhanceDeviceForm, 600);
-    const observer = new MutationObserver(enhanceDeviceForm);
-    observer.observe(document.body, { childList: true, subtree: true });
+    const run = () => {
+      hideInjectedSideMenuOnAuth();
+      if (!isAuthScreen()) enhanceDeviceForm();
+    };
+    run();
+    const timer = window.setInterval(run, 250);
+    const observer = new MutationObserver(run);
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
     return () => {
       window.clearInterval(timer);
       observer.disconnect();
