@@ -126,7 +126,7 @@ body:not(:has(.login-page)):not(:has(input[type="password"])) .infoRow:hover {
   background: rgba(34, 211, 238, .045) !important;
 }
 
-body:not(:has(.login-page)):not(:has(input[type="password")) .danger,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .danger,
 body:not(:has(.login-page)):not(:has(input[type="password"])) .btn.danger {
   border-color: rgba(248, 113, 113, .36) !important;
 }
