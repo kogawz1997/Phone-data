@@ -124,6 +124,10 @@ function filterPage(query: string, status: string) {
   return { total: rows.length, visible };
 }
 
+function credentialedInit(init?: RequestInit): RequestInit {
+  return { ...(init ?? {}), credentials: init?.credentials ?? "include" };
+}
+
 export default function UXEnhancements() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [sheet, setSheet] = useState<Sheet>("none");
@@ -149,7 +153,12 @@ export default function UXEnhancements() {
     const ok = clickByText(".tab-btn", [label]);
     setSheet("none");
     setCommandOpen(false);
-    if (!ok) addToast("info", "เมนูนี้ยังไม่พร้อมในหน้าปัจจุบัน");
+    if (!ok) {
+      window.setTimeout(() => {
+        const retryOk = clickByText(".tab-btn", [label]);
+        if (!retryOk) addToast("info", "เมนูยังไม่พร้อม ลองออกจากระบบแล้วเข้าใหม่");
+      }, 160);
+    }
   };
 
   const commands = useMemo<Command[]>(() => [
@@ -178,11 +187,12 @@ export default function UXEnhancements() {
   useEffect(() => {
     const originalFetch = window.fetch.bind(window);
     window.fetch = async (input, init) => {
-      const method = String(init?.method || "GET").toUpperCase();
+      const nextInit = credentialedInit(init);
+      const method = String(nextInit?.method || "GET").toUpperCase();
       const isMutation = !["GET", "HEAD", "OPTIONS"].includes(method);
       if (isMutation) document.documentElement.classList.add("ux-busy");
       try {
-        const response = await originalFetch(input, init);
+        const response = await originalFetch(input, nextInit);
         if (isMutation) {
           const pathname = typeof input === "string" ? input : input instanceof Request ? input.url : "";
           if (response.ok) addToast("success", toastMessageFor(pathname, method));
