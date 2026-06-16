@@ -65,6 +65,15 @@ function buildHeaders(options: RequestInit = {}) {
   };
 }
 
+function readableApiError(message?: string) {
+  const raw = message || "API error";
+  const lower = raw.toLowerCase();
+  if (lower.includes("missing bearer token") || lower.includes("bearer token") || lower.includes("jwt") || lower.includes("unauthorized")) {
+    return "เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่";
+  }
+  return raw;
+}
+
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -72,7 +81,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     headers: buildHeaders(options),
   });
   const json = await res.json();
-  if (!json.ok) throw new Error(json.error?.message ?? "API error");
+  if (!json.ok) throw new Error(readableApiError(json.error?.message));
   return json.data;
 }
 
