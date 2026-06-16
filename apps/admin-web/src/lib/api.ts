@@ -3,37 +3,55 @@ export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ??
   "http://localhost:4000";
 
-const SURFACE = process.env.NEXT_PUBLIC_APP_SURFACE || "admin";
-const SESSION_MARKER_KEY = `koga_${SURFACE}_session_marker`;
-const SESSION_VALUE_KEY = `koga_${SURFACE}_session_value`;
-let inMemoryToken = "";
+const BUILD_SURFACE = process.env.NEXT_PUBLIC_APP_SURFACE || "auto";
+let inMemoryTokenBySurface: Record<string, string> = {};
+
+function currentSurface() {
+  if (BUILD_SURFACE && BUILD_SURFACE !== "auto") return BUILD_SURFACE;
+  if (typeof window === "undefined") return "admin";
+  const path = window.location.pathname;
+  if (path.startsWith("/platform")) return "owner";
+  if (path.startsWith("/portal") || path.startsWith("/customer")) return "customer";
+  return "admin";
+}
+
+function markerKey(surface = currentSurface()) {
+  return `koga_${surface}_session_marker`;
+}
+
+function valueKey(surface = currentSurface()) {
+  return `koga_${surface}_session_value`;
+}
 
 export function getToken() {
-  if (inMemoryToken) return inMemoryToken;
+  const surface = currentSurface();
+  if (inMemoryTokenBySurface[surface]) return inMemoryTokenBySurface[surface];
   if (typeof window === "undefined") return "";
-  const stored = window.sessionStorage.getItem(SESSION_VALUE_KEY);
+  const stored = window.sessionStorage.getItem(valueKey(surface));
   if (stored) {
-    inMemoryToken = stored;
+    inMemoryTokenBySurface[surface] = stored;
     return stored;
   }
   return "";
 }
 
 export function setToken(token: string) {
-  inMemoryToken = token;
+  const surface = currentSurface();
+  inMemoryTokenBySurface[surface] = token;
   if (typeof window !== "undefined") {
-    window.sessionStorage.setItem(SESSION_VALUE_KEY, token);
-    window.localStorage.setItem(SESSION_MARKER_KEY, "signed-in");
+    window.sessionStorage.setItem(valueKey(surface), token);
+    window.localStorage.setItem(markerKey(surface), "signed-in");
     window.localStorage.setItem("koga_admin_token", "cookie-session");
   }
 }
 
 export function clearToken() {
-  inMemoryToken = "";
+  const surface = currentSurface();
+  inMemoryTokenBySurface[surface] = "";
   if (typeof window !== "undefined") {
-    window.sessionStorage.removeItem(SESSION_VALUE_KEY);
-    window.localStorage.removeItem(SESSION_MARKER_KEY);
-    window.localStorage.removeItem("koga_admin_token");
+    window.sessionStorage.removeItem(valueKey(surface));
+    window.localStorage.removeItem(markerKey(surface));
+    if (surface === "admin") window.localStorage.removeItem("koga_admin_token");
   }
   void fetch(`${API_BASE_URL}/auth/logout`, { method: "POST", credentials: "include" }).catch(() => null);
 }
