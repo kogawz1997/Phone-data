@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import SettingsCompleteDock from "./settings-complete-dock";
 
 type DeviceModel = {
   platform: "ANDROID" | "IOS" | "IPADOS";
@@ -110,8 +111,7 @@ function enhanceDeviceForm() {
   function syncFromPlatform() {
     const platform = platformSelect.value as DeviceModel["platform"];
     const rows = deviceCatalog.filter((item) => item.platform === platform);
-    const brands = unique(rows.map((item) => item.brand));
-    fill(brandSelect, brands, brandSelect.value);
+    fill(brandSelect, unique(rows.map((item) => item.brand)), brandSelect.value);
     syncFromBrand();
   }
 
@@ -153,5 +153,5 @@ export default function DeviceStockEnhancer() {
     };
   }, []);
 
-  return null;
+  return <SettingsCompleteDock />;
 }
