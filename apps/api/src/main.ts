@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import { PORT, IS_PRODUCTION, ALLOWED_ORIGINS, JWT_SECRET, fail } from "./core/app-context";
+import { PORT, IS_PRODUCTION, ALLOWED_ORIGINS, JWT_SECRET, fail, getUserFromRequest, isPlatformOwner } from "./core/app-context";
 import { registerApiModules } from "./modules/register-modules";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -56,6 +56,18 @@ function readCookieValue(cookieHeader: string | undefined, name: string) {
   return decodeURIComponent(pair.slice(name.length + 1));
 }
 
+function isPlatformMdmSetupRoute(method: string, url: string) {
+  if (!["POST", "PUT", "PATCH"].includes(method)) return false;
+  return (
+    url.startsWith("/mdm/android/signup-url") ||
+    url.startsWith("/mdm/android/enterprise") ||
+    url.startsWith("/mdm/android/policies/") ||
+    url.startsWith("/mdm/apple/policies/") ||
+    url.startsWith("/mdm/apple/abm/sync") ||
+    (url.startsWith("/devices/") && url.includes("/mdm/bind"))
+  );
+}
+
 function assertProductionHardening() {
   if (!IS_PRODUCTION) return;
 
@@ -100,6 +112,14 @@ app.addHook("preHandler", async (request, reply) => {
 
   if (IS_PRODUCTION && request.method === "POST" && request.url.startsWith("/payments/webhook") && !process.env.PAYMENT_WEBHOOK_SECRET) {
     return fail(reply, 500, "WEBHOOK_SECRET_MISSING", "PAYMENT_WEBHOOK_SECRET is required before enabling payment webhooks in production");
+  }
+
+  if (isPlatformMdmSetupRoute(request.method, request.url)) {
+    const user = await getUserFromRequest(request, reply);
+    if (!user) return;
+    if (!isPlatformOwner(user)) {
+      return fail(reply, 403, "PLATFORM_OWNER_REQUIRED", "MDM provider key/cert setup is handled by Platform Owner only. Store users can only generate customer enrollment.");
+    }
   }
 });
 
