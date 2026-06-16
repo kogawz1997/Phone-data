@@ -3,23 +3,38 @@ export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ??
   "http://localhost:4000";
 
-const SESSION_MARKER_KEY = "koga_admin_token";
+const SURFACE = process.env.NEXT_PUBLIC_APP_SURFACE || "admin";
+const SESSION_MARKER_KEY = `koga_${SURFACE}_session_marker`;
+const SESSION_VALUE_KEY = `koga_${SURFACE}_session_value`;
 let inMemoryToken = "";
 
 export function getToken() {
-  // The real session should live in the HttpOnly cookie. Keep a short-lived in-memory
-  // fallback so cross-origin local development still works right after login.
-  return inMemoryToken;
+  if (inMemoryToken) return inMemoryToken;
+  if (typeof window === "undefined") return "";
+  const stored = window.sessionStorage.getItem(SESSION_VALUE_KEY);
+  if (stored) {
+    inMemoryToken = stored;
+    return stored;
+  }
+  return "";
 }
 
 export function setToken(token: string) {
   inMemoryToken = token;
-  if (typeof window !== "undefined") localStorage.setItem(SESSION_MARKER_KEY, "cookie-session");
+  if (typeof window !== "undefined") {
+    window.sessionStorage.setItem(SESSION_VALUE_KEY, token);
+    window.localStorage.setItem(SESSION_MARKER_KEY, "signed-in");
+    window.localStorage.setItem("koga_admin_token", "cookie-session");
+  }
 }
 
 export function clearToken() {
   inMemoryToken = "";
-  if (typeof window !== "undefined") localStorage.removeItem(SESSION_MARKER_KEY);
+  if (typeof window !== "undefined") {
+    window.sessionStorage.removeItem(SESSION_VALUE_KEY);
+    window.localStorage.removeItem(SESSION_MARKER_KEY);
+    window.localStorage.removeItem("koga_admin_token");
+  }
   void fetch(`${API_BASE_URL}/auth/logout`, { method: "POST", credentials: "include" }).catch(() => null);
 }
 
