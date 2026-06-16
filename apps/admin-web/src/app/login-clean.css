@@ -11,3 +11,14 @@ body:has(.login-page) .ux-command-backdrop {
 body:has(.login-page) {
   padding-bottom: 0 !important;
 }
+
+/* Remove repeated status/page headers from the admin chrome. */
+body:has(.settingsSafe) .settingsSafe .safeTop {
+  display: none !important;
+}
+
+body:not(:has(.login-page)) .topbar .pill-list .badge.good,
+body:not(:has(.login-page)) .topbar .pill-list .badge.warn,
+body:not(:has(.login-page)) .topbar .pill-list .badge.neutral {
+  display: none !important;
+}
