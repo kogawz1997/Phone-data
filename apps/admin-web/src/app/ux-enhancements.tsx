@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import StockFormEnhancer from "./stock-form-enhancer";
 
 type ToastTone = "success" | "error" | "info" | "warning";
 type Toast = { id: number; tone: ToastTone; message: string };
@@ -265,6 +266,7 @@ export default function UXEnhancements() {
 
   return (
     <>
+      <StockFormEnhancer />
       <div className="ux-loading-bar" />
       <section className="ux-smart-search" aria-label="ค้นหาและตัวกรอง">
         <button className="ux-command-trigger" type="button" onClick={() => setCommandOpen(true)}>⌘K</button>
