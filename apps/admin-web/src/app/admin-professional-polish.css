@@ -1,0 +1,166 @@
+/* Safe professional polish layer for authenticated admin surfaces.
+   CSS only, no DOM changes, no API changes. Keep login/customer untouched. */
+
+:root {
+  --koga-ease: cubic-bezier(.2, .8, .2, 1);
+  --koga-fast: 140ms;
+  --koga-med: 220ms;
+  --koga-border: rgba(148, 163, 184, .16);
+  --koga-panel: rgba(9, 20, 38, .82);
+  --koga-panel-strong: rgba(13, 25, 46, .92);
+  --koga-cyan: #22d3ee;
+  --koga-blue: #2563eb;
+  --koga-violet: #8b5cf6;
+  --koga-text: #eef6ff;
+  --koga-muted: #9badc3;
+  --koga-shadow: 0 18px 54px rgba(0, 0, 0, .20);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .card,
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .hero,
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .panel,
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .table-wrap,
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .safePanel,
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .safeHero,
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .safePreviewCard {
+    animation: kogaFadeUp .28s var(--koga-ease) both;
+  }
+
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .card:nth-of-type(2),
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .safePanel:nth-of-type(2) { animation-delay: 35ms; }
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .card:nth-of-type(3),
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .safePanel:nth-of-type(3) { animation-delay: 70ms; }
+}
+
+@keyframes kogaFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+body:not(:has(.login-page)):not(:has(input[type="password"])) {
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
+body:not(:has(.login-page)):not(:has(input[type="password"])) .app-shell,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .settingsSafe {
+  background-image:
+    radial-gradient(circle at 18% 0%, rgba(34, 211, 238, .10), transparent 30%),
+    radial-gradient(circle at 88% 0%, rgba(139, 92, 246, .12), transparent 34%),
+    linear-gradient(135deg, #020817, #07111f 48%, #0b1020);
+}
+
+body:not(:has(.login-page)):not(:has(input[type="password"])) .card,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .hero,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .panel,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .table-wrap,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .topbar,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .safePanel,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .safeHero,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .safePreviewCard,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .safeTop {
+  border-color: var(--koga-border) !important;
+  box-shadow: var(--koga-shadow);
+  backdrop-filter: blur(18px);
+}
+
+body:not(:has(.login-page)):not(:has(input[type="password"])) .card:hover,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .table-wrap:hover,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .safePanel:hover,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .safePreviewCard:hover {
+  border-color: rgba(34, 211, 238, .22) !important;
+  box-shadow: 0 22px 64px rgba(0, 0, 0, .26);
+}
+
+body:not(:has(.login-page)):not(:has(input[type="password"])) button,
+body:not(:has(.login-page)):not(:has(input[type="password"])) a,
+body:not(:has(.login-page)):not(:has(input[type="password"])) input,
+body:not(:has(.login-page)):not(:has(input[type="password"])) textarea,
+body:not(:has(.login-page)):not(:has(input[type="password"])) select {
+  transition:
+    transform var(--koga-fast) var(--koga-ease),
+    border-color var(--koga-fast) var(--koga-ease),
+    box-shadow var(--koga-fast) var(--koga-ease),
+    background var(--koga-fast) var(--koga-ease),
+    color var(--koga-fast) var(--koga-ease),
+    opacity var(--koga-fast) var(--koga-ease);
+}
+
+body:not(:has(.login-page)):not(:has(input[type="password"])) button:hover,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .btn:hover,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .tab-btn:hover,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .safeActions button:hover,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .safeSavebar button:hover {
+  transform: translateY(-1px);
+}
+
+body:not(:has(.login-page)):not(:has(input[type="password"])) input:focus,
+body:not(:has(.login-page)):not(:has(input[type="password"])) textarea:focus,
+body:not(:has(.login-page)):not(:has(input[type="password"])) select:focus {
+  outline: none !important;
+  border-color: rgba(34, 211, 238, .52) !important;
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, .10) !important;
+}
+
+body:not(:has(.login-page)):not(:has(input[type="password"])) .tab-btn.active,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .tabs .active,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .safeSide nav button.active,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .ux-bottom-nav button:hover,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .ux-bottom-nav button:focus-visible {
+  background: linear-gradient(135deg, rgba(14, 165, 233, .22), rgba(139, 92, 246, .22)) !important;
+  border-color: rgba(34, 211, 238, .28) !important;
+}
+
+body:not(:has(.login-page)):not(:has(input[type="password"])) table tr,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .listRows > *,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .safeCheck,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .infoRow {
+  transition: background var(--koga-fast) var(--koga-ease), transform var(--koga-fast) var(--koga-ease), border-color var(--koga-fast) var(--koga-ease);
+}
+
+body:not(:has(.login-page)):not(:has(input[type="password"])) table tr:hover,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .listRows > *:hover,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .safeCheck:hover,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .infoRow:hover {
+  background: rgba(34, 211, 238, .045) !important;
+}
+
+body:not(:has(.login-page)):not(:has(input[type="password")) .danger,
+body:not(:has(.login-page)):not(:has(input[type="password"])) .btn.danger {
+  border-color: rgba(248, 113, 113, .36) !important;
+}
+
+body:has(.settingsSafe.light) .app-shell,
+body:has(.settingsSafe.light) .settingsSafe {
+  background-image:
+    radial-gradient(circle at 16% 0%, rgba(14, 165, 233, .12), transparent 30%),
+    radial-gradient(circle at 86% 0%, rgba(124, 58, 237, .10), transparent 34%),
+    linear-gradient(135deg, #f8fafc, #eaf6ff 52%, #f5f3ff) !important;
+}
+
+body:has(.settingsSafe.light) .card,
+body:has(.settingsSafe.light) .hero,
+body:has(.settingsSafe.light) .panel,
+body:has(.settingsSafe.light) .table-wrap,
+body:has(.settingsSafe.light) .topbar {
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, .10) !important;
+  background: rgba(255, 255, 255, .82) !important;
+  box-shadow: 0 18px 54px rgba(15, 23, 42, .08) !important;
+}
+
+@media (max-width: 980px) {
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .card,
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .hero,
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .panel,
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .table-wrap,
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .safePanel,
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .safeHero {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .16) !important;
+  }
+
+  body:not(:has(.login-page)):not(:has(input[type="password"])) .topbar {
+    box-shadow: 0 12px 34px rgba(0, 0, 0, .20) !important;
+  }
+}
