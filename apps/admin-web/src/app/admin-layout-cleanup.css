@@ -53,6 +53,53 @@ body:has(.kogaUnifiedMenu) button {
   white-space: normal !important;
 }
 
+/* Menu quality pass: keep logout predictable and labels readable when expanded. */
+body:has(.kogaUnifiedMenu) .kogaUnifiedMenu nav {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+
+body:has(.kogaUnifiedMenu) .kogaUnifiedMenu nav button.danger {
+  margin-top: auto !important;
+}
+
+body:has(.kogaUnifiedMenu) .kogaUnifiedMenu.open nav button b,
+body:has(.kogaUnifiedMenu) .kogaUnifiedMenu.open .kogaUnifiedBrand b {
+  max-width: 178px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+body:has(.kogaUnifiedMenu) .kogaUnifiedMenu nav button {
+  min-width: 0 !important;
+}
+
+/* Make dense admin forms look less like they were packed by an angry spreadsheet. */
+body:has(.kogaUnifiedMenu) .card,
+body:has(.kogaUnifiedMenu) .panel,
+body:has(.kogaUnifiedMenu) .table-wrap,
+body:has(.kogaUnifiedMenu) form {
+  border-radius: clamp(18px, 2vw, 26px) !important;
+}
+
+body:has(.kogaUnifiedMenu) input,
+body:has(.kogaUnifiedMenu) textarea,
+body:has(.kogaUnifiedMenu) select {
+  width: 100% !important;
+  min-height: 44px !important;
+}
+
+body:has(.kogaUnifiedMenu) textarea {
+  resize: vertical;
+}
+
+body:has(.kogaUnifiedMenu) .btn.primary,
+body:has(.kogaUnifiedMenu) button[type="submit"] {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
 @media (max-width: 980px) {
   body:has(.kogaUnifiedMenu) .app-shell,
   body:has(.kogaUnifiedMenu) .settingsSafe {
@@ -70,5 +117,21 @@ body:has(.kogaUnifiedMenu) button {
   body:has(.kogaUnifiedMenu) .btn.primary,
   body:has(.kogaUnifiedMenu) .btn:not(.secondary):not(.danger) {
     width: 100% !important;
+  }
+
+  body:has(.kogaUnifiedMenu) .card,
+  body:has(.kogaUnifiedMenu) .panel,
+  body:has(.kogaUnifiedMenu) form {
+    padding-left: min(18px, 4vw) !important;
+    padding-right: min(18px, 4vw) !important;
+  }
+
+  body:has(.kogaUnifiedMenu) .kogaUnifiedMenu.open nav button b,
+  body:has(.kogaUnifiedMenu) .kogaUnifiedMenu.open .kogaUnifiedBrand b {
+    max-width: 160px !important;
+  }
+
+  body:has(.kogaUnifiedMenu) table {
+    min-width: 620px;
   }
 }
