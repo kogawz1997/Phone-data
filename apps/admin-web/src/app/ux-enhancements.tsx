@@ -93,6 +93,11 @@ function hideDuplicateChrome() {
   });
 }
 
+function ensureMainContentTarget() {
+  const main = document.querySelector<HTMLElement>("main");
+  if (main && !main.id) main.id = "main-content";
+}
+
 export default function UXEnhancements() {
   const [surface, setSurface] = useState<Surface>("admin");
   const [ready, setReady] = useState(false);
@@ -109,6 +114,7 @@ export default function UXEnhancements() {
       setReady(!isAuthScreen());
       runPendingActions();
       hideDuplicateChrome();
+      ensureMainContentTarget();
       if (!mobile) setOpen(true);
     };
     sync();
@@ -199,17 +205,31 @@ export default function UXEnhancements() {
   return <>
     {open && isMobile && <button className="kogaMenuBackdrop" type="button" aria-label="ปิดเมนู" onClick={() => setOpen(false)} />}
     <aside className={`kogaUnifiedMenu ${open ? "open" : "closed"}`} aria-label="เมนูหลัก">
-      <button className="kogaUnifiedBrand" type="button" onClick={() => setOpen((value) => !value)} aria-label="เปิดปิดเมนู"><span>K</span><b>{surface === "owner" ? "Owner Console" : "Store Console"}</b></button>
-      <nav>{items.map((item) => <button key={item.id} type="button" className={`${item.active ? "active" : ""} ${item.danger ? "danger" : ""}`} onClick={() => runItem(item)} title={item.label}><i>{item.icon}</i><b>{item.label}</b></button>)}</nav>
+      <button
+        className="kogaUnifiedBrand"
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-label={open ? "ย่อเมนูหลัก" : "เปิดเมนูหลัก"}
+        aria-expanded={open}
+        aria-controls="koga-main-menu"
+      >
+        <span aria-hidden="true">K</span><b>{surface === "owner" ? "Owner Console" : "Store Console"}</b>
+      </button>
+      <nav id="koga-main-menu" aria-label="เมนูหลัก">
+        {items.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={`${item.active ? "active" : ""} ${item.danger ? "danger" : ""}`}
+            onClick={() => runItem(item)}
+            title={item.label}
+            aria-label={item.label}
+            aria-current={item.active ? "page" : undefined}
+          >
+            <i aria-hidden="true">{item.icon}</i><b>{item.label}</b>
+          </button>
+        ))}
+      </nav>
     </aside>
-    <style>{`
-      body:has(.kogaUnifiedMenu) .ux-bottom-nav, body:has(.kogaUnifiedMenu) .ux-sheet, body:has(.kogaUnifiedMenu) .ux-sheet-backdrop, body:has(.kogaUnifiedMenu) .ux-smart-search, body:has(.kogaUnifiedMenu) .ux-fab, body:has(.kogaUnifiedMenu) .ux-command-backdrop { display: none !important; }
-      body:has(.kogaUnifiedMenu) .topbar .pill-list .btn.danger { display: none !important; }
-      body:has(.kogaUnifiedMenu) .app-shell { margin-left: 76px !important; width: calc(100% - 76px) !important; padding-bottom: 32px !important; }
-      body:has(.kogaUnifiedMenu) .settingsSafe { display: block !important; padding-left: 76px !important; }
-      body:has(.kogaUnifiedMenu) .settingsSafe .safeSide { display: none !important; }
-      body:has(.kogaUnifiedMenu) .settingsSafe .safeMain { margin-left: 0 !important; padding-left: 0 !important; }
-      .kogaUnifiedMenu{position:fixed;left:8px;top:8px;bottom:8px;z-index:1300;width:60px;border:1px solid rgba(148,163,184,.16);border-radius:22px;background:rgba(3,10,22,.90);backdrop-filter:blur(22px);box-shadow:0 22px 70px rgba(0,0,0,.30);padding:7px;display:flex;flex-direction:column;gap:10px;transition:width .2s ease,box-shadow .2s ease;overflow:hidden}.kogaUnifiedMenu.open{width:min(254px,84vw)}.kogaUnifiedBrand{min-height:48px;border:0;border-radius:16px;background:linear-gradient(135deg,rgba(34,211,238,.24),rgba(139,92,246,.28));color:white;display:flex;align-items:center;justify-content:center;gap:12px;padding:0;cursor:pointer}.kogaUnifiedMenu.open .kogaUnifiedBrand{justify-content:flex-start;padding:0 8px}.kogaUnifiedBrand span{width:40px;height:40px;min-width:40px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#22d3ee,#8b5cf6);font-weight:950}.kogaUnifiedBrand b,.kogaUnifiedMenu nav button b{display:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kogaUnifiedMenu.open .kogaUnifiedBrand b,.kogaUnifiedMenu.open nav button b{display:block}.kogaUnifiedMenu nav{display:grid;gap:7px;overflow:auto;padding-bottom:6px;scrollbar-width:none}.kogaUnifiedMenu nav::-webkit-scrollbar{display:none}.kogaUnifiedMenu nav button{min-height:42px;border:1px solid transparent;border-radius:14px;background:transparent;color:#9fb2ca;display:flex;align-items:center;justify-content:center;gap:11px;padding:0;cursor:pointer;font-weight:820}.kogaUnifiedMenu.open nav button{justify-content:flex-start;padding:0 10px}.kogaUnifiedMenu nav button:hover,.kogaUnifiedMenu nav button.active{color:white;border-color:rgba(34,211,238,.24);background:linear-gradient(135deg,rgba(14,165,233,.18),rgba(139,92,246,.18))}.kogaUnifiedMenu nav button.danger{color:#fecaca;border-color:rgba(248,113,113,.22);margin-top:6px}.kogaUnifiedMenu nav button.danger:hover{background:rgba(127,29,29,.28);border-color:rgba(248,113,113,.38)}.kogaUnifiedMenu nav button i{width:22px;min-width:22px;text-align:center;color:#67e8f9;font-style:normal}.kogaMenuBackdrop{position:fixed;inset:0;z-index:1290;border:0;background:rgba(2,6,23,.46);backdrop-filter:blur(3px)}body:has(.settingsSafe.light) .kogaUnifiedMenu{background:rgba(255,255,255,.9);border-color:rgba(15,23,42,.12);box-shadow:0 22px 70px rgba(15,23,42,.14)}body:has(.settingsSafe.light) .kogaUnifiedMenu nav button{color:#475569}body:has(.settingsSafe.light) .kogaUnifiedMenu nav button:hover,body:has(.settingsSafe.light) .kogaUnifiedMenu nav button.active{color:#0f172a;background:rgba(14,165,233,.12);border-color:rgba(14,165,233,.22)}@media(max-width:980px){body:has(.kogaUnifiedMenu) .app-shell{margin-left:68px!important;width:calc(100% - 68px)!important;padding-left:0!important;padding-right:8px!important}body:has(.kogaUnifiedMenu) .settingsSafe{padding-left:68px!important}.kogaUnifiedMenu{width:54px;left:6px;top:6px;bottom:6px;border-radius:20px;padding:6px}.kogaUnifiedMenu.open{width:min(250px,82vw)}}
-    `}</style>
   </>;
 }
