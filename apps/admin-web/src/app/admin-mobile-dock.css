@@ -123,7 +123,13 @@
   }
 
   .kogaMenuBackdrop {
-    display: none !important;
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: var(--koga-backdrop-z, 1290) !important;
+    border: 0 !important;
+    background: rgba(2, 6, 23, .42) !important;
+    backdrop-filter: blur(4px) !important;
   }
 
   body:has(.kogaUnifiedMenu) .table-wrap,
