@@ -1,6 +1,39 @@
 /* Final admin cleanup: remove duplicated legacy UI and prevent mobile overflow. */
+:root {
+  --koga-focus: #67e8f9;
+  --koga-menu-z: 1300;
+  --koga-backdrop-z: 1290;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body:not(:has(.login-page)) {
   overflow-x: hidden !important;
+}
+
+.skip-link {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  z-index: 1600;
+  transform: translateY(-140%);
+  border: 1px solid rgba(103, 232, 249, .45);
+  border-radius: 999px;
+  background: #07111f;
+  color: #e6fbff;
+  padding: 10px 14px;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 18px 50px rgba(2, 6, 23, .36);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 3px solid rgba(103, 232, 249, .55);
+  outline-offset: 3px;
 }
 
 /* Unified menu owns navigation now. Remove old intro and tab chips from admin pages. */
@@ -46,6 +79,7 @@ body:has(.kogaUnifiedMenu) .table-wrap {
 
 body:has(.kogaUnifiedMenu) table {
   min-width: 680px;
+  font-variant-numeric: tabular-nums;
 }
 
 body:has(.kogaUnifiedMenu) .btn,
@@ -53,26 +87,178 @@ body:has(.kogaUnifiedMenu) button {
   white-space: normal !important;
 }
 
-/* Menu quality pass: keep logout predictable and labels readable when expanded. */
-body:has(.kogaUnifiedMenu) .kogaUnifiedMenu nav {
-  display: flex !important;
-  flex-direction: column !important;
-  min-height: 0 !important;
+body:has(.kogaUnifiedMenu) :is(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 3px solid rgba(103, 232, 249, .72) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 6px rgba(103, 232, 249, .10) !important;
 }
 
-body:has(.kogaUnifiedMenu) .kogaUnifiedMenu nav button.danger {
+body:has(.kogaUnifiedMenu) :is(button, .btn):active {
+  transform: translateY(1px) scale(.99);
+}
+
+/* Menu quality pass: keep logout predictable and labels readable when expanded. */
+.kogaUnifiedMenu {
+  position: fixed;
+  left: 8px;
+  top: 8px;
+  bottom: 8px;
+  z-index: var(--koga-menu-z);
+  width: 60px;
+  border: 1px solid rgba(148, 163, 184, .16);
+  border-radius: 22px;
+  background: rgba(3, 10, 22, .90);
+  backdrop-filter: blur(22px);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, .30);
+  padding: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  transition: width .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.kogaUnifiedMenu.open {
+  width: min(254px, 84vw);
+}
+
+.kogaUnifiedBrand {
+  min-height: 48px;
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(34, 211, 238, .22), rgba(37, 99, 235, .24));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.kogaUnifiedMenu.open .kogaUnifiedBrand {
+  justify-content: flex-start;
+  padding: 0 8px;
+}
+
+.kogaUnifiedBrand span {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #22d3ee, #2563eb);
+  font-weight: 950;
+}
+
+.kogaUnifiedBrand b,
+.kogaUnifiedMenu nav button b {
+  display: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kogaUnifiedMenu.open .kogaUnifiedBrand b,
+.kogaUnifiedMenu.open nav button b {
+  display: block;
+}
+
+.kogaUnifiedMenu nav {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 7px;
+  min-height: 0 !important;
+  overflow: auto;
+  padding-bottom: 6px;
+  scrollbar-width: none;
+}
+
+.kogaUnifiedMenu nav::-webkit-scrollbar {
+  display: none;
+}
+
+.kogaUnifiedMenu nav button {
+  min-height: 42px;
+  min-width: 0 !important;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: #9fb2ca;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  padding: 0;
+  cursor: pointer;
+  font-weight: 820;
+}
+
+.kogaUnifiedMenu.open nav button {
+  justify-content: flex-start;
+  padding: 0 10px;
+}
+
+.kogaUnifiedMenu nav button:hover,
+.kogaUnifiedMenu nav button.active,
+.kogaUnifiedMenu nav button[aria-current="page"] {
+  color: white;
+  border-color: rgba(34, 211, 238, .24);
+  background: linear-gradient(135deg, rgba(14, 165, 233, .18), rgba(37, 99, 235, .18));
+}
+
+.kogaUnifiedMenu nav button.danger {
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, .22);
   margin-top: auto !important;
 }
 
-body:has(.kogaUnifiedMenu) .kogaUnifiedMenu.open nav button b,
-body:has(.kogaUnifiedMenu) .kogaUnifiedMenu.open .kogaUnifiedBrand b {
+.kogaUnifiedMenu nav button.danger:hover {
+  background: rgba(127, 29, 29, .28);
+  border-color: rgba(248, 113, 113, .38);
+}
+
+.kogaUnifiedMenu nav button i {
+  width: 22px;
+  min-width: 22px;
+  text-align: center;
+  color: #67e8f9;
+  font-style: normal;
+}
+
+.kogaUnifiedMenu.open nav button b,
+.kogaUnifiedMenu.open .kogaUnifiedBrand b {
   max-width: 178px !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
 
-body:has(.kogaUnifiedMenu) .kogaUnifiedMenu nav button {
-  min-width: 0 !important;
+.kogaMenuBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--koga-backdrop-z);
+  border: 0;
+  background: rgba(2, 6, 23, .46);
+  backdrop-filter: blur(3px);
+}
+
+body:has(.settingsSafe.light) .kogaUnifiedMenu {
+  background: rgba(255, 255, 255, .9);
+  border-color: rgba(15, 23, 42, .12);
+  box-shadow: 0 22px 70px rgba(15, 23, 42, .14);
+}
+
+body:has(.settingsSafe.light) .kogaUnifiedMenu nav button {
+  color: #475569;
+}
+
+body:has(.settingsSafe.light) .kogaUnifiedMenu nav button:hover,
+body:has(.settingsSafe.light) .kogaUnifiedMenu nav button.active,
+body:has(.settingsSafe.light) .kogaUnifiedMenu nav button[aria-current="page"] {
+  color: #0f172a;
+  background: rgba(14, 165, 233, .12);
+  border-color: rgba(14, 165, 233, .22);
 }
 
 /* Make dense admin forms look less like they were packed by an angry spreadsheet. */
@@ -98,6 +284,15 @@ body:has(.kogaUnifiedMenu) .btn.primary,
 body:has(.kogaUnifiedMenu) button[type="submit"] {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
 }
 
 @media (max-width: 980px) {
@@ -126,8 +321,21 @@ body:has(.kogaUnifiedMenu) button[type="submit"] {
     padding-right: min(18px, 4vw) !important;
   }
 
-  body:has(.kogaUnifiedMenu) .kogaUnifiedMenu.open nav button b,
-  body:has(.kogaUnifiedMenu) .kogaUnifiedMenu.open .kogaUnifiedBrand b {
+  .kogaUnifiedMenu {
+    width: 54px;
+    left: 6px;
+    top: 6px;
+    bottom: 6px;
+    border-radius: 20px;
+    padding: 6px;
+  }
+
+  .kogaUnifiedMenu.open {
+    width: min(250px, 82vw);
+  }
+
+  .kogaUnifiedMenu.open nav button b,
+  .kogaUnifiedMenu.open .kogaUnifiedBrand b {
     max-width: 160px !important;
   }
 
