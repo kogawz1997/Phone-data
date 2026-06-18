@@ -21,7 +21,7 @@ This document closes the current UI redesign pass and records what must be deplo
 - Main content target helper
 - Focus states
 - Reduced motion support
-- Hardened Railway start script
+- Hardened Railway target detection
 
 ### Documentation
 - `DESIGN_MEMORY.md`
@@ -46,6 +46,11 @@ This document closes the current UI redesign pass and records what must be deplo
 - `apps/customer-web/src/app/customer-luxury-modern.css`
 - `apps/customer-web/package.json`
 
+### Railway scripts
+- `scripts/railway-target.mjs`
+- `scripts/railway-build.mjs`
+- `scripts/railway-start.mjs`
+
 ### Repo root
 - `DESIGN_MEMORY.md`
 - `UI_RELEASE_CHECKLIST.md`
@@ -60,25 +65,46 @@ Redeploy these services in this order:
 
 Reason: customer-web was the service showing `Application failed to respond`, so verify it first.
 
-## Railway config expectations
+## Railway target variables
 
-### customer-web
-Expected start script:
+Because `/railway.json` uses shared scripts, every Railway service must explicitly identify what it is.
 
-```bash
-next start -H 0.0.0.0
+Set these variables in Railway:
+
+```txt
+customer-web: KOGA_RAILWAY_TARGET=customer-web
+admin-web:    KOGA_RAILWAY_TARGET=admin-web
+api:          KOGA_RAILWAY_TARGET=api
 ```
 
-Railway should inject the port using the `PORT` environment variable. If the service still fails to respond:
+If a service uses admin-web for owner/platform pages, use:
+
+```txt
+KOGA_RAILWAY_TARGET=admin-web
+```
+
+The shared script now refuses to silently fall back to `api`. If target detection fails, the deploy log will say exactly what variable to set.
+
+## Railway config expectations
+
+`/railway.json` should stay as:
+
+```txt
+Build Command: node scripts/railway-build.mjs
+Start Command: node scripts/railway-start.mjs
+Healthcheck Path: /health
+```
+
+Both `admin-web` and `customer-web` include `/health` routes.
+
+If customer-web still fails to respond:
 
 1. Open Railway deploy logs.
-2. Check whether `next build` succeeded.
-3. Check whether `next start` ran.
-4. Confirm it is listening on the injected `PORT`.
-5. Roll back customer-web first if the deploy blocks production traffic.
-
-### admin-web
-Admin currently keeps its existing start configuration. Do not change it unless Railway logs show a port/start issue there too.
+2. Check whether `[railway-target] selected customer-web` appears.
+3. Check whether `next build` succeeded.
+4. Check whether `next start` ran.
+5. Confirm it is listening on Railway's injected `PORT`.
+6. Roll back customer-web first if the deploy blocks production traffic.
 
 ## Manual acceptance checklist
 
@@ -99,7 +125,8 @@ Minimum release gate:
 ## Known non-code deployment risks
 
 - Browser cache may show old CSS or old bundles after Railway deploy.
-- Railway may be using a service-level start command that overrides `package.json`.
+- Railway may be using service-level variables from a different environment.
+- If `KOGA_RAILWAY_TARGET` is missing, deploy will now fail fast with a clear error.
 - If service root directory is wrong, Railway may build the wrong app in the monorepo.
 - Environment variables can still break runtime API calls after the page loads, even if the UI renders.
 
