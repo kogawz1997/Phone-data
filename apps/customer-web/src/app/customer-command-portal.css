@@ -1,0 +1,426 @@
+/* Source-level customer portal redesign. Replaces legacy customer portal on `/`. */
+body:has(.kogaCustomerCommand) .portal.customer-shell {
+  display: none !important;
+}
+
+.kogaCustomerCommand {
+  min-height: 100dvh;
+  padding: clamp(18px, 3vw, 34px) clamp(14px, 4vw, 52px) 80px;
+  color: #edf7ff;
+  background:
+    radial-gradient(circle at 18% -8%, rgba(103,232,249,.15), transparent 31%),
+    radial-gradient(circle at 90% 6%, rgba(37,99,235,.18), transparent 34%),
+    linear-gradient(135deg, #020712, #06101f 48%, #081120);
+  overflow-x: hidden;
+}
+
+.kogaCustomerCommand::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: .14;
+  background-image:
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+  background-size: 74px 74px;
+}
+
+.kcpTopbar,
+.kcpHero,
+.kcpMainGrid {
+  position: relative;
+  z-index: 1;
+  max-width: 1360px;
+  margin-inline: auto;
+}
+
+.kcpTopbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.kcpBrand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.kcpBrand > span {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  color: #03101d;
+  background: linear-gradient(135deg, #67e8f9, #2563eb);
+  font-weight: 950;
+  box-shadow: 0 18px 48px rgba(37,99,235,.24), inset 0 1px 0 rgba(255,255,255,.34);
+}
+
+.kcpBrand small,
+.kcpHero p,
+.kcpPanelHead p,
+.kcpMetric small,
+.kcpList small,
+.kcpPayment small,
+.kcpDeviceCard span,
+.kcpDeviceCard p {
+  color: #9fb2c9;
+}
+
+.kcpBrand strong {
+  color: #f7fbff;
+}
+
+.kcpTopbar button,
+.kcpHero button,
+.kcpLogin button,
+.kcpQuickNav a,
+.kcpUpload {
+  min-height: 44px;
+  border: 1px solid rgba(103,232,249,.24);
+  border-radius: 16px;
+  padding: 10px 14px;
+  color: #e9fbff;
+  background: rgba(255,255,255,.045);
+  text-decoration: none;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.kcpHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 440px);
+  gap: clamp(16px, 3vw, 28px);
+  align-items: stretch;
+}
+
+.kcpHeroCopy,
+.kcpDeviceCard,
+.kcpLogin,
+.kcpMetric,
+.kcpPanel,
+.kcpNotice {
+  border: 1px solid rgba(158,178,205,.16);
+  border-radius: 30px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.018)),
+    rgba(8,18,34,.80);
+  box-shadow: 0 22px 70px rgba(1,7,18,.28), inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter: blur(24px) saturate(1.08);
+}
+
+.kcpHeroCopy {
+  min-height: min(58dvh, 560px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: clamp(24px, 5vw, 58px);
+}
+
+.kcpEyebrow {
+  color: #67e8f9;
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.kcpHero h1 {
+  max-width: 12ch;
+  margin: 18px 0;
+  color: #f7fbff;
+  font-size: clamp(3rem, 8vw, 6.6rem);
+  line-height: .86;
+  letter-spacing: -.08em;
+  text-wrap: balance;
+}
+
+.kcpHero p {
+  max-width: 720px;
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  line-height: 1.7;
+}
+
+.kcpQuickNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.kcpDeviceCard,
+.kcpLogin {
+  padding: clamp(20px, 4vw, 34px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.kcpDeviceCard strong {
+  color: #f7fbff;
+  font-size: clamp(2rem, 4vw, 4rem);
+  line-height: .9;
+  letter-spacing: -.07em;
+}
+
+.kcpProgress {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  overflow: hidden;
+}
+
+.kcpProgress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #67e8f9, #2563eb);
+}
+
+.kcpLogin {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+}
+
+.kcpLogin h2 {
+  margin: 4px 0 0;
+  color: #f7fbff;
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  letter-spacing: -.055em;
+}
+
+.kcpLogin label {
+  display: grid;
+  gap: 8px;
+  color: #9fb2c9;
+  font-weight: 750;
+}
+
+.kcpLogin input {
+  min-height: 44px;
+  border: 1px solid rgba(158,178,205,.18);
+  border-radius: 16px;
+  padding: 0 12px;
+  color: #edf7ff;
+  background: rgba(2,8,20,.58);
+}
+
+.kcpLogin button {
+  color: #03101d;
+  background: linear-gradient(135deg, #67e8f9, #2563eb);
+}
+
+.kcpNotice {
+  position: relative;
+  z-index: 1;
+  max-width: 1360px;
+  margin: 16px auto;
+  padding: 16px;
+  color: #fecaca;
+}
+
+.kcpMainGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.kcpMetric {
+  padding: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.kcpMetric.wide {
+  grid-column: span 1;
+}
+
+.kcpMetric span,
+.kcpMetric small {
+  color: #9fb2c9;
+}
+
+.kcpMetric strong {
+  color: #f7fbff;
+  font-size: clamp(1.9rem, 4vw, 3.4rem);
+  line-height: .9;
+  letter-spacing: -.07em;
+}
+
+.kcpPanel {
+  grid-column: span 3;
+  padding: clamp(18px, 3vw, 30px);
+}
+
+.kcpPanel.pay {
+  grid-column: span 3;
+}
+
+.kcpPanel.help {
+  grid-column: span 3;
+}
+
+.kcpPanelHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.kcpPanelHead h2 {
+  margin: 4px 0 0;
+  color: #f7fbff;
+  font-size: clamp(1.55rem, 3vw, 2.65rem);
+  line-height: 1;
+  letter-spacing: -.06em;
+}
+
+.kcpCards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.kcpPayment {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(158,178,205,.13);
+  border-radius: 22px;
+  background: rgba(255,255,255,.04);
+}
+
+.kcpPayment strong {
+  color: #f7fbff;
+  font-size: 2rem;
+  letter-spacing: -.06em;
+}
+
+.kcpPayment img {
+  width: 100%;
+  max-width: 220px;
+  border-radius: 18px;
+  background: #fff;
+  padding: 10px;
+}
+
+.kcpUpload {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.kcpUpload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.kcpList {
+  display: grid;
+  gap: 10px;
+}
+
+.kcpList > div {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid rgba(158,178,205,.12);
+  border-radius: 18px;
+  background: rgba(255,255,255,.038);
+}
+
+.kcpList strong {
+  color: #f7fbff;
+}
+
+.kcpList span {
+  color: #9fb2c9;
+}
+
+.kcpHelpGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.kcpHelpGrid span,
+.kcpEmpty {
+  border-radius: 18px;
+  padding: 14px;
+  color: #9fb2c9;
+  background: rgba(255,255,255,.045);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .kcpHeroCopy,
+  .kcpDeviceCard,
+  .kcpLogin,
+  .kcpMetric,
+  .kcpPanel {
+    animation: kcpRise .36s cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  .kcpMetric:nth-child(2) { animation-delay: .04s; }
+  .kcpMetric:nth-child(3) { animation-delay: .08s; }
+
+  .kcpQuickNav a:hover,
+  .kcpTopbar button:hover,
+  .kcpPayment:hover,
+  .kcpList > div:hover,
+  .kcpMetric:hover,
+  .kcpPanel:hover {
+    transform: translateY(-2px);
+    border-color: rgba(103,232,249,.32);
+  }
+}
+
+@keyframes kcpRise {
+  from { opacity: 0; transform: translateY(16px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 980px) {
+  .kcpHero,
+  .kcpLogin,
+  .kcpMainGrid,
+  .kcpCards,
+  .kcpHelpGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .kcpPanel,
+  .kcpPanel.pay,
+  .kcpPanel.help {
+    grid-column: auto;
+  }
+
+  .kcpHeroCopy {
+    min-height: auto;
+    padding-top: 72px;
+  }
+
+  .kcpHero h1 {
+    font-size: clamp(2.55rem, 14vw, 4.6rem);
+  }
+
+  .kcpHeroCopy,
+  .kcpDeviceCard,
+  .kcpLogin,
+  .kcpPanel,
+  .kcpMetric {
+    border-radius: 24px;
+  }
+}
