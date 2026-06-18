@@ -1,11 +1,17 @@
 import "./globals.css";
 import "./customer-experience.css";
+import "./customer-luxury-modern.css";
 import type { ReactNode } from "react";
 
 export const metadata = {
   title: "KOGA Customer Portal",
   description: "Phone finance customer portal",
-  viewport: "width=device-width, initial-scale=1, viewport-fit=cover",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
