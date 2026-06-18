@@ -6,6 +6,16 @@ Use this before every production deploy of the redesigned UI. Tiny checklist, en
 - [ ] `admin-web`
 - [ ] `customer-web`
 
+## Railway response check
+If Railway shows `Application failed to respond`:
+
+1. Open the service deploy logs immediately.
+2. Confirm the service built successfully.
+3. Confirm the service starts with the correct package script.
+4. Confirm the service listens on Railway's injected `PORT`.
+5. For `customer-web`, the start script should be `next start -H 0.0.0.0`.
+6. If the error continues, roll back the latest customer-web deploy first, then inspect build output.
+
 ## Admin web routes
 Check desktop and mobile:
 
