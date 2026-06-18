@@ -2,6 +2,7 @@ import "./globals.css";
 import "./login-clean.css";
 import "./admin-compact-header.css";
 import "./admin-professional-polish.css";
+import "./admin-luxury-modern-v2.css";
 import type { ReactNode } from "react";
 import UXEnhancements from "./ux-enhancements";
 
