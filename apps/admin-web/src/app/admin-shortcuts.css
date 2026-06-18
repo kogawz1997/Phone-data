@@ -1,0 +1,58 @@
+/* Global navigation shortcut: present on every admin route except home. */
+.kogaHomeShortcut {
+  position: fixed;
+  right: 18px;
+  top: 18px;
+  z-index: 1320;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  border: 1px solid rgba(103, 232, 249, .24);
+  border-radius: 999px;
+  padding: 8px 14px 8px 10px;
+  color: #eaffff;
+  background:
+    linear-gradient(180deg, rgba(9, 21, 39, .84), rgba(3, 10, 22, .82));
+  box-shadow: 0 18px 54px rgba(1, 7, 18, .28), inset 0 1px 0 rgba(255,255,255,.07);
+  backdrop-filter: blur(18px) saturate(1.12);
+  text-decoration: none;
+  font-weight: 850;
+  letter-spacing: -.02em;
+}
+
+.kogaHomeShortcut span {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #06101f;
+  background: linear-gradient(135deg, #67e8f9, #2563eb);
+  font-weight: 950;
+}
+
+.kogaHomeShortcut:hover {
+  transform: translateY(-1px);
+  border-color: rgba(103, 232, 249, .42);
+}
+
+@media (max-width: 980px) {
+  .kogaHomeShortcut {
+    left: 12px;
+    right: auto;
+    top: 12px;
+    min-height: 40px;
+    padding: 7px 10px;
+    border-radius: 16px;
+  }
+
+  .kogaHomeShortcut b {
+    display: none;
+  }
+
+  .kogaHomeShortcut span {
+    width: 28px;
+    height: 28px;
+  }
+}
