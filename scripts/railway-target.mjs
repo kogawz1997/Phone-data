@@ -50,6 +50,9 @@ export function resolveRailwayTarget() {
     ["RAILWAY_SERVICE_ID", process.env.RAILWAY_SERVICE_ID],
     ["RAILWAY_PUBLIC_DOMAIN", process.env.RAILWAY_PUBLIC_DOMAIN],
     ["RAILWAY_STATIC_URL", process.env.RAILWAY_STATIC_URL],
+    ["RAILWAY_PRIVATE_DOMAIN", process.env.RAILWAY_PRIVATE_DOMAIN],
+    ["RAILWAY_GIT_REPO_NAME", process.env.RAILWAY_GIT_REPO_NAME],
+    ["RAILWAY_DEPLOYMENT_ID", process.env.RAILWAY_DEPLOYMENT_ID],
   ];
 
   console.log(`[railway-target] candidates: ${namedCandidates.map(([name, value]) => describeCandidate(name, value)).join(" | ")}`);
@@ -62,9 +65,19 @@ export function resolveRailwayTarget() {
     }
   }
 
-  const fallback = process.env.KOGA_RAILWAY_TARGET_FALLBACK || "api";
-  console.warn(`[railway-target] Cannot infer target from Railway env. Falling back to ${fallback}. Set KOGA_RAILWAY_TARGET explicitly to api, admin-web, owner-web, or customer-web.`);
-  return inferFromText(fallback) || "api";
+  const fallback = process.env.KOGA_RAILWAY_TARGET_FALLBACK;
+  const fallbackTarget = inferFromText(fallback);
+  if (fallbackTarget) {
+    console.warn(`[railway-target] Cannot infer target from Railway env. Falling back to ${fallbackTarget} from KOGA_RAILWAY_TARGET_FALLBACK.`);
+    return fallbackTarget;
+  }
+
+  throw new Error([
+    "Cannot infer Railway target.",
+    "Set KOGA_RAILWAY_TARGET to one of: api, admin-web, owner-web, customer-web.",
+    "For the customer portal service, set KOGA_RAILWAY_TARGET=customer-web.",
+    "Refusing to silently fall back to api because that can start the wrong app.",
+  ].join(" "));
 }
 
 export function commandForTarget(target, phase) {
