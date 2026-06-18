@@ -1,7 +1,7 @@
 /* Mobile menu fix: the admin navigation becomes a bottom dock instead of blocking every page. */
 @media (max-width: 980px) {
   body:has(.kogaUnifiedMenu) {
-    padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   body:has(.kogaUnifiedMenu) .app-shell,
@@ -13,7 +13,7 @@
     padding-left: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .kogaUnifiedMenu {
@@ -33,11 +33,15 @@
 
   .kogaUnifiedMenu.open {
     width: auto !important;
-    height: 66px !important;
+    height: min(74dvh, 620px) !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 56px minmax(0, 1fr) !important;
+    align-content: start !important;
+    padding: 10px !important;
   }
 
   .kogaUnifiedBrand,
-  .kogaUnifiedMenu.open .kogaUnifiedBrand {
+  .kogaUnifiedMenu.closed .kogaUnifiedBrand {
     width: 52px !important;
     min-height: 52px !important;
     height: 52px !important;
@@ -45,12 +49,24 @@
     justify-content: center !important;
   }
 
+  .kogaUnifiedMenu.open .kogaUnifiedBrand {
+    width: 100% !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    justify-content: flex-start !important;
+    padding: 0 10px !important;
+  }
+
   .kogaUnifiedBrand b,
-  .kogaUnifiedMenu.open .kogaUnifiedBrand b {
+  .kogaUnifiedMenu.closed .kogaUnifiedBrand b {
     display: none !important;
   }
 
-  .kogaUnifiedMenu nav {
+  .kogaUnifiedMenu.open .kogaUnifiedBrand b {
+    display: block !important;
+  }
+
+  .kogaUnifiedMenu.closed nav {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
@@ -63,8 +79,17 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .kogaUnifiedMenu nav button,
-  .kogaUnifiedMenu.open nav button {
+  .kogaUnifiedMenu.open nav {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-content: start !important;
+    gap: 8px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 2px 0 6px !important;
+  }
+
+  .kogaUnifiedMenu.closed nav button {
     width: 48px !important;
     min-width: 48px !important;
     height: 48px !important;
@@ -74,14 +99,27 @@
     scroll-snap-align: center;
   }
 
-  .kogaUnifiedMenu nav button b,
-  .kogaUnifiedMenu.open nav button b {
+  .kogaUnifiedMenu.open nav button {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    padding: 0 12px !important;
+    justify-content: flex-start !important;
+  }
+
+  .kogaUnifiedMenu.closed nav button b {
     display: none !important;
+  }
+
+  .kogaUnifiedMenu.open nav button b {
+    display: block !important;
+    max-width: 100% !important;
   }
 
   .kogaUnifiedMenu nav button.danger {
     margin-top: 0 !important;
-    margin-left: 4px !important;
+    margin-left: 0 !important;
   }
 
   .kogaMenuBackdrop {
