@@ -3,8 +3,10 @@ import "./login-clean.css";
 import "./admin-compact-header.css";
 import "./admin-professional-polish.css";
 import "./admin-luxury-modern-v2.css";
+import "./admin-shortcuts.css";
 import type { ReactNode } from "react";
 import UXEnhancements from "./ux-enhancements";
+import HomeShortcut from "./home-shortcut";
 
 export const metadata = {
   title: "KOGA Lease MDM SaaS",
@@ -22,6 +24,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="th">
       <body>
         <a className="skip-link" href="#main-content">ข้ามไปเนื้อหาหลัก</a>
+        <HomeShortcut />
         {children}
         <UXEnhancements />
       </body>
