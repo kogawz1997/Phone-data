@@ -8,13 +8,19 @@ import UXEnhancements from "./ux-enhancements";
 export const metadata = {
   title: "KOGA Lease MDM SaaS",
   description: "Multi-tenant lease-to-own MDM SaaS for rental shops",
-  viewport: "width=device-width, initial-scale=1, viewport-fit=cover",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="th">
       <body>
+        <a className="skip-link" href="#main-content">ข้ามไปเนื้อหาหลัก</a>
         {children}
         <UXEnhancements />
       </body>
