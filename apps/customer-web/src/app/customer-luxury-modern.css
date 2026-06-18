@@ -28,6 +28,29 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.portal-skip-link {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  z-index: 1500;
+  transform: translateY(-140%);
+  border: 1px solid rgba(103, 232, 249, .45);
+  border-radius: 999px;
+  background: #07111f;
+  color: #e6fbff;
+  padding: 10px 14px;
+  font-weight: 850;
+  text-decoration: none;
+  box-shadow: 0 18px 50px rgba(2, 6, 23, .36);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.portal-skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 3px solid rgba(103, 232, 249, .55);
+  outline-offset: 3px;
+}
+
 .customer-shell { position: relative; isolation: isolate; }
 
 .customer-shell::before {
