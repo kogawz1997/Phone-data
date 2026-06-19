@@ -8,6 +8,7 @@ import "./dashboard-reference.css";
 import "./dashboard-fix.css";
 import "./mobile-store-real.css";
 import "./mobile-store-menu-fix.css";
+import "./device-switch.css";
 import type { ReactNode } from "react";
 
 export const metadata = {
