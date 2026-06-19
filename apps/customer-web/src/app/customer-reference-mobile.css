@@ -1,0 +1,170 @@
+/* KOGA Reference Mobile: makes customer portal closer to the provided phone mockups. */
+@media (max-width: 760px) {
+  .kogaCustomerCommand {
+    min-height: 100dvh !important;
+    padding: 10px 10px 32px !important;
+    background:
+      radial-gradient(circle at 50% -8%, rgba(29, 128, 255, .34), transparent 34%),
+      radial-gradient(circle at 100% 0%, rgba(125, 243, 255, .14), transparent 28%),
+      linear-gradient(180deg, #020712, #06101f 54%, #081120) !important;
+  }
+
+  .kogaCustomerCommand::before {
+    opacity: .08 !important;
+    background-size: 46px 46px !important;
+  }
+
+  .kcpTopbar {
+    position: sticky !important;
+    top: 8px !important;
+    z-index: 50 !important;
+    margin-bottom: 10px !important;
+    padding: 10px !important;
+    border: 1px solid rgba(205, 220, 238, .18) !important;
+    border-radius: 20px !important;
+    background: rgba(4, 12, 24, .92) !important;
+    box-shadow: 0 18px 40px rgba(1,7,18,.34) !important;
+    backdrop-filter: blur(18px) saturate(1.08) !important;
+  }
+
+  .kcpBrand > span {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 12px !important;
+  }
+
+  .kcpBrand small {
+    display: none !important;
+  }
+
+  .kcpHero {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .kcpHeroCopy,
+  .kcpDeviceCard,
+  .kcpLogin,
+  .kcpMetric,
+  .kcpPanel,
+  .kcpPayment,
+  .kcpList > div,
+  .kcpHelpGrid span {
+    border: 1px solid rgba(205, 220, 238, .18) !important;
+    border-radius: 22px !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.024)),
+      rgba(8, 18, 34, .92) !important;
+    box-shadow: 0 16px 42px rgba(1,7,18,.32), inset 0 1px 0 rgba(255,255,255,.06) !important;
+  }
+
+  .kcpHeroCopy {
+    min-height: 280px !important;
+    padding: 28px 18px !important;
+    justify-content: flex-end !important;
+  }
+
+  .kcpHero h1 {
+    max-width: 10.5ch !important;
+    font-size: clamp(2.05rem, 13vw, 3.75rem) !important;
+    line-height: .88 !important;
+    letter-spacing: -.075em !important;
+  }
+
+  .kcpHero p {
+    font-size: .95rem !important;
+    color: #cbd8e8 !important;
+  }
+
+  .kcpQuickNav {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .kcpQuickNav a {
+    min-height: 58px !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 8px !important;
+    text-align: center !important;
+    border-radius: 16px !important;
+    font-size: .76rem !important;
+  }
+
+  .kcpDeviceCard {
+    min-height: 180px !important;
+    padding: 18px !important;
+  }
+
+  .kcpDeviceCard strong {
+    font-size: clamp(2.1rem, 12vw, 3.2rem) !important;
+  }
+
+  .kcpLogin {
+    grid-template-columns: 1fr !important;
+    padding: 18px !important;
+  }
+
+  .kcpLogin input,
+  .kcpLogin button,
+  .kcpUpload,
+  .kcpTopbar button {
+    min-height: 48px !important;
+    border-radius: 15px !important;
+  }
+
+  .kcpMainGrid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    margin-top: 12px !important;
+  }
+
+  .kcpMetric,
+  .kcpPanel {
+    grid-column: auto !important;
+    padding: 16px !important;
+  }
+
+  .kcpCards {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .kcpPayment {
+    padding: 16px !important;
+  }
+
+  .kcpPayment img {
+    width: min(100%, 260px) !important;
+    margin-inline: auto !important;
+    border: 10px solid #fff !important;
+    border-radius: 20px !important;
+    padding: 0 !important;
+  }
+
+  .kcpList {
+    gap: 10px !important;
+  }
+
+  .kcpList > div {
+    padding: 14px !important;
+  }
+
+  .kcpHelpGrid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (min-width: 761px) {
+  .kcpPanel.pay .kcpCards {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .kcpPayment {
+    min-height: 280px;
+  }
+}
