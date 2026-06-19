@@ -1,5 +1,5 @@
-import { DesktopCoreLiveBoard } from "./core-live-board";
+import { LiveKogaApp } from "./live-app";
 
 export default function Page() {
-  return <DesktopCoreLiveBoard />;
+  return <LiveKogaApp page="dashboard" />;
 }
