@@ -8,7 +8,6 @@ import "./admin-shortcuts.css";
 import type { ReactNode } from "react";
 import UXEnhancements from "./ux-enhancements";
 import HomeShortcut from "./home-shortcut";
-import AdminCommandCenter from "./admin-command-center";
 
 export const metadata = {
   title: "KOGA Lease MDM SaaS",
@@ -27,7 +26,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <a className="skip-link" href="#main-content">ข้ามไปเนื้อหาหลัก</a>
         <HomeShortcut />
-        <AdminCommandCenter />
         {children}
         <UXEnhancements />
       </body>
