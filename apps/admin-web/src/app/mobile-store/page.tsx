@@ -1,5 +1,5 @@
-import { MobileStoreLiveBoard } from "../core-live-board";
+import { LiveMobileStoreApp } from "../live-app";
 
 export default function MobileStorePage() {
-  return <MobileStoreLiveBoard />;
+  return <LiveMobileStoreApp />;
 }
