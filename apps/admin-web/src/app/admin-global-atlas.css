@@ -1,0 +1,152 @@
+/* KOGA Atlas UI: global admin readability layer. Applies to every admin route without touching business logic. */
+:root {
+  --atlas-bg: #020712;
+  --atlas-panel: rgba(8, 18, 34, .90);
+  --atlas-panel-strong: rgba(10, 24, 44, .96);
+  --atlas-border: rgba(205, 220, 238, .22);
+  --atlas-border-strong: rgba(125, 243, 255, .44);
+  --atlas-text: #f7fbff;
+  --atlas-text-strong: #ffffff;
+  --atlas-muted: #cbd8e8;
+  --atlas-soft: #9db1c7;
+  --atlas-accent: #7df3ff;
+  --atlas-blue: #4f8dff;
+  --atlas-danger: #fecaca;
+  --atlas-warn: #fde68a;
+  --atlas-good: #bbf7d0;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body:not(:has(.login-page)) {
+  color: var(--atlas-text) !important;
+  background:
+    radial-gradient(circle at 15% -10%, rgba(125, 243, 255, .11), transparent 32%),
+    radial-gradient(circle at 90% 0%, rgba(79, 141, 255, .14), transparent 36%),
+    linear-gradient(135deg, #020712, #06101f 48%, #081120) !important;
+}
+
+body:not(:has(.login-page)) :where(main, section, article, aside, nav, header, footer, div) {
+  border-color: var(--atlas-border);
+}
+
+body:not(:has(.login-page)) :where(h1, h2, h3, h4, strong, th, .title, .brand, .logo) {
+  color: var(--atlas-text-strong) !important;
+}
+
+body:not(:has(.login-page)) :where(p, small, label, td, li, span, .muted, .sub, .helper, .kicker) {
+  color: var(--atlas-muted) !important;
+}
+
+body:not(:has(.login-page)) :where(.app-shell, .settingsSafe, .page, .content, .main-content, .shell) {
+  color: var(--atlas-text) !important;
+}
+
+body:not(:has(.login-page)) :where(.card, .panel, .safePanel, .section-card, .stat-card, .dashboard-hero, .payment-card, .payment-request-card, .form-card, .table-card, .settingsSafe .safeMain, .settingsSafe .safeSection) {
+  border: 1px solid var(--atlas-border) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.026)),
+    var(--atlas-panel) !important;
+  color: var(--atlas-text) !important;
+  box-shadow: 0 18px 56px rgba(1, 7, 18, .28), inset 0 1px 0 rgba(255,255,255,.07) !important;
+  backdrop-filter: blur(18px) saturate(1.06);
+}
+
+body:not(:has(.login-page)) :where(input, textarea, select) {
+  color: var(--atlas-text-strong) !important;
+  background: rgba(2, 8, 20, .74) !important;
+  border: 1px solid rgba(205, 220, 238, .34) !important;
+  border-radius: 14px !important;
+  caret-color: var(--atlas-accent);
+}
+
+body:not(:has(.login-page)) :where(input::placeholder, textarea::placeholder) {
+  color: #91a6bd !important;
+  opacity: 1 !important;
+}
+
+body:not(:has(.login-page)) :where(button, .btn, a.btn) {
+  border-color: rgba(125, 243, 255, .30) !important;
+  font-weight: 850 !important;
+}
+
+body:not(:has(.login-page)) :where(.btn.secondary, button.secondary, .ghost, button.ghost, .safeButton.secondary) {
+  color: var(--atlas-text-strong) !important;
+  background: rgba(255, 255, 255, .10) !important;
+  border-color: rgba(205, 220, 238, .24) !important;
+}
+
+body:not(:has(.login-page)) :where(.btn.primary, button.primary, .primary, .safeButton.primary) {
+  color: #03101d !important;
+  background: linear-gradient(135deg, var(--atlas-accent), var(--atlas-blue)) !important;
+  border-color: rgba(125, 243, 255, .44) !important;
+}
+
+body:not(:has(.login-page)) :where(.btn.danger, button.danger, .danger) {
+  color: #fff1f2 !important;
+  background: rgba(127, 29, 29, .55) !important;
+  border-color: rgba(251, 113, 133, .45) !important;
+}
+
+body:not(:has(.login-page)) :where(table) {
+  color: var(--atlas-text) !important;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+body:not(:has(.login-page)) :where(thead, th) {
+  background: rgba(255,255,255,.07) !important;
+  color: var(--atlas-text-strong) !important;
+}
+
+body:not(:has(.login-page)) :where(td) {
+  color: var(--atlas-muted) !important;
+  border-color: rgba(205, 220, 238, .12) !important;
+}
+
+body:not(:has(.login-page)) :where(.badge, .chip, .pill, .status) {
+  color: var(--atlas-text-strong) !important;
+  background: rgba(255, 255, 255, .10) !important;
+  border: 1px solid rgba(205, 220, 238, .22) !important;
+}
+
+body:not(:has(.login-page)) :where(.badge.good, .chip.good, .status.good) {
+  color: var(--atlas-good) !important;
+  background: rgba(22, 101, 52, .28) !important;
+  border-color: rgba(74, 222, 128, .34) !important;
+}
+
+body:not(:has(.login-page)) :where(.badge.warn, .chip.warn, .status.warn) {
+  color: var(--atlas-warn) !important;
+  background: rgba(113, 63, 18, .30) !important;
+  border-color: rgba(251, 191, 36, .34) !important;
+}
+
+body:not(:has(.login-page)) :where(.badge.bad, .chip.bad, .status.bad) {
+  color: var(--atlas-danger) !important;
+  background: rgba(127, 29, 29, .30) !important;
+  border-color: rgba(251, 113, 133, .34) !important;
+}
+
+body:not(:has(.login-page)) :where(a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible) {
+  outline: 3px solid rgba(125, 243, 255, .72) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 6px rgba(125, 243, 255, .12) !important;
+}
+
+body:not(:has(.login-page)) :where(.table-wrap, .safeTableWrap) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 760px) {
+  body:not(:has(.login-page)) :where(.card, .panel, .safePanel, .section-card, .stat-card, .dashboard-hero) {
+    border-radius: 22px !important;
+  }
+
+  body:not(:has(.login-page)) :where(h1) {
+    font-size: clamp(2rem, 11vw, 3.4rem) !important;
+  }
+}
