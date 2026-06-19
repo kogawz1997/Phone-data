@@ -1,0 +1,191 @@
+/* KOGA Reference Pages: page-specific layout patterns inspired by the supplied boards. */
+body:not(:has(.login-page)) :where(.app-shell, .settingsSafe, .kogaCommandCenter) {
+  min-height: 100dvh;
+}
+
+/* Desktop board rhythm */
+@media (min-width: 981px) {
+  body:not(:has(.login-page)) :where(.app-shell, .settingsSafe, .kogaCommandCenter) {
+    padding-top: 18px !important;
+    padding-right: 22px !important;
+    padding-bottom: 22px !important;
+  }
+
+  body:not(:has(.login-page)) :where(.hero, .dashboard-hero, .settingsSafe .safeTop, .safeHeader, .pageHeader, .kogaPageTop) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 16px !important;
+    align-items: end !important;
+    padding: 22px !important;
+  }
+}
+
+/* Page title zone */
+body:not(:has(.login-page)) :where(h1) {
+  color: #ffffff !important;
+  letter-spacing: -.055em !important;
+  line-height: .95 !important;
+}
+
+body:not(:has(.login-page)) :where(.kicker, .breadcrumb, .breadcrumbs, .eyebrow) {
+  color: #7df3ff !important;
+  font-size: .75rem !important;
+  font-weight: 900 !important;
+  letter-spacing: .13em !important;
+  text-transform: uppercase !important;
+}
+
+/* Metric rows like the screenshots */
+body:not(:has(.login-page)) :where(.stats-grid, .hero-metrics, .metrics-grid, .kpi-grid, .summary-grid) {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+body:not(:has(.login-page)) :where(.stat-card, .metric-card, .kpi-card, .summary-card) {
+  min-height: 104px !important;
+  padding: 16px !important;
+  border-radius: 18px !important;
+}
+
+body:not(:has(.login-page)) :where(.stat-card strong, .metric-card strong, .kpi-card strong, .summary-card strong) {
+  font-size: clamp(1.6rem, 2.4vw, 2.8rem) !important;
+  letter-spacing: -.065em !important;
+}
+
+/* Enterprise filters/action bar */
+body:not(:has(.login-page)) :where(.filter-bar, .filters, .toolbar, .action-bar, .safeToolbar, .table-actions) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 12px !important;
+  border: 1px solid rgba(205, 220, 238, .16) !important;
+  border-radius: 18px !important;
+  background: rgba(4, 12, 24, .72) !important;
+}
+
+body:not(:has(.login-page)) :where(.filter-bar input, .filters input, .toolbar input, .action-bar input, .safeToolbar input) {
+  min-width: min(340px, 100%) !important;
+}
+
+/* Dense tables */
+body:not(:has(.login-page)) :where(.table-wrap, .safeTableWrap, .data-table, .list-table) {
+  border: 1px solid rgba(205, 220, 238, .16) !important;
+  border-radius: 20px !important;
+  background: rgba(4, 12, 24, .74) !important;
+  overflow: hidden !important;
+}
+
+body:not(:has(.login-page)) :where(table) {
+  table-layout: auto !important;
+}
+
+body:not(:has(.login-page)) :where(th) {
+  color: #ffffff !important;
+  font-size: .74rem !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+}
+
+body:not(:has(.login-page)) :where(td) {
+  font-size: .86rem !important;
+}
+
+/* Right detail panels similar to customer/inventory/contract boards */
+body:not(:has(.login-page)) :where(.detail-panel, .side-panel, .right-panel, .summary-panel, .safeAside, .aside-card) {
+  border: 1px solid rgba(205, 220, 238, .16) !important;
+  border-radius: 22px !important;
+  background: rgba(8, 18, 34, .88) !important;
+  box-shadow: 0 18px 52px rgba(1, 7, 18, .24), inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+
+body:not(:has(.login-page)) :where(.content-grid, .safeGrid, .page-grid, .workspace-grid) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px) !important;
+  gap: 14px !important;
+  align-items: start !important;
+}
+
+/* Provider/setup grids like integrations/onboarding */
+body:not(:has(.login-page)) :where(.provider-grid, .integration-grid, .setup-grid, .onboarding-grid, .template-grid) {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+
+body:not(:has(.login-page)) :where(.provider-card, .integration-card, .setup-card, .template-card) {
+  min-height: 118px !important;
+  border: 1px solid rgba(205, 220, 238, .16) !important;
+  border-radius: 20px !important;
+  background: rgba(8, 18, 34, .86) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+
+/* QR/payment module */
+body:not(:has(.login-page)) :where(.qr-card, .payment-qr, .qr-preview, .payment-request-card) {
+  border: 1px solid rgba(205, 220, 238, .18) !important;
+  border-radius: 22px !important;
+  background: rgba(8, 18, 34, .90) !important;
+}
+
+body:not(:has(.login-page)) :where(.qr-card img, .payment-qr img, .qr-preview img) {
+  border: 10px solid #ffffff !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+}
+
+/* Charts/report cards */
+body:not(:has(.login-page)) :where(.chart-card, .report-card, .risk-card, .graph-card) {
+  min-height: 260px !important;
+  border: 1px solid rgba(205, 220, 238, .16) !important;
+  border-radius: 22px !important;
+  background: rgba(8, 18, 34, .88) !important;
+}
+
+/* Platform owner board */
+body:not(:has(.login-page)) :where(.platform-grid, .owner-grid, .billing-grid, .health-grid) {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+
+/* Better empty/error blocks */
+body:not(:has(.login-page)) :where(.empty, .empty-state, .error, .notice, .alert) {
+  border: 1px solid rgba(205, 220, 238, .16) !important;
+  border-radius: 18px !important;
+  padding: 14px !important;
+  background: rgba(255, 255, 255, .07) !important;
+  color: #cbd8e8 !important;
+}
+
+body:not(:has(.login-page)) :where(.error, .alert-danger) {
+  color: #fecaca !important;
+  background: rgba(127, 29, 29, .30) !important;
+  border-color: rgba(251, 113, 133, .34) !important;
+}
+
+@media (max-width: 1100px) {
+  body:not(:has(.login-page)) :where(.content-grid, .safeGrid, .page-grid, .workspace-grid, .platform-grid, .owner-grid, .billing-grid, .health-grid) {
+    grid-template-columns: 1fr !important;
+  }
+
+  body:not(:has(.login-page)) :where(.stats-grid, .hero-metrics, .metrics-grid, .kpi-grid, .summary-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 680px) {
+  body:not(:has(.login-page)) :where(.stats-grid, .hero-metrics, .metrics-grid, .kpi-grid, .summary-grid, .provider-grid, .integration-grid, .setup-grid, .onboarding-grid, .template-grid) {
+    grid-template-columns: 1fr !important;
+  }
+
+  body:not(:has(.login-page)) :where(.filter-bar, .filters, .toolbar, .action-bar, .safeToolbar) {
+    display: grid !important;
+  }
+
+  body:not(:has(.login-page)) :where(th, td) {
+    padding: 10px 12px !important;
+    font-size: .82rem !important;
+  }
+}
