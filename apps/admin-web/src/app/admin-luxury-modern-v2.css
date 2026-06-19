@@ -1,4 +1,5 @@
 @import "./admin-global-atlas.css";
+@import "./admin-reference-shell.css";
 
 /* Deprecated visual layer.
    The older luxury layer caused low contrast and overlapping UI treatments.
