@@ -1,5 +1,5 @@
-import { LiveKogaApp } from "./live-app";
+import { DashboardHome as Home } from "./dashboard-home";
 
 export default function Page() {
-  return <LiveKogaApp page="dashboard" />;
+  return <Home />;
 }
