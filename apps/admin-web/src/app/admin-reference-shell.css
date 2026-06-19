@@ -1,0 +1,198 @@
+/* KOGA Reference Shell: makes admin pages closer to the provided desktop boards. */
+@media (min-width: 981px) {
+  body:not(:has(.login-page)) {
+    --koga-rail: 78px;
+  }
+
+  body:not(:has(.login-page)) .kogaUnifiedMenu {
+    position: fixed !important;
+    left: 18px !important;
+    top: 18px !important;
+    bottom: 18px !important;
+    width: var(--koga-rail) !important;
+    z-index: 1200 !important;
+    border: 1px solid rgba(205, 220, 238, .18) !important;
+    border-radius: 24px !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.024)),
+      rgba(4, 12, 24, .94) !important;
+    box-shadow: 0 24px 70px rgba(1, 7, 18, .38), inset 1px 0 0 rgba(255,255,255,.06) !important;
+    backdrop-filter: blur(20px) saturate(1.08) !important;
+    overflow: hidden !important;
+  }
+
+  body:not(:has(.login-page)) .kogaUnifiedMenu.open {
+    width: 226px !important;
+  }
+
+  body:not(:has(.login-page)) .kogaUnifiedBrand {
+    min-height: 68px !important;
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 42px 1fr !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 12px !important;
+    border: 0 !important;
+    border-bottom: 1px solid rgba(205, 220, 238, .12) !important;
+    background: transparent !important;
+    color: #f7fbff !important;
+  }
+
+  body:not(:has(.login-page)) .kogaUnifiedBrand span {
+    width: 42px !important;
+    height: 42px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 14px !important;
+    color: #03101d !important;
+    background: linear-gradient(135deg, #7df3ff, #4f8dff) !important;
+    box-shadow: 0 14px 34px rgba(79, 141, 255, .28), inset 0 1px 0 rgba(255,255,255,.42) !important;
+    font-weight: 950 !important;
+  }
+
+  body:not(:has(.login-page)) .kogaUnifiedBrand b {
+    color: #f7fbff !important;
+    font-size: .85rem !important;
+    letter-spacing: -.02em !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  body:not(:has(.login-page)) .kogaUnifiedMenu.closed .kogaUnifiedBrand b {
+    display: none !important;
+  }
+
+  body:not(:has(.login-page)) .kogaUnifiedMenu nav {
+    display: grid !important;
+    gap: 6px !important;
+    padding: 10px !important;
+    max-height: calc(100dvh - 112px) !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin;
+  }
+
+  body:not(:has(.login-page)) .kogaUnifiedMenu nav button {
+    min-height: 44px !important;
+    display: grid !important;
+    grid-template-columns: 38px 1fr !important;
+    align-items: center !important;
+    gap: 8px !important;
+    border: 1px solid transparent !important;
+    border-radius: 14px !important;
+    padding: 3px 8px 3px 3px !important;
+    color: #cbd8e8 !important;
+    background: transparent !important;
+    text-align: left !important;
+    box-shadow: none !important;
+  }
+
+  body:not(:has(.login-page)) .kogaUnifiedMenu nav button i {
+    width: 38px !important;
+    height: 38px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 12px !important;
+    background: rgba(255,255,255,.055) !important;
+    color: #dcecff !important;
+    font-style: normal !important;
+    font-weight: 800 !important;
+  }
+
+  body:not(:has(.login-page)) .kogaUnifiedMenu nav button b {
+    color: #cbd8e8 !important;
+    font-size: .83rem !important;
+    font-weight: 780 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  body:not(:has(.login-page)) .kogaUnifiedMenu.closed nav button b {
+    display: none !important;
+  }
+
+  body:not(:has(.login-page)) .kogaUnifiedMenu nav button.active,
+  body:not(:has(.login-page)) .kogaUnifiedMenu nav button:hover {
+    border-color: rgba(125, 243, 255, .28) !important;
+    background: rgba(79, 141, 255, .16) !important;
+    color: #f7fbff !important;
+  }
+
+  body:not(:has(.login-page)) .kogaUnifiedMenu nav button.active i,
+  body:not(:has(.login-page)) .kogaUnifiedMenu nav button:hover i {
+    color: #03101d !important;
+    background: linear-gradient(135deg, #7df3ff, #4f8dff) !important;
+  }
+
+  body:not(:has(.login-page)) .kogaUnifiedMenu nav button.danger i {
+    background: rgba(127, 29, 29, .45) !important;
+    color: #fecaca !important;
+  }
+
+  body:not(:has(.login-page)) :where(.app-shell, .settingsSafe, .kogaCommandCenter, .page, .shell, .content) {
+    margin-left: calc(var(--koga-rail) + 26px) !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  body:not(:has(.login-page)):has(.kogaUnifiedMenu.open) :where(.app-shell, .settingsSafe, .kogaCommandCenter, .page, .shell, .content) {
+    margin-left: 256px !important;
+  }
+}
+
+body:not(:has(.login-page)) :where(.topbar, .safeTop, .portal-topbar, .kogaPageTop) {
+  min-height: 68px !important;
+  border: 1px solid rgba(205, 220, 238, .16) !important;
+  border-radius: 22px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.018)),
+    rgba(4, 12, 24, .88) !important;
+  box-shadow: 0 18px 52px rgba(1, 7, 18, .24), inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+
+body:not(:has(.login-page)) :where(.hero, .dashboard-hero, .settingsSafe .safeTop, .kogaCommandCenter .kcHeroCopy) {
+  border-radius: 24px !important;
+}
+
+body:not(:has(.login-page)) :where(.grid, .stats-grid, .hero-metrics, .cards-grid) {
+  gap: 14px !important;
+}
+
+body:not(:has(.login-page)) :where(.card, .panel, .safePanel, .section-card, .stat-card) {
+  min-height: 96px;
+}
+
+body:not(:has(.login-page)) :where(table) {
+  width: 100%;
+  font-size: .88rem;
+}
+
+body:not(:has(.login-page)) :where(th, td) {
+  padding: 12px 14px !important;
+  vertical-align: middle !important;
+}
+
+body:not(:has(.login-page)) :where(tbody tr:hover) {
+  background: rgba(79, 141, 255, .08) !important;
+}
+
+body:not(:has(.login-page)) :where(.badge, .chip, .pill, .status) {
+  min-height: 24px;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 3px 9px !important;
+  border-radius: 999px !important;
+  font-size: .74rem !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 980px) {
+  body:not(:has(.login-page)) :where(.app-shell, .settingsSafe, .kogaCommandCenter, .page, .shell, .content) {
+    margin-left: 0 !important;
+  }
+}
