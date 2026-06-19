@@ -1,5 +1,5 @@
-import { LiveKogaApp } from "../live-app";
+import CustomerRealPage from "./customer-real";
 
 export default function CustomersPage() {
-  return <LiveKogaApp page="customers" />;
+  return <CustomerRealPage />;
 }
