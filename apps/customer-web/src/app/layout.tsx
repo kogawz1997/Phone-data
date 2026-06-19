@@ -1,8 +1,5 @@
 import "./globals.css";
-import "./customer-experience.css";
-import "./customer-luxury-modern.css";
 import type { ReactNode } from "react";
-import CustomerUX from "./customer-ux";
 
 export const metadata = {
   title: "KOGA Customer Portal",
@@ -18,11 +15,7 @@ export const viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="th">
-      <body>
-        <a className="portal-skip-link" href="#main-content">ข้ามไปเนื้อหาหลัก</a>
-        {children}
-        <CustomerUX />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
