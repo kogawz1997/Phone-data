@@ -1,5 +1,6 @@
 import "./globals.css";
 import "./login-clean.css";
+import "./desktop-core-board.css";
 import type { ReactNode } from "react";
 
 export const metadata = {
