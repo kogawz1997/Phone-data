@@ -17,15 +17,22 @@ type StoreData = {
 const emptyData: StoreData = { customers: [], devices: [], contracts: [], payments: [], paymentRequests: [], collectionTasks: [] };
 const menu = [
   { href: "/mobile-store", label: "หน้าหลัก", icon: "⌂" },
-  { href: "/customers", label: "ลูกค้า", icon: "♙" },
+  { href: "/mobile-store/customers", label: "ลูกค้า", icon: "♙" },
   { href: "/devices", label: "คลังเครื่อง", icon: "▣" },
   { href: "/contracts", label: "สัญญา", icon: "▤" },
   { href: "/payments", label: "ชำระเงิน", icon: "฿" },
   { href: "/collection", label: "ติดตามงวด", icon: "◎" },
   { href: "/devices", label: "MDM", icon: "🛡" },
-  { href: "/collection", label: "รายงาน", icon: "▥" },
-  { href: "/mobile-store", label: "ตั้งค่า", icon: "⚙" },
+  { href: "/reports", label: "รายงาน", icon: "▥" },
+  { href: "/settings", label: "ตั้งค่า", icon: "⚙" },
 ];
+
+function readArray(value: any): Row[] {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.items)) return value.items;
+  if (Array.isArray(value?.data)) return value.data;
+  return [];
+}
 
 async function getData<T>(path: string): Promise<T> {
   const session = readSessionToken();
@@ -102,20 +109,20 @@ export default function MobileStoreRealPage() {
       return;
     }
     const result = await Promise.allSettled([
-      getData<Row[]>("/customers"),
-      getData<Row[]>("/devices"),
-      getData<Row[]>("/contracts"),
-      getData<Row[]>("/payments"),
-      getData<Row[]>("/payment-requests"),
-      getData<Row[]>("/collection/tasks"),
+      getData<any>("/customers"),
+      getData<any>("/devices"),
+      getData<any>("/contracts"),
+      getData<any>("/payments"),
+      getData<any>("/payment-requests"),
+      getData<any>("/collection/tasks"),
     ]);
     setData({
-      customers: result[0].status === "fulfilled" ? result[0].value : [],
-      devices: result[1].status === "fulfilled" ? result[1].value : [],
-      contracts: result[2].status === "fulfilled" ? result[2].value : [],
-      payments: result[3].status === "fulfilled" ? result[3].value : [],
-      paymentRequests: result[4].status === "fulfilled" ? result[4].value : [],
-      collectionTasks: result[5].status === "fulfilled" ? result[5].value : [],
+      customers: result[0].status === "fulfilled" ? readArray(result[0].value) : [],
+      devices: result[1].status === "fulfilled" ? readArray(result[1].value) : [],
+      contracts: result[2].status === "fulfilled" ? readArray(result[2].value) : [],
+      payments: result[3].status === "fulfilled" ? readArray(result[3].value) : [],
+      paymentRequests: result[4].status === "fulfilled" ? readArray(result[4].value) : [],
+      collectionTasks: result[5].status === "fulfilled" ? readArray(result[5].value) : [],
     });
     const failed = result.find((item) => item.status === "rejected") as PromiseRejectedResult | undefined;
     if (failed) setError(failed.reason?.message || "เชื่อมต่อ API ไม่สำเร็จ");
@@ -141,7 +148,7 @@ export default function MobileStoreRealPage() {
       <aside className={`ms-drawer ${menuOpen ? "open" : ""}`} aria-hidden={!menuOpen}>
         <div className="ms-drawer-head"><div className="ms-logo">K</div><div><b>KOGA Lease MDM</b><span>Mobile Store</span></div><button aria-label="ปิดเมนู" onClick={() => setMenuOpen(false)}>×</button></div>
         <DeviceSwitch current="mobile" />
-        <nav>{menu.map((item, index) => <Link key={`${item.href}-${index}`} href={item.href} className={item.href === "/mobile-store" && index === 0 ? "active" : ""} onClick={() => setMenuOpen(false)}><i>{item.icon}</i><span>{item.label}</span></Link>)}</nav>
+        <nav>{menu.map((item) => <Link key={item.href} href={item.href} className={item.href === "/mobile-store" ? "active" : ""} onClick={() => setMenuOpen(false)}><i>{item.icon}</i><span>{item.label}</span></Link>)}</nav>
         <div className="ms-drawer-status"><b>{error ? "API error" : "API live"}</b><span>{API_BASE}</span></div>
         <button className="ms-logout" onClick={logout}>ออกจากระบบ</button>
       </aside>
@@ -181,7 +188,7 @@ export default function MobileStoreRealPage() {
         <QuickLink href="/contracts" icon="▤" label="สัญญา" />
         <QuickLink href="/payments" icon="฿" label="ชำระเงิน" />
         <QuickLink href="/devices" icon="🛡" label="ตั้งค่า MDM" />
-        <QuickLink href="/collection" icon="▥" label="รายงาน" />
+        <QuickLink href="/reports" icon="▥" label="รายงาน" />
       </section>
 
       {loading ? <div className="ms-loading">กำลังโหลดข้อมูลจริงจาก API...</div> : null}
