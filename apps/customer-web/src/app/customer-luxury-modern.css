@@ -1,9 +1,10 @@
 @import "./customer-command-portal.css";
 @import "./customer-global-atlas.css";
+@import "./customer-reference-mobile.css";
 
 /* Compatibility layer kept because layout.tsx imports this file.
-   Detailed visual rules now live in customer-command-portal.css and customer-global-atlas.css
-   to avoid low-contrast text and overlapping UI treatments. */
+   Detailed visual rules now live in customer-command-portal.css, customer-global-atlas.css,
+   and customer-reference-mobile.css to stay close to the supplied reference boards. */
 
 .portal-skip-link {
   position: fixed;
