@@ -78,6 +78,15 @@ function QuickLink({ href, icon, label }: { href: string; icon: string; label: s
   return <Link className="ms-quick" href={href}><i>{icon}</i><span>{label}</span></Link>;
 }
 
+function DeviceSwitch({ current }: { current: "desktop" | "mobile" }) {
+  return (
+    <nav className="koga-device-switch ms-device-switch" aria-label="เลือกหน้าจอสำหรับดูเว็บ">
+      <Link href="/" className={current === "desktop" ? "active" : ""}>Desktop</Link>
+      <Link href="/mobile-store" className={current === "mobile" ? "active" : ""}>Mobile</Link>
+    </nav>
+  );
+}
+
 export default function MobileStoreRealPage() {
   const [data, setData] = useState<StoreData>(emptyData);
   const [loading, setLoading] = useState(true);
@@ -131,6 +140,7 @@ export default function MobileStoreRealPage() {
       {menuOpen ? <button className="ms-backdrop" aria-label="ปิดเมนู" onClick={() => setMenuOpen(false)} /> : null}
       <aside className={`ms-drawer ${menuOpen ? "open" : ""}`} aria-hidden={!menuOpen}>
         <div className="ms-drawer-head"><div className="ms-logo">K</div><div><b>KOGA Lease MDM</b><span>Mobile Store</span></div><button aria-label="ปิดเมนู" onClick={() => setMenuOpen(false)}>×</button></div>
+        <DeviceSwitch current="mobile" />
         <nav>{menu.map((item, index) => <Link key={`${item.href}-${index}`} href={item.href} className={item.href === "/mobile-store" && index === 0 ? "active" : ""} onClick={() => setMenuOpen(false)}><i>{item.icon}</i><span>{item.label}</span></Link>)}</nav>
         <div className="ms-drawer-status"><b>{error ? "API error" : "API live"}</b><span>{API_BASE}</span></div>
         <button className="ms-logout" onClick={logout}>ออกจากระบบ</button>
@@ -141,6 +151,7 @@ export default function MobileStoreRealPage() {
         <h1><span>KOGA</span> Lease MDM</h1>
         <button aria-label="รีเฟรชข้อมูล" onClick={load}>↻</button>
       </header>
+      <DeviceSwitch current="mobile" />
 
       {error ? <section className="ms-error"><b>ระบบยังไม่พร้อม</b><span>{error}</span><Link href="/login">เข้าสู่ระบบ</Link></section> : null}
 
