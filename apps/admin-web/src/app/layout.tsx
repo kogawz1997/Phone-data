@@ -7,6 +7,7 @@ import "./live-mobile-drawer.css";
 import "./dashboard-reference.css";
 import "./dashboard-fix.css";
 import "./mobile-store-real.css";
+import "./mobile-store-menu-fix.css";
 import type { ReactNode } from "react";
 
 export const metadata = {
