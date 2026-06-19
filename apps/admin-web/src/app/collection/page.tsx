@@ -1,18 +1,5 @@
-"use client";
-import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { LiveKogaApp } from "../live-app";
 
-type Row = any;
-function badge(status?: string) { const s = status || "-"; const tone = /DONE|PAID|ACTIVE|RESOLVED/.test(s) ? "good" : /OPEN|OVERDUE|WAITING|IN_PROGRESS/.test(s) ? "warn" : "neutral"; return <span className={`badge ${tone}`}>{s}</span>; }
 export default function CollectionPage() {
-  const [tasks, setTasks] = useState<Row[]>([]);
-  const [customers, setCustomers] = useState<Row[]>([]);
-  const [error, setError] = useState("");
-  const [form, setForm] = useState({ customerId: "", title: "โทรติดตามงวด", channel: "PHONE", priority: "NORMAL", note: "" });
-  async function load() { setError(""); try { const [t,c] = await Promise.all([api<Row[]>("/collection/tasks"), api<Row[]>("/customers")]); setTasks(t); setCustomers(c);} catch(e){setError(e instanceof Error?e.message:"โหลดไม่ได้");}}
-  useEffect(()=>{void load();},[]);
-  async function generateOverdue(){ try{await api("/collection/tasks/generate-overdue",{method:"POST",body:"{}"}); await load();}catch(e){setError(e instanceof Error?e.message:"สร้างงานไม่ได้");}}
-  async function createTask(){ try{await api("/collection/tasks",{method:"POST",body:JSON.stringify(form)}); setForm({...form,note:""}); await load();}catch(e){setError(e instanceof Error?e.message:"สร้างงานไม่ได้");}}
-  async function done(id:string){ try{await api(`/collection/tasks/${id}`,{method:"PATCH",body:JSON.stringify({status:"DONE"})}); await load();}catch(e){setError(e instanceof Error?e.message:"อัปเดตไม่ได้");}}
-  return <main className="app-shell"><section className="hero"><div className="kicker">Store Console</div><h1>Collection Workspace</h1><p className="muted">งานติดตามงวดค้าง โทร/LINE/SMS และสร้าง task อัตโนมัติจากสัญญาค้าง</p><div className="hero-actions"><button className="btn" onClick={generateOverdue}>สร้างงานจากงวดค้าง</button><button className="btn secondary" onClick={load}>รีเฟรช</button><a className="btn secondary" href="/">กลับ Dashboard</a></div></section>{error&&<div className="alert bad">{error}</div>}<div className="layout-rail"><section className="card"><h2>สร้างงานติดตาม</h2><div className="form-grid"><label>ลูกค้า<select className="input" value={form.customerId} onChange={e=>setForm({...form,customerId:e.target.value})}><option value="">เลือกลูกค้า</option>{customers.map(c=><option key={c.id} value={c.id}>{c.fullName} / {c.phone}</option>)}</select></label><label>หัวข้อ<input className="input" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></label><div className="form-row"><label>ช่องทาง<select className="input" value={form.channel} onChange={e=>setForm({...form,channel:e.target.value})}><option>PHONE</option><option>LINE</option><option>SMS</option><option>EMAIL</option></select></label><label>ความสำคัญ<select className="input" value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})}><option>LOW</option><option>NORMAL</option><option>HIGH</option><option>URGENT</option></select></label></div><label>โน้ต<textarea className="input" value={form.note} onChange={e=>setForm({...form,note:e.target.value})}/></label><button className="btn" onClick={createTask}>บันทึกงาน</button></div></section><section className="card"><h2>งานทั้งหมด</h2><div className="table-wrap"><table className="table"><thead><tr><th>ลูกค้า</th><th>หัวข้อ</th><th>ช่องทาง</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>{tasks.map(t=><tr key={t.id}><td>{t.customer?.fullName}<div className="small">{t.customer?.phone}</div></td><td>{t.title}<div className="small">{t.note}</div></td><td>{t.channel}</td><td>{badge(t.status)}</td><td>{t.status!=="DONE"&&<button className="btn tiny" onClick={()=>done(t.id)}>ทำแล้ว</button>}</td></tr>)}{!tasks.length&&<tr><td colSpan={5} className="empty">ยังไม่มีงาน</td></tr>}</tbody></table></div></section></div></main>;
+  return <LiveKogaApp page="collection" />;
 }
