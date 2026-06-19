@@ -1,5 +1,5 @@
-import { LiveKogaApp } from "../live-app";
+import DeviceInventoryReal from "./device-inventory-real";
 
 export default function DevicesPage() {
-  return <LiveKogaApp page="devices" />;
+  return <DeviceInventoryReal />;
 }
