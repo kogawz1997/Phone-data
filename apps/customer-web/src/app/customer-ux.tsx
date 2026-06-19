@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import CustomerCommandPortal from "./customer-command-portal";
 
 export default function CustomerUX() {
   useEffect(() => {
@@ -15,5 +14,5 @@ export default function CustomerUX() {
     return () => observer.disconnect();
   }, []);
 
-  return <CustomerCommandPortal />;
+  return null;
 }
