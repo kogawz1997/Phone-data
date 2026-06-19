@@ -5,6 +5,7 @@ import "./live-app.css";
 import "./live-app-polish.css";
 import "./live-mobile-drawer.css";
 import "./dashboard-reference.css";
+import "./dashboard-fix.css";
 import type { ReactNode } from "react";
 
 export const metadata = {
