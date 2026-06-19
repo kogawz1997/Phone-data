@@ -1,2 +1,2 @@
-import {CustomerAccessPage} from "../store-utility-pages";
-export default function Page(){return <CustomerAccessPage mode="desktop"/>}
+import {CustomerPortalAccessPage as View} from "../customer-portal-access-page";
+export default function Page(){return <View mode="desktop"/>}
