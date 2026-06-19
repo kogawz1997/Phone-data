@@ -1,6 +1,7 @@
 import "./globals.css";
 import "./login-clean.css";
 import "./live-app.css";
+import "./live-app-polish.css";
 import type { ReactNode } from "react";
 
 export const metadata = {
