@@ -1,7 +1,9 @@
-export const API_BASE_URL =
+export const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
-  "http://localhost:4000";
+  process.env.NEXT_PUBLIC_KOGA_API_URL ??
+  "http://localhost:4000"
+).replace(/\/+$/, "");
 
 const BUILD_SURFACE = process.env.NEXT_PUBLIC_APP_SURFACE || "auto";
 let inMemoryTokenBySurface: Record<string, string> = {};
@@ -23,11 +25,29 @@ function valueKey(surface = currentSurface()) {
   return `koga_${surface}_session_value`;
 }
 
+const LEGACY_TOKEN_KEYS = [
+  "koga_token",
+  "koga_access_token",
+  "accessToken",
+  "token",
+  "adminToken",
+  "koga_admin_token",
+];
+
+function readLegacyToken() {
+  if (typeof window === "undefined") return "";
+  for (const key of LEGACY_TOKEN_KEYS) {
+    const value = window.localStorage.getItem(key) || window.sessionStorage.getItem(key);
+    if (value && value !== "cookie-session") return value;
+  }
+  return "";
+}
+
 export function getToken() {
   const surface = currentSurface();
   if (inMemoryTokenBySurface[surface]) return inMemoryTokenBySurface[surface];
   if (typeof window === "undefined") return "";
-  const stored = window.sessionStorage.getItem(valueKey(surface));
+  const stored = window.sessionStorage.getItem(valueKey(surface)) || readLegacyToken();
   if (stored) {
     inMemoryTokenBySurface[surface] = stored;
     return stored;
@@ -41,7 +61,7 @@ export function setToken(token: string) {
   if (typeof window !== "undefined") {
     window.sessionStorage.setItem(valueKey(surface), token);
     window.localStorage.setItem(markerKey(surface), "signed-in");
-    window.localStorage.setItem("koga_admin_token", "cookie-session");
+    for (const key of LEGACY_TOKEN_KEYS) window.localStorage.setItem(key, token);
   }
 }
 
@@ -51,7 +71,12 @@ export function clearToken() {
   if (typeof window !== "undefined") {
     window.sessionStorage.removeItem(valueKey(surface));
     window.localStorage.removeItem(markerKey(surface));
-    if (surface === "admin") window.localStorage.removeItem("koga_admin_token");
+    for (const key of LEGACY_TOKEN_KEYS) {
+      window.localStorage.removeItem(key);
+      window.sessionStorage.removeItem(key);
+    }
+    window.localStorage.removeItem("koga_admin");
+    window.localStorage.removeItem("koga_store");
   }
   void fetch(`${API_BASE_URL}/auth/logout`, { method: "POST", credentials: "include" }).catch(() => null);
 }
@@ -80,9 +105,9 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     credentials: "include",
     headers: buildHeaders(options),
   });
-  const json = await res.json();
-  if (!json.ok) throw new Error(readableApiError(json.error?.message));
-  return json.data;
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || json?.ok === false) throw new Error(readableApiError(json?.error?.message || json?.message));
+  return (json?.data ?? json) as T;
 }
 
 export async function downloadCsv(path: string, filename: string) {
