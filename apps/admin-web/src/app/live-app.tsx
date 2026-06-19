@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 type PageKey = "dashboard" | "customers" | "devices" | "contracts" | "payments" | "collection";
 type Row = Record<string, any>;
@@ -21,6 +21,12 @@ const nav: Array<{ key: PageKey; href: string; label: string; icon: string }> = 
 function token() {
   if (typeof window === "undefined") return "";
   return localStorage.getItem("koga_token") || localStorage.getItem("token") || localStorage.getItem("adminToken") || "";
+}
+
+function logout() {
+  if (typeof window === "undefined") return;
+  ["koga_token", "token", "adminToken", "koga_admin", "koga_store"].forEach((key) => localStorage.removeItem(key));
+  window.location.assign("/login");
 }
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -90,7 +96,7 @@ function SubmitButton({ children }: { children: ReactNode }) { return <button cl
 
 function Shell({ page, children, loading, error, refresh }: { page: PageKey; children: ReactNode; loading: boolean; error: string; refresh: () => void }) {
   const current = nav.find((n) => n.key === page)!;
-  return <main className="live-app"><aside className="live-sidebar"><div className="live-brand"><div className="live-logo">K</div><div><b>KOGA Lease MDM</b><span>Production console</span></div></div><nav>{nav.map((n) => <Link key={n.key} href={n.href} className={n.key === page ? "active" : ""}><i>{n.icon}</i>{n.label}</Link>)}</nav><div className="live-side-bottom"><Chip type={error ? "bad" : "good"}>{error ? "API error" : "API live"}</Chip><small>{API_BASE}</small></div></aside><section className="live-main"><header className="live-top"><div><p>Store workspace</p><h1>{current.label}</h1></div><div className="live-top-actions">{loading ? <Chip type="warn">กำลังโหลด</Chip> : <Chip type="good">ข้อมูลสด</Chip>}<button className="live-btn" onClick={refresh}>รีเฟรช</button><Link className="live-btn" href="/mobile-store">Mobile</Link></div></header>{error ? <div className="live-alert bad"><b>ยังใช้งาน API ไม่ได้</b><span>{error.includes("Missing bearer") ? "ต้องเข้าสู่ระบบก่อน หรือ token ไม่อยู่ใน localStorage" : error}</span></div> : null}<div className="live-content">{children}</div></section></main>;
+  return <main className="live-app"><aside className="live-sidebar"><div className="live-brand"><div className="live-logo">K</div><div><b>KOGA Lease MDM</b><span>Production console</span></div></div><nav>{nav.map((n) => <Link key={n.key} href={n.href} className={n.key === page ? "active" : ""}><i>{n.icon}</i><span>{n.label}</span></Link>)}</nav><div className="live-side-bottom"><Chip type={error ? "bad" : "good"}>{error ? "API error" : "API live"}</Chip><small>{API_BASE}</small><button className="live-btn danger" onClick={logout}>ออกจากระบบ</button></div></aside><section className="live-main"><header className="live-top"><div><p>Store workspace</p><h1>{current.label}</h1></div><div className="live-top-actions">{loading ? <Chip type="warn">กำลังโหลด</Chip> : <Chip type="good">ข้อมูลสด</Chip>}<button className="live-btn" onClick={refresh}>รีเฟรช</button><Link className="live-btn" href="/mobile-store">Mobile</Link><button className="live-btn danger" onClick={logout}>ออกจากระบบ</button></div></header>{error ? <div className="live-alert bad"><b>ยังใช้งาน API ไม่ได้</b><span>{error.includes("Missing bearer") ? "ต้องเข้าสู่ระบบก่อน หรือ token ไม่อยู่ใน localStorage" : error}</span></div> : null}<div className="live-content">{children}</div></section></main>;
 }
 
 function Stat({ title, value, note, type = "info" }: { title: string; value: ReactNode; note?: string; type?: string }) { return <div className={`live-stat ${type}`}><span>{title}</span><strong>{value}</strong>{note ? <small>{note}</small> : null}</div>; }
@@ -150,6 +156,8 @@ export function LiveKogaApp({ page = "dashboard" }: { page?: PageKey }) {
 export function LiveMobileStoreApp() {
   const state = useKogaData();
   const [page, setPage] = useState<PageKey>("dashboard");
+  const [menuOpen, setMenuOpen] = useState(false);
   const current = nav.find((n) => n.key === page)!;
-  return <main className="live-mobile"><header className="live-mobile-head"><div className="live-mobile-brand"><button>☰</button><b><span>KOGA</span> Lease MDM</b></div><button onClick={state.refresh}>รีเฟรช</button></header><section className="live-mobile-title"><p>Mobile store console</p><h1>{current.label}</h1>{state.error ? <div className="live-alert bad"><b>API error</b><span>{state.error}</span></div> : null}</section><section className="live-mobile-content"><Content page={page} data={state.data} mutate={state.mutate}/></section><nav className="live-mobile-nav">{nav.map((n) => <button key={n.key} className={n.key === page ? "active" : ""} onClick={() => setPage(n.key)}><i>{n.icon}</i><span>{n.label}</span></button>)}</nav></main>;
+  const go = (key: PageKey) => { setPage(key); setMenuOpen(false); };
+  return <main className={`live-mobile ${menuOpen ? "menu-open" : ""}`}><header className="live-mobile-head"><div className="live-mobile-brand"><button aria-label="เปิดเมนู" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}>☰</button><b><span>KOGA</span> Lease MDM</b></div><button aria-label="รีเฟรชข้อมูล" onClick={state.refresh}>รีเฟรช</button></header>{menuOpen ? <button className="live-mobile-backdrop" aria-label="ปิดเมนู" onClick={() => setMenuOpen(false)} /> : null}<aside className={`live-mobile-drawer ${menuOpen ? "open" : ""}`} aria-hidden={!menuOpen}><div className="live-mobile-drawer-head"><div className="live-logo">K</div><div><b>KOGA Lease MDM</b><span>Store console</span></div><button aria-label="ปิดเมนู" onClick={() => setMenuOpen(false)}>×</button></div><nav>{nav.map((n) => <button key={n.key} className={n.key === page ? "active" : ""} onClick={() => go(n.key)}><i>{n.icon}</i><span>{n.label}</span></button>)}</nav><div className="live-mobile-drawer-actions"><Chip type={state.error ? "bad" : "good"}>{state.error ? "API error" : "API live"}</Chip><button className="live-btn danger" onClick={logout}>ออกจากระบบ</button></div></aside><section className="live-mobile-title"><p>Mobile store console</p><h1>{current.label}</h1>{state.error ? <div className="live-alert bad"><b>API error</b><span>{state.error.includes("Missing bearer") ? "ต้องเข้าสู่ระบบก่อน หรือ token ไม่อยู่ใน localStorage" : state.error}</span></div> : null}</section><section className="live-mobile-content"><Content page={page} data={state.data} mutate={state.mutate}/></section></main>;
 }
