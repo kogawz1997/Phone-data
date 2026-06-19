@@ -1,5 +1,5 @@
-import { LiveKogaApp } from "../live-app";
+import Component from "./collection-real";
 
-export default function CollectionPage() {
-  return <LiveKogaApp page="collection" />;
+export default function Page() {
+  return <Component />;
 }
