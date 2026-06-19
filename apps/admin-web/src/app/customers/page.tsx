@@ -1,5 +1,5 @@
-import CustomerRealPage from "./customer-real";
+import CustomerCompletePage from "./customer-complete";
 
 export default function CustomersPage() {
-  return <CustomerRealPage />;
+  return <CustomerCompletePage />;
 }
