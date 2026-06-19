@@ -1,5 +1,5 @@
-import { LiveKogaApp } from "../live-app";
+import Component from "./contracts-real";
 
-export default function ContractsPage() {
-  return <LiveKogaApp page="contracts" />;
+export default function Page() {
+  return <Component />;
 }
