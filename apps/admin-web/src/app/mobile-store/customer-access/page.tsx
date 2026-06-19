@@ -1,2 +1,3 @@
-import {CustomerAccessPage as PageView} from "../../store-utility-pages";
-export default function Page(){return <PageView mode="mobile"/>}
+import {CustomerPortalAccessPage} from "../../customer-portal-access-page";
+const View = CustomerPortalAccessPage;
+export default function Page(){return <View mode="mobile"/>}
