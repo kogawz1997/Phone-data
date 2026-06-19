@@ -1,0 +1,138 @@
+/* KOGA Atlas UI: global customer readability layer. Applies across customer-facing routes. */
+:root {
+  --catlas-bg: #020712;
+  --catlas-panel: rgba(8, 18, 34, .90);
+  --catlas-panel-strong: rgba(10, 24, 44, .96);
+  --catlas-border: rgba(205, 220, 238, .22);
+  --catlas-border-strong: rgba(125, 243, 255, .44);
+  --catlas-text: #f7fbff;
+  --catlas-text-strong: #ffffff;
+  --catlas-muted: #cbd8e8;
+  --catlas-soft: #9db1c7;
+  --catlas-accent: #7df3ff;
+  --catlas-blue: #4f8dff;
+  --catlas-danger: #fecaca;
+  --catlas-warn: #fde68a;
+  --catlas-good: #bbf7d0;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  color: var(--catlas-text) !important;
+  background:
+    radial-gradient(circle at 18% -8%, rgba(125, 243, 255, .12), transparent 30%),
+    radial-gradient(circle at 100% 10%, rgba(79, 141, 255, .14), transparent 34%),
+    linear-gradient(135deg, #020712, #06101f 48%, #081120) !important;
+}
+
+body :where(h1, h2, h3, h4, strong, th, .title, .portal-logo, .kcpBrand strong) {
+  color: var(--catlas-text-strong) !important;
+}
+
+body :where(p, small, label, td, li, span, .muted, .helper, .kcpBrand small, .kcpHero p, .kcpPanelHead p, .kcpMetric small, .kcpList small, .kcpPayment small, .kcpDeviceCard span, .kcpDeviceCard p) {
+  color: var(--catlas-muted) !important;
+}
+
+body :where(.customer-shell, .portal, .section-card, .dashboard-hero, .stat-card, .payment-request-card, .payment-card, .portal-login-card, .help-card, .kcpHeroCopy, .kcpDeviceCard, .kcpLogin, .kcpMetric, .kcpPanel, .kcpNotice) {
+  border-color: var(--catlas-border) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.026)),
+    var(--catlas-panel) !important;
+  color: var(--catlas-text) !important;
+  box-shadow: 0 18px 56px rgba(1, 7, 18, .28), inset 0 1px 0 rgba(255,255,255,.07) !important;
+}
+
+body :where(input, textarea, select) {
+  color: var(--catlas-text-strong) !important;
+  background: rgba(2, 8, 20, .74) !important;
+  border: 1px solid rgba(205, 220, 238, .34) !important;
+  border-radius: 14px !important;
+  caret-color: var(--catlas-accent);
+}
+
+body :where(input::placeholder, textarea::placeholder) {
+  color: #91a6bd !important;
+  opacity: 1 !important;
+}
+
+body :where(button, .btn, a.btn, .kcpQuickNav a, .kcpUpload) {
+  border-color: rgba(125, 243, 255, .30) !important;
+  color: var(--catlas-text-strong) !important;
+  font-weight: 850 !important;
+}
+
+body :where(button.primary, .btn.primary, .primary, .kcpLogin button) {
+  color: #03101d !important;
+  background: linear-gradient(135deg, var(--catlas-accent), var(--catlas-blue)) !important;
+  border-color: rgba(125, 243, 255, .44) !important;
+}
+
+body :where(.kcpQuickNav a, .kcpUpload, .btn.secondary, button.secondary, .ghost, button.ghost) {
+  color: var(--catlas-text-strong) !important;
+  background: rgba(255, 255, 255, .10) !important;
+  border-color: rgba(205, 220, 238, .24) !important;
+}
+
+body :where(table) {
+  color: var(--catlas-text) !important;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+body :where(thead, th) {
+  background: rgba(255,255,255,.07) !important;
+  color: var(--catlas-text-strong) !important;
+}
+
+body :where(td) {
+  color: var(--catlas-muted) !important;
+  border-color: rgba(205, 220, 238, .12) !important;
+}
+
+body :where(.badge, .chip, .pill, .status) {
+  color: var(--catlas-text-strong) !important;
+  background: rgba(255, 255, 255, .10) !important;
+  border: 1px solid rgba(205, 220, 238, .22) !important;
+}
+
+body :where(.badge.good, .chip.good, .status.good) {
+  color: var(--catlas-good) !important;
+  background: rgba(22, 101, 52, .28) !important;
+  border-color: rgba(74, 222, 128, .34) !important;
+}
+
+body :where(.badge.warn, .chip.warn, .status.warn) {
+  color: var(--catlas-warn) !important;
+  background: rgba(113, 63, 18, .30) !important;
+  border-color: rgba(251, 191, 36, .34) !important;
+}
+
+body :where(.badge.bad, .chip.bad, .status.bad, .kcpNotice) {
+  color: var(--catlas-danger) !important;
+  background: rgba(127, 29, 29, .30) !important;
+  border-color: rgba(251, 113, 133, .34) !important;
+}
+
+body :where(a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible) {
+  outline: 3px solid rgba(125, 243, 255, .72) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 6px rgba(125, 243, 255, .12) !important;
+}
+
+body :where(.table-wrap, .safeTableWrap) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 760px) {
+  body :where(.section-card, .dashboard-hero, .stat-card, .payment-request-card, .payment-card, .portal-login-card, .help-card, .kcpHeroCopy, .kcpDeviceCard, .kcpLogin, .kcpMetric, .kcpPanel) {
+    border-radius: 22px !important;
+  }
+
+  body :where(h1) {
+    font-size: clamp(2rem, 11vw, 3.4rem) !important;
+  }
+}
