@@ -16,12 +16,15 @@ type StoreData = {
 
 const emptyData: StoreData = { customers: [], devices: [], contracts: [], payments: [], paymentRequests: [], collectionTasks: [] };
 const menu = [
-  { href: "/", label: "หน้าหลัก", icon: "⌂" },
+  { href: "/mobile-store", label: "หน้าหลัก", icon: "⌂" },
   { href: "/customers", label: "ลูกค้า", icon: "♙" },
   { href: "/devices", label: "คลังเครื่อง", icon: "▣" },
   { href: "/contracts", label: "สัญญา", icon: "▤" },
-  { href: "/payments", label: "การเงิน", icon: "฿" },
+  { href: "/payments", label: "ชำระเงิน", icon: "฿" },
   { href: "/collection", label: "ติดตามงวด", icon: "◎" },
+  { href: "/devices", label: "MDM", icon: "🛡" },
+  { href: "/collection", label: "รายงาน", icon: "▥" },
+  { href: "/mobile-store", label: "ตั้งค่า", icon: "⚙" },
 ];
 
 async function getData<T>(path: string): Promise<T> {
@@ -42,10 +45,6 @@ function baht(value: unknown) {
 
 function isPaid(value: unknown) {
   return ["PAID", "CONFIRMED"].includes(String(value || "").toUpperCase());
-}
-
-function isOpenTask(value: unknown) {
-  return String(value || "").toUpperCase() !== "DONE";
 }
 
 function isDeviceNeedsCheck(device: Row) {
@@ -114,9 +113,7 @@ export default function MobileStoreRealPage() {
     setLoading(false);
   }
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const dueSoon = useMemo(() => countDueSoon(data.contracts), [data.contracts]);
   const payToday = useMemo(() => data.paymentRequests.filter((request) => !["CONFIRMED", "REJECTED", "CANCELLED"].includes(String(request.status || "").toUpperCase())).length + data.payments.filter((payment) => String(payment.status || "").toUpperCase() === "VERIFYING").length, [data.paymentRequests, data.payments]);
@@ -132,14 +129,15 @@ export default function MobileStoreRealPage() {
   return (
     <main className="koga-mobile-real">
       {menuOpen ? <button className="ms-backdrop" aria-label="ปิดเมนู" onClick={() => setMenuOpen(false)} /> : null}
-      <aside className={`ms-drawer ${menuOpen ? "open" : ""}`}>
-        <div className="ms-drawer-head"><div className="ms-logo">K</div><div><b>KOGA Lease MDM</b><span>Mobile Store</span></div><button onClick={() => setMenuOpen(false)}>×</button></div>
-        <nav>{menu.map((item) => <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}><i>{item.icon}</i><span>{item.label}</span></Link>)}</nav>
+      <aside className={`ms-drawer ${menuOpen ? "open" : ""}`} aria-hidden={!menuOpen}>
+        <div className="ms-drawer-head"><div className="ms-logo">K</div><div><b>KOGA Lease MDM</b><span>Mobile Store</span></div><button aria-label="ปิดเมนู" onClick={() => setMenuOpen(false)}>×</button></div>
+        <nav>{menu.map((item, index) => <Link key={`${item.href}-${index}`} href={item.href} className={item.href === "/mobile-store" && index === 0 ? "active" : ""} onClick={() => setMenuOpen(false)}><i>{item.icon}</i><span>{item.label}</span></Link>)}</nav>
+        <div className="ms-drawer-status"><b>{error ? "API error" : "API live"}</b><span>{API_BASE}</span></div>
         <button className="ms-logout" onClick={logout}>ออกจากระบบ</button>
       </aside>
 
       <header className="ms-topbar">
-        <button aria-label="เปิดเมนู" onClick={() => setMenuOpen(true)}>☰</button>
+        <button aria-label="เปิดเมนู" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}>☰</button>
         <h1><span>KOGA</span> Lease MDM</h1>
         <button aria-label="รีเฟรชข้อมูล" onClick={load}>↻</button>
       </header>
@@ -161,10 +159,10 @@ export default function MobileStoreRealPage() {
       <section className="ms-card">
         <h3>ภาพรวมร้านค้า</h3>
         <div className="ms-stats-grid">
-          <StatBox label="ลูกค้า" value={data.customers.length} unit="คน" trend="ข้อมูลจริง" />
-          <StatBox label="อุปกรณ์" value={data.devices.length} unit="เครื่อง" trend="ข้อมูลจริง" />
-          <StatBox label="สัญญาที่ใช้งาน" value={activeContracts} unit="สัญญา" trend="ข้อมูลจริง" />
-          <StatBox label="รายได้ที่ยืนยันแล้ว" value={baht(revenue)} unit="บาท" trend="ข้อมูลจริง" />
+          <StatBox label="ลูกค้า" value={data.customers.length} unit="คน" trend="จาก API" />
+          <StatBox label="อุปกรณ์" value={data.devices.length} unit="เครื่อง" trend="จาก API" />
+          <StatBox label="สัญญาที่ใช้งาน" value={activeContracts} unit="สัญญา" trend="จาก API" />
+          <StatBox label="รายได้ที่ยืนยันแล้ว" value={baht(revenue)} unit="บาท" trend="จาก API" />
         </div>
       </section>
 
@@ -172,7 +170,7 @@ export default function MobileStoreRealPage() {
         <QuickLink href="/contracts" icon="▤" label="สัญญา" />
         <QuickLink href="/payments" icon="฿" label="ชำระเงิน" />
         <QuickLink href="/devices" icon="🛡" label="ตั้งค่า MDM" />
-        <QuickLink href="/reports" icon="▥" label="รายงาน" />
+        <QuickLink href="/collection" icon="▥" label="รายงาน" />
       </section>
 
       {loading ? <div className="ms-loading">กำลังโหลดข้อมูลจริงจาก API...</div> : null}
