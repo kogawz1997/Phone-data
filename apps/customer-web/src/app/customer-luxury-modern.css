@@ -1,34 +1,9 @@
 @import "./customer-command-portal.css";
+@import "./customer-global-atlas.css";
 
-/* KOGA customer portal premium layer. */
-
-:root {
-  --portal-ink: #020712;
-  --portal-ink-2: #06101f;
-  --portal-card: rgba(8, 18, 34, .82);
-  --portal-line: rgba(158, 178, 205, .16);
-  --portal-line-strong: rgba(103, 232, 249, .30);
-  --portal-text: #edf7ff;
-  --portal-muted: #9fb2c9;
-  --portal-accent: #67e8f9;
-  --portal-blue: #2563eb;
-  --portal-radius-xl: 28px;
-  --portal-radius-md: 16px;
-  --portal-shadow: 0 18px 52px rgba(1, 7, 18, .24);
-  --portal-ease: cubic-bezier(.2, .8, .2, 1);
-}
-
-html { scroll-behavior: smooth; }
-
-body {
-  background:
-    radial-gradient(circle at 18% -8%, rgba(103, 232, 249, .12), transparent 30%),
-    radial-gradient(circle at 100% 10%, rgba(37, 99, 235, .14), transparent 34%),
-    linear-gradient(135deg, var(--portal-ink), var(--portal-ink-2) 48%, #081120) !important;
-  color: var(--portal-text) !important;
-  font-family: "Aptos", "Outfit", "Geist", "SF Pro Display", "Segoe UI", system-ui, sans-serif !important;
-  -webkit-font-smoothing: antialiased;
-}
+/* Compatibility layer kept because layout.tsx imports this file.
+   Detailed visual rules now live in customer-command-portal.css and customer-global-atlas.css
+   to avoid low-contrast text and overlapping UI treatments. */
 
 .portal-skip-link {
   position: fixed;
@@ -36,10 +11,10 @@ body {
   top: 12px;
   z-index: 1500;
   transform: translateY(-140%);
-  border: 1px solid rgba(103, 232, 249, .45);
+  border: 1px solid rgba(125, 243, 255, .55);
   border-radius: 999px;
   background: #07111f;
-  color: #e6fbff;
+  color: #f7fbff;
   padding: 10px 14px;
   font-weight: 850;
   text-decoration: none;
@@ -49,129 +24,6 @@ body {
 
 .portal-skip-link:focus-visible {
   transform: translateY(0);
-  outline: 3px solid rgba(103, 232, 249, .55);
+  outline: 3px solid rgba(125, 243, 255, .72);
   outline-offset: 3px;
-}
-
-.customer-shell { position: relative; isolation: isolate; }
-
-.customer-shell::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  opacity: .13;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
-  background-size: 72px 72px;
-}
-
-.portal-topbar {
-  border-color: rgba(103, 232, 249, .18) !important;
-  background: rgba(3, 10, 22, .74) !important;
-  box-shadow: 0 18px 54px rgba(1, 7, 18, .26), inset 0 1px 0 rgba(255,255,255,.05);
-}
-
-.portal-logo {
-  color: #03101d !important;
-  background: linear-gradient(135deg, var(--portal-accent), var(--portal-blue)) !important;
-  box-shadow: 0 18px 48px rgba(37, 99, 235, .24), inset 0 1px 0 rgba(255,255,255,.35) !important;
-}
-
-.dashboard-hero,
-.section-card,
-.stat-card,
-.payment-request-card,
-.payment-card,
-.portal-login-card,
-.help-card {
-  border: 1px solid var(--portal-line) !important;
-  border-radius: var(--portal-radius-xl) !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018)),
-    var(--portal-card) !important;
-  box-shadow: var(--portal-shadow), inset 0 1px 0 rgba(255,255,255,.06) !important;
-  backdrop-filter: blur(20px) saturate(1.08) !important;
-}
-
-.dashboard-hero:hover,
-.section-card:hover,
-.stat-card:hover,
-.payment-request-card:hover,
-.payment-card:hover,
-.portal-login-card:hover,
-.help-card:hover {
-  border-color: var(--portal-line-strong) !important;
-}
-
-h1,
-.dashboard-hero h1,
-.portal-hero-compact h1 {
-  color: #f7fbff !important;
-  font-size: clamp(2.25rem, 7vw, 5.1rem) !important;
-  line-height: .94 !important;
-  letter-spacing: -.07em !important;
-  text-wrap: balance;
-}
-
-h2, h3, strong { color: #f2f8ff !important; letter-spacing: -.025em; }
-p, small, label, .muted { color: var(--portal-muted) !important; line-height: 1.65; text-wrap: pretty; }
-
-input, textarea, select {
-  min-height: 44px;
-  color: var(--portal-text) !important;
-  border: 1px solid rgba(158, 178, 205, .18) !important;
-  border-radius: var(--portal-radius-md) !important;
-  background: rgba(2, 8, 20, .58) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
-}
-
-button, .btn, .hero-metrics a {
-  min-height: 44px;
-  border-radius: 16px !important;
-  font-weight: 820 !important;
-}
-
-button.primary, .btn.primary, .primary {
-  border-color: rgba(103, 232, 249, .36) !important;
-  background: linear-gradient(135deg, rgba(103, 232, 249, .95), rgba(37, 99, 235, .94)) !important;
-  color: #03101d !important;
-  box-shadow: 0 18px 48px rgba(37, 99, 235, .24), inset 0 1px 0 rgba(255,255,255,.34) !important;
-}
-
-a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
-  outline: 3px solid rgba(103, 232, 249, .72) !important;
-  outline-offset: 3px !important;
-  box-shadow: 0 0 0 6px rgba(103, 232, 249, .10) !important;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .dashboard-hero, .section-card, .stat-card, .payment-request-card, .payment-card, .portal-login-card, .help-card {
-    transition: transform .2s var(--portal-ease), border-color .2s var(--portal-ease), box-shadow .2s var(--portal-ease);
-  }
-
-  .dashboard-hero:hover, .section-card:hover, .stat-card:hover, .payment-request-card:hover, .payment-card:hover, .portal-login-card:hover, .help-card:hover {
-    transform: translateY(-1px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: .01ms !important;
-  }
-}
-
-@media (max-width: 850px) {
-  .dashboard-hero, .section-card, .stat-card, .payment-request-card, .payment-card, .portal-login-card, .help-card {
-    border-radius: 22px !important;
-  }
-
-  h1, .dashboard-hero h1, .portal-hero-compact h1 {
-    font-size: clamp(2.1rem, 11vw, 3.7rem) !important;
-  }
 }
