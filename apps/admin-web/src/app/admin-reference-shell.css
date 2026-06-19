@@ -1,3 +1,5 @@
+@import "./admin-reference-pages.css";
+
 /* KOGA Reference Shell: makes admin pages closer to the provided desktop boards. */
 @media (min-width: 981px) {
   body:not(:has(.login-page)) {
