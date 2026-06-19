@@ -5,17 +5,26 @@ This document closes the current UI redesign pass and records what must be deplo
 ## Scope completed
 
 ### Admin web
-- Premium dark console visual layer
+- Reference-inspired dark enterprise desktop shell
+- Compact left sidebar / icon rail matching the supplied desktop boards
 - Unified navigation
 - Mobile bottom dock navigation
 - Outside tap closes open mobile menu
 - Global home shortcut on every non-home admin route
+- Admin root login gate restored and kept separate from dashboard logic
+- Store command center dashboard as the new root after login
+- Global Atlas readability layer for all admin pages
+- Page-specific layout patterns for customers, inventory, contracts, payments, collection, risk, reports, integrations, setup, platform owner pages
+- Dense table, metric card, filter bar, right-side detail panel, QR/payment, chart/report, and provider-grid styling patterns
 - Skip link and focus states
 - Reduced motion support
 - Layout guards for cards, forms, and tables
 
 ### Customer web
-- Premium customer portal visual layer
+- Reference-inspired mobile customer portal styling
+- App-like customer portal topbar, hero, payment, contract, history, help sections
+- Global Atlas readability layer across customer-facing pages
+- QR/payment card styling closer to the supplied mobile board
 - Dark KOGA brand system aligned with admin
 - Skip link
 - Main content target helper
@@ -32,17 +41,29 @@ This document closes the current UI redesign pass and records what must be deplo
 
 ### Admin web
 - `apps/admin-web/src/app/layout.tsx`
+- `apps/admin-web/src/app/page.tsx`
 - `apps/admin-web/src/app/ux-enhancements.tsx`
 - `apps/admin-web/src/app/home-shortcut.tsx`
+- `apps/admin-web/src/app/admin-login-gate.css`
 - `apps/admin-web/src/app/admin-layout-cleanup.css`
 - `apps/admin-web/src/app/admin-mobile-dock.css`
+- `apps/admin-web/src/app/admin-command-center.tsx`
+- `apps/admin-web/src/app/admin-command-center.css`
+- `apps/admin-web/src/app/admin-global-atlas.css`
+- `apps/admin-web/src/app/admin-reference-shell.css`
+- `apps/admin-web/src/app/admin-reference-pages.css`
 - `apps/admin-web/src/app/admin-luxury-modern-v2.css`
 - `apps/admin-web/src/app/admin-shortcuts.css`
 - `apps/admin-web/src/app/admin-compact-header.css`
 
 ### Customer web
+- `apps/customer-web/src/app/page.tsx`
 - `apps/customer-web/src/app/layout.tsx`
 - `apps/customer-web/src/app/customer-ux.tsx`
+- `apps/customer-web/src/app/customer-command-portal.tsx`
+- `apps/customer-web/src/app/customer-command-portal.css`
+- `apps/customer-web/src/app/customer-global-atlas.css`
+- `apps/customer-web/src/app/customer-reference-mobile.css`
 - `apps/customer-web/src/app/customer-luxury-modern.css`
 - `apps/customer-web/package.json`
 
@@ -114,11 +135,20 @@ Minimum release gate:
 
 - [ ] customer-web opens without Railway error
 - [ ] admin-web opens without Railway error
+- [ ] admin login page accepts valid credentials
+- [ ] admin root shows Store Command Center after login
+- [ ] admin desktop sidebar matches compact reference board direction
+- [ ] customers/inventory/contracts/payments pages show dense table and metric-card treatment
+- [ ] collection/risk/reports pages show chart/report-card treatment
+- [ ] integrations/setup pages show provider/setup-card treatment
+- [ ] platform owner pages show owner analytics board treatment
 - [ ] mobile admin menu does not cover page content
 - [ ] tapping outside mobile menu closes it
 - [ ] home shortcut appears on non-home admin routes
 - [ ] customer portal login screen is readable on mobile
+- [ ] customer QR/payment screen looks app-like and readable
 - [ ] contract/payment/history sections do not overflow horizontally
+- [ ] status chips good/warn/bad are readable and not color-only
 - [ ] keyboard focus ring is visible
 - [ ] private/incognito browser shows the latest design
 
@@ -129,6 +159,7 @@ Minimum release gate:
 - If `KOGA_RAILWAY_TARGET` is missing, deploy will now fail fast with a clear error.
 - If service root directory is wrong, Railway may build the wrong app in the monorepo.
 - Environment variables can still break runtime API calls after the page loads, even if the UI renders.
+- If a page uses unusual class names, the global reference CSS will improve it, but a full JSX rebuild may still be needed for 1:1 matching.
 
 ## Rollback plan
 
@@ -136,16 +167,11 @@ If production fails:
 
 1. Roll back the latest Railway deployment for the affected service.
 2. If needed, revert only the visual-layer commit for that service.
-3. Do not touch API or database unless logs prove the issue is backend-related.
+3. If login fails, revert `apps/admin-web/src/app/page.tsx` first.
+4. Do not touch API or database unless logs prove the issue is backend-related.
 
-## Next improvement after release
+## What is still not a 1:1 rebuild
 
-After the current redesign is deployed and stable, the next pass should be per-page refinement:
+This pass makes all pages closer to the supplied boards through shell, global readability, and page-pattern layers. A true 1:1 page rebuild would still require editing the JSX of each page to explicitly use the same grid, table, and right-panel structure as the mockups.
 
-- Admin dashboard information hierarchy
-- Settings page section grouping
-- Customer payment request cards
-- Customer contract table mobile UX
-- Empty states and error copy cleanup
-
-Do not start this next pass until both production web services are stable.
+Do that only after this release is deployed and verified stable.
