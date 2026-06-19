@@ -95,6 +95,15 @@ function PayItem({ payment }: { payment: Row }) {
   return <div className="koga-pay-item"><div className="koga-pay-icon">▣</div><div><b>{dateShort(payment.paidAt || payment.createdAt)}</b><span>{payment.contract?.contractNo || "-"}</span></div><strong>{money(payment.amount)}</strong></div>;
 }
 
+function DeviceSwitch({ current }: { current: "desktop" | "mobile" }) {
+  return (
+    <nav className="koga-device-switch" aria-label="เลือกหน้าจอสำหรับดูเว็บ">
+      <Link href="/" className={current === "desktop" ? "active" : ""}>Desktop</Link>
+      <Link href="/mobile-store" className={current === "mobile" ? "active" : ""}>Mobile</Link>
+    </nav>
+  );
+}
+
 export function DashboardHome() {
   const [data, setData] = useState<HomeData>(emptyData);
   const [loading, setLoading] = useState(true);
@@ -130,9 +139,7 @@ export function DashboardHome() {
     setLoading(false);
   }
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const activeContracts = useMemo(() => data.contracts.filter((item) => String(item.status).toUpperCase() === "ACTIVE"), [data.contracts]);
   const confirmedRevenue = useMemo(() => data.payments.filter((item) => String(item.status).toUpperCase() === "CONFIRMED").reduce((sum, item) => sum + Number(item.amount || 0), 0), [data.payments]);
@@ -158,6 +165,7 @@ export function DashboardHome() {
           </aside>
 
           <section className="koga-home-main">
+            <div className="koga-view-toolbar"><DeviceSwitch current="desktop" /></div>
             <header className="koga-home-top"><div><p><Link href="/">หน้าหลัก</Link> / Command Center</p><h1>ยินดีต้อนรับ, KOGA Store</h1><span>ภาพรวมการดำเนินงานของร้านค้าในวันนี้</span></div><div className="koga-top-chips"><Chip tone={error ? "bad" : "good"}>{error ? "API warning" : "Database ready"}</Chip><Chip tone="purple">Tenant Isolation</Chip></div></header>
             {error ? <div className="koga-home-alert"><b>ระบบยังไม่สมบูรณ์</b><span>{error}</span><Link href="/login">เข้าสู่ระบบ</Link></div> : null}
 
