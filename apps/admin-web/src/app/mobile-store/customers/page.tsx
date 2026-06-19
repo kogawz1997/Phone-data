@@ -1,5 +1,5 @@
-import CustomerMobileRealPage from "./customer-mobile-real";
+import CustomerMobileCompletePage from "./customer-mobile-complete";
 
 export default function MobileCustomersPage() {
-  return <CustomerMobileRealPage />;
+  return <CustomerMobileCompletePage />;
 }
